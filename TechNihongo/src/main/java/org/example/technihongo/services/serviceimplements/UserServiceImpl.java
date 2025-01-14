@@ -1,4 +1,4 @@
-package org.example.technihongo.services;
+package org.example.technihongo.services.serviceimplements;
 
 import lombok.RequiredArgsConstructor;
 import org.example.technihongo.dto.LoginResponseDTO;
@@ -21,8 +21,8 @@ public class UserServiceImpl implements UserService {
     @Autowired
     private UserRepository userRepository;
     @Override
-    public LoginResponseDTO login(String userName, String password) throws Exception {
-        User user = userRepository.findByUserName(userName).orElseThrow(() -> new Exception("User are not exists"));
+    public LoginResponseDTO login(String email, String password) throws Exception {
+        User user = userRepository.findByEmail(email).orElseThrow(() -> new Exception("User are not exists"));
 
         if (!user.getPassword().equals(password)) {
             throw new Exception("Invalid password");
