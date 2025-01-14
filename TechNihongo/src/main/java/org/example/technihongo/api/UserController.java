@@ -2,6 +2,7 @@ package org.example.technihongo.api;
 
 import lombok.RequiredArgsConstructor;
 import org.example.technihongo.dto.LoginResponseDTO;
+import org.example.technihongo.dto.UserLogin;
 import org.example.technihongo.entities.User;
 import org.example.technihongo.response.ApiResponse;
 import org.example.technihongo.services.interfaces.UserService;
@@ -20,17 +21,10 @@ public class UserController {
     @Autowired
     private UserService userService;
 
-    /**
-     * Handles user login requests.
-     *
-     * @param email the username of the user
-     * @param password the password of the user
-     * @return ResponseEntity containing the login result
-     */
     @PostMapping("/login")
-    public ResponseEntity<LoginResponseDTO> login(@RequestParam String email, @RequestParam String password) {
+    public ResponseEntity<LoginResponseDTO> login(@RequestBody UserLogin userLogin) {
         try {
-            LoginResponseDTO response = userService.login(email, password);
+            LoginResponseDTO response = userService.login(userLogin.getEmail(), userLogin.getPassword());
 
             if (response.isSuccess()) {
                 return ResponseEntity.ok(response);
@@ -43,6 +37,7 @@ public class UserController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
         }
     }
+
     @GetMapping("/all")
     public ResponseEntity<ApiResponse> getAllUser() throws Exception {
         List<User> userList = userService.userList();
