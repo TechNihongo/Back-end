@@ -1,14 +1,17 @@
 package org.example.technihongo.entities;
 
-
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import jakarta.validation.constraints.Email;
+
 
 @Builder
 @Entity
@@ -25,23 +28,29 @@ public class User {
     @Column(name="username", unique = true)
     private String userName;
 
-    @Column(name="email", unique = true)
+    @Column(name = "email", unique = true, nullable = false)
+    @Email(message = "Invalid email format")
+    @NotBlank(message = "Email cannot be blank")
     private String email;
 
     @Column(name="password")
+    @Pattern(
+            regexp = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]{8,}$",
+            message = "Password must contain at least 8 characters, including uppercase, lowercase, a digit, and a special character"
+    )
     private String password;
 
     @Column(name = "uid")
     private String uid;
 
     @Column(name = "is_active")
-    private boolean isActive = true;
+    private boolean isActive;
 
     @Column(name = "created_at")
-    private LocalDate createdAt;
+    private LocalDateTime createdAt;
 
     @Column(name = "last_login")
-    private LocalDate lastLogin;
+    private LocalDateTime lastLogin;
 
     @JsonIgnore
     @Column(name="role_id")
@@ -55,7 +64,7 @@ public class User {
 
     @PrePersist
     protected void onCreate() {
-        createdAt = LocalDate.now();
+        createdAt = LocalDateTime.now();
     }
 
     @ManyToOne

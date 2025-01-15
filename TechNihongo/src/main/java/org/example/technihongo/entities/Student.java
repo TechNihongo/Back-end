@@ -7,8 +7,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.sql.Time;
-import java.time.LocalDate;
+
 import java.time.LocalDateTime;
 
 @Builder
@@ -31,18 +30,18 @@ public class Student {
     private String bio;
 
     @Column(name = "daily_goal_minutes")
+    @Builder.Default
     private Integer dailyGoal = 60;
 
     @Column(name = "reminder_enabled")
-    private boolean reminderEnabled = false;
+    private boolean reminderEnabled;
 
     @Column(name = "reminder_time")
-    private Time reminderTime;
+    private LocalDateTime reminderTime;
 
     @Column(name = "updated_at")
-    private LocalDateTime updatedAt;
-
-
+    @Builder.Default
+    private LocalDateTime updatedAt = LocalDateTime.now();
 
     @PrePersist
     @PreUpdate
