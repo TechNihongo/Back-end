@@ -65,10 +65,13 @@
             <version>RELEASE</version>
             <scope>test</scope>
         </dependency>
+<<<<<<< HEAD
         <dependency>
             <groupId>jakarta.validation</groupId>
             <artifactId>jakarta.validation-api</artifactId>
             <version>3.0.2</version>
         </dependency>
+=======
+>>>>>>> 024347f88993c418ac03ebb490f4f14ff6505429
     </dependencies>
 </project>
