@@ -1,0 +1,14 @@
+package org.example.technihongo.services.interfaces;
+
+import org.example.technihongo.dto.CoursePublicDTO;
+import org.example.technihongo.entities.Course;
+
+import java.util.List;
+import java.util.Optional;
+
+public interface CourseService {
+    List<Course> courseList();
+    List<CoursePublicDTO> getPublicCourses();
+    Optional<Course> getCourseById (Integer courseId);
+    Optional<CoursePublicDTO> getPublicCourseById (Integer courseId);
+}
