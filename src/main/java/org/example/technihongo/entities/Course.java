@@ -54,7 +54,7 @@ public class Course {
 
     @Column(name = "is_public")
     @Builder.Default
-    private boolean isPublic = true;
+    private boolean isPublic = false;
 
     @Column(name = "is_premium")
     @Builder.Default
