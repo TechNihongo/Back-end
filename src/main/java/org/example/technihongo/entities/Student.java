@@ -1,6 +1,7 @@
 package org.example.technihongo.entities;
 
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
@@ -24,6 +25,7 @@ public class Student {
     @Column(name = "student_id")
     private Integer studentId;
 
+    @JsonIgnore
     @OneToOne
     @JoinColumn(name = "user_id", referencedColumnName = "user_id", nullable = false)
     private User user;
@@ -55,7 +57,7 @@ public class Student {
     private LocalDateTime updatedAt;
 
     public enum OccupationStatus{
-        STUDENT,EMPLOYED, UNEMPLOYED, FREELANCER, OTHER
+        STUDENT, EMPLOYED, UNEMPLOYED, FREELANCER, OTHER
     }
 
 
