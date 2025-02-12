@@ -2,10 +2,7 @@ package org.example.technihongo.services.serviceimplements;
 
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
-import org.example.technihongo.dto.GoogleTokenDTO;
-import org.example.technihongo.dto.GoogleUserInfoDTO;
-import org.example.technihongo.dto.LoginResponseDTO;
-import org.example.technihongo.dto.RegistrationDTO;
+import org.example.technihongo.dto.*;
 import org.example.technihongo.entities.Role;
 import org.example.technihongo.entities.Student;
 import org.example.technihongo.entities.User;
@@ -207,6 +204,44 @@ public class UserServiceImpl implements UserService {
             throw new RuntimeException("Error verifying Google token: " + e.getMessage());
         }
     }
+
+    @Override
+    @Transactional
+    public User createContentManager(ContentManagerDTO dto, Integer userId) {
+        User adminUser = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        if (adminUser.getRole().getRoleId() != 1) {
+            throw new RuntimeException("Only Admin can create Content Manager accounts");
+        }
+
+        if (userRepository.existsByEmail(dto.getEmail())) {
+            throw new RuntimeException("Email already exists");
+        }
+
+        if (userRepository.existsByUserName(dto.getUserName())) {
+            throw new RuntimeException("Username already exists");
+        }
+
+        Role contentManagerRole = roleRepository.findById(2)
+                .orElseThrow(() -> new RuntimeException("Content Manager role not found")).getRole();
+
+        User newUser = User.builder()
+                .userName(dto.getUserName())
+                .email(dto.getEmail())
+                .password(passwordEncoder.encode(dto.getPassword()))
+                .isActive(true)
+                .role(contentManagerRole)
+                .createdAt(LocalDateTime.now())
+                .build();
+
+        try {
+            return userRepository.save(newUser);
+        } catch (DataIntegrityViolationException e) {
+            throw new RuntimeException("Failed to save Content Manager account", e);
+        }
+    }
+
 
     @Override
     public List<User> userList() {

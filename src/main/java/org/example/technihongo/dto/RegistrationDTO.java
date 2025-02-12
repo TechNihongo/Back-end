@@ -23,7 +23,7 @@ public class RegistrationDTO {
     private String email;
 
     @Pattern(
-            regexp = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]{8,}$",
+            regexp = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[^A-Za-z\\d]).{8,}$",
             message = "Password must contain at least 8 characters, including uppercase, lowercase, a digit, and a special character"
     )
     private String password;
