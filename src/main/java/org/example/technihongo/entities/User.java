@@ -19,7 +19,7 @@ import jakarta.validation.constraints.Email;
 @NoArgsConstructor
 @AllArgsConstructor
 @Data
-@Table(name = "User")
+@Table(name = "[User]")
 public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -36,7 +36,7 @@ public class User {
 
     @Column(name="password")
     @Pattern(
-            regexp = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]{8,}$",
+            regexp = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&+])[A-Za-z\\d@$!%*?&+]{8,}$",
             message = "Password must contain at least 8 characters, including uppercase, lowercase, a digit, and a special character"
     )
     private String password;
@@ -56,9 +56,9 @@ public class User {
     @Column(name = "last_login")
     private LocalDateTime lastLogin;
 
-    @JsonIgnore
-    @Column(name="role_id")
-    private Integer roleId;
+//    @JsonIgnore
+//    @Column(name="role_id")
+//    private Integer roleId = 3;
 
     @Column(name = "profile_img")
     private String profileImg;
@@ -71,8 +71,9 @@ public class User {
         createdAt = LocalDateTime.now();
     }
 
-    @ManyToOne
-    @JoinColumn(name = "role_id", insertable = false, updatable = false)
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JsonIgnore
+    @JoinColumn(name = "role_id", updatable = false)
     private Role role;
 
 }

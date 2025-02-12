@@ -2,6 +2,7 @@ package org.example.technihongo.entities;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.example.technihongo.enums.CompletionStatus;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.math.BigDecimal;
@@ -50,7 +51,5 @@ public class StudentFlashcardSetProgress {
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
 
-    public enum CompletionStatus {
-        NOT_STARTED, IN_PROGRESS, COMPLETED
-    }
+
 }

@@ -1,9 +1,11 @@
 package org.example.technihongo.entities;
 
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
+import org.example.technihongo.enums.OccupationStatus;
 import org.hibernate.annotations.UpdateTimestamp;
 
 
@@ -24,6 +26,7 @@ public class Student {
     @Column(name = "student_id")
     private Integer studentId;
 
+    @JsonIgnore
     @OneToOne
     @JoinColumn(name = "user_id", referencedColumnName = "user_id", nullable = false)
     private User user;
@@ -39,24 +42,20 @@ public class Student {
     private OccupationStatus occupation;
 
     @Column(name = "reminder_enabled")
-    @Builder.Default
     private boolean reminderEnabled = true;
 
     @Column(name = "reminder_time")
     private LocalTime reminderTime;
 
     @ManyToOne
-    @NotNull
-    @JoinColumn(name = "level_id", nullable = false, referencedColumnName = "level_id")
+    @JoinColumn(name = "level_id", referencedColumnName = "level_id")
     private DifficultyLevel difficultyLevel;
 
     @UpdateTimestamp
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
-    public enum OccupationStatus{
-        STUDENT,EMPLOYED, UNEMPLOYED, FREELANCER, OTHER
-    }
+
 
 
 }

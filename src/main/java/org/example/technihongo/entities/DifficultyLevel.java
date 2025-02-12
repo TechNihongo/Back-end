@@ -3,6 +3,7 @@ package org.example.technihongo.entities;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Size;
 import lombok.*;
+import org.example.technihongo.enums.DifficultyLevelEnum;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDateTime;
@@ -22,7 +23,7 @@ public class DifficultyLevel {
 
     @Enumerated(EnumType.STRING)
     @Column(name ="tag", unique = true)
-    private LevelTag tag;
+    private DifficultyLevelEnum tag;
 
     @Column(name = "name")
     private String name;
@@ -42,7 +43,5 @@ public class DifficultyLevel {
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
 
-    public enum LevelTag{
-        N5,N4,N3,N2,N1
-    }
+
 }

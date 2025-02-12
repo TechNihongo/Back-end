@@ -3,6 +3,7 @@ package org.example.technihongo.entities;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
+import org.example.technihongo.enums.TransactionStatus;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.math.BigDecimal;
@@ -52,9 +53,7 @@ public class PaymentTransaction {
     @Column(name = "created_at", updatable = false, nullable = false)
     private LocalDateTime createdAt;
 
-    public enum TransactionStatus {
-        PENDING, COMPLETED, FAILED
-    }
+
 }
 
 

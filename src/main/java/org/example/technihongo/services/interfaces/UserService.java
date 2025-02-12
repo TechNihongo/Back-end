@@ -1,24 +1,24 @@
 package org.example.technihongo.services.interfaces;
 
 
+import org.example.technihongo.dto.GoogleTokenDTO;
+import org.example.technihongo.dto.GoogleUserInfoDTO;
 import org.example.technihongo.dto.LoginResponseDTO;
-import org.example.technihongo.dto.UserLogin;
+import org.example.technihongo.dto.RegistrationDTO;
 import org.example.technihongo.entities.User;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.stereotype.Repository;
 
 import java.util.List;
-import java.util.Optional;
 
 public interface UserService {
     LoginResponseDTO login(String email, String password) throws Exception;
 
     List<User> userList();
 
+    LoginResponseDTO register(RegistrationDTO registrationDTO);
 
-    Optional<User> findUserByEmail(String email);
+    LoginResponseDTO authenticateWithGoogle(GoogleTokenDTO tokenDTO);
+    GoogleUserInfoDTO verifyGoogleToken(String accessToken);
 
-    boolean userNameExists(String userName);
 
-    boolean emailExists(String email);
+
 }

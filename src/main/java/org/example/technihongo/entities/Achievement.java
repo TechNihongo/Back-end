@@ -5,6 +5,8 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.*;
+import org.example.technihongo.enums.Category;
+import org.example.technihongo.enums.ConditionType;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
@@ -68,10 +70,5 @@ public class Achievement {
 
 
     // Nghiên cứu thêm tại mới dùng DeepSeek
-    public enum Category {
-        LEARNING, COMMUNITY, CHALLENGE
-    }
-    public enum ConditionType {
-        LESSON_COMPLETED, QUIZ_PASSED, DAYS_STREAK
-    }
+
 }
