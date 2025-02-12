@@ -2,6 +2,8 @@ package org.example.technihongo.entities;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.example.technihongo.enums.PaymentMethodCode;
+import org.example.technihongo.enums.PaymentMethodType;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDateTime;
@@ -34,10 +36,4 @@ public class PaymentMethod {
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
-    public enum PaymentMethodType {
-        MomoPay, VNPay
-    }
-    public enum PaymentMethodCode {
-         MOMO_QR, VNPAY_QR
-    }
 }

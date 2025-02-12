@@ -1,33 +1,52 @@
 package org.example.technihongo.services.serviceimplements;
 
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.example.technihongo.dto.GoogleTokenDTO;
+import org.example.technihongo.dto.GoogleUserInfoDTO;
 import org.example.technihongo.dto.LoginResponseDTO;
+import org.example.technihongo.dto.RegistrationDTO;
+import org.example.technihongo.entities.Role;
+import org.example.technihongo.entities.Student;
 import org.example.technihongo.entities.User;
+import org.example.technihongo.repositories.RoleRepository;
 import org.example.technihongo.repositories.UserRepository;
 import org.example.technihongo.services.interfaces.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.web.client.RestTemplate;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
-
 @Service
 @RequiredArgsConstructor
-@Component
 public class UserServiceImpl implements UserService {
 
+    private final UserRepository userRepository;
+    private final RestTemplate restTemplate;
+
     @Autowired
-    private UserRepository userRepository;
+    private RoleRepository roleRepository;
+
+    @Autowired
+    private BCryptPasswordEncoder passwordEncoder;
+
+
+    private static final String GOOGLE_TOKEN_INFO_URL = "https://www.googleapis.com/oauth2/v3/tokeninfo?access_token=";
+
     @Override
     public LoginResponseDTO login(String email, String password) throws Exception {
-        User user = userRepository.findByEmail(email).orElseThrow(() -> new Exception("User are not exists"));
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new Exception("User does not exist"));
 
-        if (!user.getPassword().equals(password)) {
+        if (!passwordEncoder.matches(password, user.getPassword())) {
             throw new Exception("Invalid password");
         }
-    
         return new LoginResponseDTO(
                 user.getUserId(),
                 user.getUserName(),
@@ -39,32 +58,158 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public List<User> userList() {
-        return userRepository.findAll();
-    }
+    @Transactional
+    public LoginResponseDTO register(RegistrationDTO registrationDTO) {
+        try {
+            if (userRepository.existsByEmail(registrationDTO.getEmail())) {
+                throw new RuntimeException("Email already exists", new IllegalArgumentException("Email: " + registrationDTO.getEmail()));
+            }
+            if (userRepository.existsByUserName(registrationDTO.getUserName())) {
+                throw new RuntimeException("Username already exists", new IllegalArgumentException("Username: " + registrationDTO.getUserName()));
+            }
 
-    @Override
-    public Optional<User> findUserByEmail(String email) {
-        return userRepository.findByEmail(email);
-    }
+            Role defaultRole;
+            try {
+                defaultRole = roleRepository.findById(3)
+                        .orElseThrow(() -> new EntityNotFoundException("Role with ID 3 not found")).getRole();
+            } catch (EntityNotFoundException e) {
+                throw new RuntimeException("Failed to find default role for registration", e);
+            }
 
-    @Override
-    public boolean userNameExists(String userName) {
-        return userRepository.existsByUserName(userName);
-    }
+            User user = User.builder()
+                    .userName(registrationDTO.getUserName())
+                    .email(registrationDTO.getEmail())
+                    .password(passwordEncoder.encode(registrationDTO.getPassword()))
+                    .dob(registrationDTO.getDob())
+                    .isActive(true)
+                    .role(defaultRole)
+                    .build();
 
-    @Override
-    public boolean emailExists(String email) {
-        return userRepository.existsByEmail(email);
-    }
 
+            Student student = Student.builder()
+                    .user(user)
+                    .occupation(registrationDTO.getOccupation())
+                    .reminderEnabled(true)
+                    .build();
 
-    public void validateEmail(String email) throws Exception {
-        if (emailExists(email)) {
-            throw new Exception("Email '" + email + "' is already registered");
+            user.setStudent(student);
+
+            try {
+                User savedUser = userRepository.save(user);
+                return new LoginResponseDTO(
+                        savedUser.getUserId(),
+                        savedUser.getUserName(),
+                        savedUser.getEmail(),
+                        savedUser.getRole().getRoleName(),
+                        true,
+                        "Registration Successfully"
+                );
+            } catch (DataIntegrityViolationException e) {
+                throw new RuntimeException("Failed to save user data", e);
+            }
+        } catch (Exception e) {
+            throw new RuntimeException("Registration failed: " + e.getMessage(), e);
         }
     }
 
+    @Override
+    @Transactional
+    public LoginResponseDTO authenticateWithGoogle(GoogleTokenDTO tokenDTO) {
+        GoogleUserInfoDTO googleUserInfoDTO = verifyGoogleToken(tokenDTO.getAccessToken());
 
+        if (googleUserInfoDTO == null || !googleUserInfoDTO.isEmail_verified()) {
+            throw new RuntimeException("Invalid Google token or email not verified");
+        }
 
+        Optional<User> existedUser = userRepository.findByEmail(googleUserInfoDTO.getEmail());
+
+        User user;
+        String message;
+
+        if (existedUser.isPresent()) {
+            user = existedUser.get();
+            user.setLastLogin(LocalDateTime.now());
+            message = "Login Successfully";
+        } else {
+            user = createNewUserFromGoogle(googleUserInfoDTO);
+            message = "Registration Successfully";
+        }
+
+        user = userRepository.save(user);
+
+        return new LoginResponseDTO(
+                user.getUserId(),
+                user.getUserName(),
+                user.getEmail(),
+                user.getRole().getRoleName(),
+                true,
+                message
+        );
+    }
+
+    private User createNewUserFromGoogle(GoogleUserInfoDTO googleUser) {
+        Role defaultRole;
+        try {
+            defaultRole = roleRepository.findById(3)
+                    .orElseThrow(() -> new EntityNotFoundException("Role with ID 3 not found")).getRole();
+        } catch (EntityNotFoundException e) {
+            throw new RuntimeException("Failed to find default role for Google registration", e);
+        }
+
+        try {
+            User user = User.builder()
+                    .email(googleUser.getEmail())
+                    .userName(generateUsername(googleUser.getEmail()))
+                    .isActive(true)
+                    .role(defaultRole)
+                    .profileImg(googleUser.getPicture())
+                    .uid(googleUser.getSub())
+                    .createdAt(LocalDateTime.now())
+                    .lastLogin(LocalDateTime.now())
+                    .build();
+
+            Student student = Student.builder()
+                    .user(user)
+                    .reminderEnabled(true)
+                    .build();
+
+            user.setStudent(student);
+            return user;
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to create user from Google data", e);
+        }
+    }
+
+    private String generateUsername(String email) {
+        String baseUsername = email.split("@")[0];
+        String username = baseUsername;
+        int counter = 1;
+
+        while (userRepository.existsByUserName(username)) {
+            username = baseUsername + counter++;
+        }
+
+        return username;
+    }
+
+    @Override
+    public GoogleUserInfoDTO verifyGoogleToken(String accessToken) {
+        try {
+            String url = GOOGLE_TOKEN_INFO_URL + accessToken;
+            GoogleUserInfoDTO userInfo = restTemplate.getForObject(url, GoogleUserInfoDTO.class);
+
+            if (userInfo == null || userInfo.getEmail() == null) {
+                throw new RuntimeException("Failed to verify Google token");
+            }
+
+            return userInfo;
+        } catch (Exception e) {
+            throw new RuntimeException("Error verifying Google token: " + e.getMessage());
+        }
+    }
+
+    @Override
+    public List<User> userList() {
+        return userRepository.findAll();
+    }
 }

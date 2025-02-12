@@ -3,6 +3,9 @@ https://www.googleapis.com/oauth2/v3/tokeninfo?access_token=
 ya29.a0ARW5m74mMhlQl9f-1N0Lq5DWq6A-U-q_a8OwjajmTp5g4D9nDE0lk0-KOUlLy6WnXzXmG-t4LKx4euKNIjRHsPk3J3cTIe1kLqIOETNzddX2DqWUss6Ae-X7DYNcev8JvZyhqU1Ft7Gt479llYDrc-mnqaNHzS3Wp76hN3zvaCgYKAQkSARESFQHGX2MiXdDnYBUG95r3ntys8pdpMQ0175
 
 
+
+https://www.googleapis.com/auth/userinfo.email
+
 Result :
 
 {

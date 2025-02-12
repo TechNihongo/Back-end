@@ -1,0 +1,162 @@
+package org.example.technihongo.services.serviceimplements;
+
+import org.example.technihongo.dto.StudentDTO;
+import org.example.technihongo.dto.UpdateProfileDTO;
+import org.example.technihongo.entities.DifficultyLevel;
+import org.example.technihongo.entities.Student;
+import org.example.technihongo.entities.User;
+import org.example.technihongo.enums.DifficultyLevelEnum;
+import org.example.technihongo.exception.InvalidDifficultyLevelException;
+import org.example.technihongo.exception.ResourceNotFoundException;
+import org.example.technihongo.repositories.DifficultyLevelRepository;
+import org.example.technihongo.repositories.StudentRepository;
+import org.example.technihongo.repositories.UserRepository;
+import org.example.technihongo.services.interfaces.StudentService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+
+@Service
+public class StudentServiceImpl implements StudentService {
+
+    @Autowired
+    private StudentRepository studentRepository;
+
+    @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
+    private DifficultyLevelRepository difficultyLevelRepository;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+
+    @Override
+    @Transactional
+    public StudentDTO setDailyGoal(Integer studentId, Integer dailyGoal) {
+        if (studentId == null) {
+            throw new IllegalArgumentException("Student ID cannot be null");
+        }
+
+        if (dailyGoal == null) {
+            throw new IllegalArgumentException("Daily goal cannot be null");
+        }
+
+        Student student = studentRepository.findById(studentId)
+                .orElseThrow(() -> new ResourceNotFoundException("Student not found with id: " + studentId));
+
+        if (dailyGoal < 30) {
+            throw new IllegalArgumentException("Fighting, you can do it better!!!");
+        }
+
+        student.setDailyGoal(dailyGoal);
+        Student savedStudent = studentRepository.save(student);
+
+        return convertToDTO(savedStudent);
+    }
+
+    @Override
+    @Transactional
+    public StudentDTO updateDifficultyLevel(Integer studentId, DifficultyLevelEnum difficultyLevelEnum) {
+        if (studentId == null) {
+            throw new IllegalArgumentException("Student ID cannot be null");
+        }
+
+        if (difficultyLevelEnum == null) {
+            throw new InvalidDifficultyLevelException("Difficulty level cannot be null");
+        }
+
+        Student student = studentRepository.findById(studentId)
+                .orElseThrow(() -> new ResourceNotFoundException("Student not found with id: " + studentId));
+
+        DifficultyLevel difficultyLevel = difficultyLevelRepository.findByTag(difficultyLevelEnum);
+        if (difficultyLevel == null) {
+            difficultyLevel = new DifficultyLevel();
+            difficultyLevel.setTag(difficultyLevelEnum);
+            difficultyLevel = difficultyLevelRepository.save(difficultyLevel);
+        }
+
+        student.setDifficultyLevel(difficultyLevel);
+        Student savedStudent = studentRepository.save(student);
+
+        return convertToDTO(savedStudent);
+    }
+
+    private StudentDTO convertToDTO(Student student) {
+        if (student == null) {
+            return null;
+        }
+
+        DifficultyLevelEnum difficultyLevel = null;
+        if (student.getDifficultyLevel() != null) {
+            difficultyLevel = student.getDifficultyLevel().getTag();
+        }
+
+        return StudentDTO.builder()
+                .studentId(student.getStudentId())
+                .dailyGoal(student.getDailyGoal())
+                .difficultyLevel(difficultyLevel)
+                .build();
+    }
+
+    @Override
+    @Transactional
+    public void updateUserName(Integer userId, UpdateProfileDTO dto) {
+        User user = userRepository.findByUserId(userId);
+        if(user == null) throw new RuntimeException("User not found!");
+        user.setUserName(dto.getUserName());
+        userRepository.save(user);
+    }
+
+    @Override
+    @Transactional
+    public void updatePassword(Integer userId, UpdateProfileDTO dto) {
+        if (userId == null || dto == null || dto.getPassword() == null) {
+            throw new IllegalArgumentException("User ID or Password cannot be null");
+        }
+
+        User user = userRepository.findByUserId(userId);
+        if (user == null) {
+            throw new ResourceNotFoundException("User not found with id: " + userId);
+        }
+
+        String encodedPassword = passwordEncoder.encode(dto.getPassword());
+        user.setPassword(encodedPassword);
+        userRepository.save(user);
+    }
+
+    @Override
+    @Transactional
+    public void updateStudentProfile(Integer userId, UpdateProfileDTO dto) {
+        Student student = studentRepository.findByUser_UserId(userId);
+        if (student == null) {
+            throw new ResourceNotFoundException("Student not found with id: " + userId);
+        }
+
+        // Update profile image
+        if (dto.getProfileImg() != null) {
+            User user = student.getUser();
+            user.setProfileImg(dto.getProfileImg());
+            userRepository.save(user);
+        }
+
+        if (dto.getBio() != null) {
+            student.setBio(dto.getBio());
+        }
+
+        if (dto.getOccupation() != null) {
+            student.setOccupation(dto.getOccupation());
+        }
+
+        student.setReminderEnabled(dto.isReminderEnabled());
+        if (dto.getReminderTime() != null) {
+            student.setReminderTime(dto.getReminderTime());
+        }
+
+        studentRepository.save(student);
+    }
+
+
+}

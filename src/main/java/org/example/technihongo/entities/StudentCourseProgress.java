@@ -2,6 +2,7 @@ package org.example.technihongo.entities;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.example.technihongo.enums.CompletionStatus;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
@@ -58,7 +59,5 @@ public class StudentCourseProgress {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
-    public enum CompletionStatus {
-        NOT_STARTED, IN_PROGRESS, COMPLETED
-    }
+
 }
