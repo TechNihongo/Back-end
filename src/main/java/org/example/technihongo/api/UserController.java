@@ -1,6 +1,9 @@
 package org.example.technihongo.api;
 
 import lombok.RequiredArgsConstructor;
+import org.example.technihongo.core.security.JwtUtil;
+import org.example.technihongo.core.security.MyUserDetailsService;
+import org.example.technihongo.core.security.TokenBlacklist;
 import org.example.technihongo.dto.*;
 import org.example.technihongo.entities.User;
 import org.example.technihongo.response.ApiResponse;
@@ -19,20 +22,28 @@ public class UserController {
 
     @Autowired
     private UserService userService;
+    @Autowired
+    private MyUserDetailsService myUserDetailsService;
+    @Autowired
+    private JwtUtil jwtUtil;
+    @Autowired
+    private TokenBlacklist tokenBlacklist;
 
     @PostMapping("/login")
-    public ResponseEntity<LoginResponseDTO> login(@RequestBody UserLogin userLogin) {
+    public ResponseEntity<LoginResponseTokenDTO> login(@RequestBody UserLogin userLogin) {
         try {
             LoginResponseDTO response = userService.login(userLogin.getEmail(), userLogin.getPassword());
-
+            String token = myUserDetailsService.loginToken(userLogin);
             if (response.isSuccess()) {
-                return ResponseEntity.ok(response);
+                return ResponseEntity.ok(new LoginResponseTokenDTO(response.getUserId(), response.getUserName(),
+                        response.getEmail(), response.getRole(), true, response.getMessage(), token));
             } else {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new LoginResponseTokenDTO(response.getUserId(), response.getUserName(),
+                        response.getEmail(), response.getRole(), false, response.getMessage(), token));
             }
         } catch (Exception e) {
             String errorMessage = "Login failed: " + e.getMessage();
-            LoginResponseDTO errorResponse = new LoginResponseDTO(null, null, null, null, false, errorMessage);
+            LoginResponseTokenDTO errorResponse = new LoginResponseTokenDTO(null, null, null, null, false, errorMessage, null);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
         }
     }
@@ -70,6 +81,22 @@ public class UserController {
         }
     }
 
+    @PostMapping("/logout")
+    public ResponseEntity<ApiResponse> logout(@RequestHeader("Authorization") String authorizationHeader) {
+        if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
+            String token = authorizationHeader.substring(7);
+            tokenBlacklist.addToken(token);
+            return ResponseEntity.ok(ApiResponse.builder()
+                    .success(true)
+                    .message("Logged out successfully.")
+                    .build());
+        } else {
+            return ResponseEntity.ok(ApiResponse.builder()
+                    .success(false)
+                    .message("Invalid Authorization header.")
+                    .build());
+        }
+    }
 
     @GetMapping("/all")
     public ResponseEntity<ApiResponse> getAllUser() throws Exception {

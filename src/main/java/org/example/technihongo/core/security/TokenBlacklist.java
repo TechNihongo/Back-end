@@ -1,4 +1,4 @@
-package org.example.technihongo.core;
+package org.example.technihongo.core.security;
 
 import org.springframework.stereotype.Component;
 

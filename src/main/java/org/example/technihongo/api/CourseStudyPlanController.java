@@ -16,7 +16,7 @@ import java.util.List;
 import java.util.Optional;
 
 @RestController
-@RequestMapping("/api/course_sp")
+@RequestMapping("/api/course-study-plan")
 @RequiredArgsConstructor
 public class CourseStudyPlanController {
     @Autowired
