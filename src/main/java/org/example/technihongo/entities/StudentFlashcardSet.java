@@ -32,12 +32,11 @@ public class StudentFlashcardSet {
 
     @ManyToOne
     @NotNull
-    @JoinColumn(name = "creator_id", referencedColumnName = "user_id", nullable = false)
+    @JoinColumn(name = "creator_id", referencedColumnName = "student_id", nullable = false)
     private Student creator;
 
     @ManyToOne
-    @NotNull
-    @JoinColumn(name = "resource_id", referencedColumnName = "resource_id", nullable = false)
+    @JoinColumn(name = "resource_id", referencedColumnName = "resource_id")
     private LearningResource learningResource;
 
     @Column(name = "total_cards")

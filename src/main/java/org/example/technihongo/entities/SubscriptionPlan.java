@@ -34,7 +34,7 @@ public class SubscriptionPlan {
     private Integer durationDays;
 
     @Column(name = "is_active")
-    private Boolean isActive;
+    private boolean isActive;
 
     @CreationTimestamp
     @Column(name = "create_at", updatable = false)
