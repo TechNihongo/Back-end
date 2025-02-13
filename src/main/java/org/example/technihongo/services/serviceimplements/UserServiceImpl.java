@@ -89,7 +89,7 @@ public class UserServiceImpl implements UserService {
             Student student = Student.builder()
                     .user(user)
                     .occupation(registrationDTO.getOccupation())
-                    .reminderEnabled(true)
+                    .reminderEnabled(false)
                     .build();
 
             user.setStudent(student);

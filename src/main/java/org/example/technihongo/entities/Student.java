@@ -42,7 +42,7 @@ public class Student {
     private OccupationStatus occupation;
 
     @Column(name = "reminder_enabled")
-    private boolean reminderEnabled = true;
+    private boolean reminderEnabled = false;
 
     @Column(name = "reminder_time")
     private LocalTime reminderTime;
