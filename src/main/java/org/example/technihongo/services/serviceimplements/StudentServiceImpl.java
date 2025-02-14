@@ -62,25 +62,33 @@ public class StudentServiceImpl implements StudentService {
         if (studentId == null) {
             throw new IllegalArgumentException("Student ID cannot be null");
         }
-
         if (difficultyLevelEnum == null) {
             throw new InvalidDifficultyLevelException("Difficulty level cannot be null");
         }
-
+        if (!isValidDifficultyLevel(difficultyLevelEnum)) {
+            throw new InvalidDifficultyLevelException("Invalid difficulty level!! The difficulty level must be : N5, N4, N3, N2, N1");
+        }
         Student student = studentRepository.findById(studentId)
                 .orElseThrow(() -> new ResourceNotFoundException("Student not found with id: " + studentId));
 
         DifficultyLevel difficultyLevel = difficultyLevelRepository.findByTag(difficultyLevelEnum);
         if (difficultyLevel == null) {
-            difficultyLevel = new DifficultyLevel();
-            difficultyLevel.setTag(difficultyLevelEnum);
-            difficultyLevel = difficultyLevelRepository.save(difficultyLevel);
+            throw new InvalidDifficultyLevelException("Difficulty level not found in the system: " + difficultyLevelEnum);
         }
 
         student.setDifficultyLevel(difficultyLevel);
         Student savedStudent = studentRepository.save(student);
 
         return convertToDTO(savedStudent);
+    }
+
+    private boolean isValidDifficultyLevel(DifficultyLevelEnum difficultyLevelEnum) {
+        for (DifficultyLevelEnum level : DifficultyLevelEnum.values()) {
+            if (level == difficultyLevelEnum) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private UpdateProfileDTO convertToDTO(Student student) {
