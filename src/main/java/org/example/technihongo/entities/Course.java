@@ -4,6 +4,7 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
 
@@ -52,6 +53,10 @@ public class Course {
     @Column(name = "estimated_duration")
     private String estimatedDuration;
 
+    @Column(name = "enrollment_count")
+    @Builder.Default
+    private Integer enrollmentCount = 0;
+
     @Column(name = "is_public")
     @Builder.Default
     private boolean isPublic = false;
@@ -64,4 +69,7 @@ public class Course {
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
 
+    @UpdateTimestamp
+    @Column(name = "updated_at")
+    private LocalDateTime updateAt;
 }

@@ -3,9 +3,11 @@ package org.example.technihongo.services.serviceimplements;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.example.technihongo.dto.*;
+import org.example.technihongo.entities.AuthToken;
 import org.example.technihongo.entities.Role;
 import org.example.technihongo.entities.Student;
 import org.example.technihongo.entities.User;
+import org.example.technihongo.repositories.AuthTokenRepository;
 import org.example.technihongo.repositories.RoleRepository;
 import org.example.technihongo.repositories.UserRepository;
 import org.example.technihongo.services.interfaces.UserService;
@@ -16,9 +18,13 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.web.client.RestTemplate;
 
+import java.time.Duration;
+import java.time.Instant;
 import java.time.LocalDateTime;
+import java.util.Date;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -26,9 +32,12 @@ public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
     private final RestTemplate restTemplate;
+    private static final long EXPIRE_TOKEN = 10;
 
     @Autowired
     private RoleRepository roleRepository;
+    @Autowired
+    private AuthTokenRepository authTokenRepository;
 
     @Autowired
     private BCryptPasswordEncoder passwordEncoder;
@@ -242,9 +251,67 @@ public class UserServiceImpl implements UserService {
         }
     }
 
-
     @Override
     public List<User> userList() {
         return userRepository.findAll();
     }
+
+    @Override
+    public String forgotPass(String email) {
+        User user = userRepository.findUserByEmail(email);
+
+        if (user == null){
+            return "Invalid email.";
+        }
+
+        AuthToken authToken = AuthToken.builder()
+                .user(user)
+                .token(generateToken())
+                .tokenType("RESET_PASSWORD")
+                .expiresAt(LocalDateTime.now().plusMinutes(EXPIRE_TOKEN))
+                .build();
+
+        authTokenRepository.save(authToken);
+        return authToken.getToken();
+    }
+
+    @Override
+    public String resetPass(String token, PasswordResetDTO passwordResetDTO) {
+        AuthToken authToken = authTokenRepository.findByToken(token);
+        User user = userRepository.findByUserId(authToken.getUser().getUserId());
+
+        if (user == null) {
+            return "Invalid token";
+        }
+
+        if (authToken.getExpiresAt().isBefore(LocalDateTime.now())) {
+            authToken.setIsActive(false);
+            authTokenRepository.save(authToken);
+            return "Token expired.";
+        }
+
+        if (!passwordResetDTO.getPassword().equals(passwordResetDTO.getConfirm())) {
+            return "Confirm password does not match!";
+        }
+
+
+        if (passwordEncoder.matches(passwordResetDTO.getPassword(), user.getPassword())) {
+            return "New password cannot be same as current password.";
+        }
+
+        user.setPassword(passwordEncoder.encode(passwordResetDTO.getPassword()));
+
+        userRepository.save(user);
+        authToken.setIsActive(false);
+        authTokenRepository.save(authToken);
+        return "Your password has been successfully updated.";
+    }
+
+    private String generateToken() {
+        StringBuilder token = new StringBuilder();
+
+        return token.append(UUID.randomUUID())
+                .append(UUID.randomUUID()).toString();
+    }
+
 }

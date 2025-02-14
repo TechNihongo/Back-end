@@ -18,7 +18,7 @@ public interface UserService {
 
     User createContentManager(ContentManagerDTO dto, Integer userId);
 
-
-
+    String forgotPass(String email);
+    String resetPass(String token, PasswordResetDTO passwordResetDTO);
 
 }
