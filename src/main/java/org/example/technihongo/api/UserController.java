@@ -132,6 +132,45 @@ public class UserController {
                     .build());
         }
     }
+
+    @PatchMapping("/{userId}/username")
+    public ResponseEntity<ApiResponse> updateUserName(
+            @PathVariable Integer userId,
+            @RequestBody UpdateProfileDTO request) {
+        try {
+            userService.updateUserName(userId, request);
+            return ResponseEntity.ok(ApiResponse.builder()
+                    .success(true)
+                    .message("Username updated successfully")
+                    .build());
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(ApiResponse.builder()
+                            .success(false)
+                            .message("User not found: " + e.getMessage())
+                            .build());
+        }
+    }
+
+    @PatchMapping("/{userId}/password")
+    public ResponseEntity<ApiResponse> updatePassword(
+            @PathVariable Integer userId,
+            @RequestBody UpdateProfileDTO request) {
+        try {
+            userService.updatePassword(userId, request);
+            return ResponseEntity.ok(ApiResponse.builder()
+                    .success(true)
+                    .message("Password updated successfully")
+                    .build());
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(ApiResponse.builder()
+                            .success(false)
+                            .message("User not found: " + e.getMessage())
+                            .build());
+        }
+    }
+
     @PostMapping("/content-manager/{adminId}")
     public ResponseEntity<ApiResponse> createContentManager(
             @PathVariable("adminId") Integer adminId,

@@ -10,7 +10,7 @@ import org.example.technihongo.exception.ResourceNotFoundException;
 import org.example.technihongo.repositories.FlashcardRepository;
 import org.example.technihongo.repositories.StudentFlashcardSetRepository;
 import org.example.technihongo.repositories.StudentRepository;
-import org.example.technihongo.services.interfaces.FlashcardSetService;
+import org.example.technihongo.services.interfaces.StudentFlashcardSetService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,7 +20,7 @@ import java.util.stream.Collectors;
 
 @Service
 @Transactional
-public class FlashcardSetServiceImpl implements FlashcardSetService {
+public class StudentFlashcardSetServiceImpl implements StudentFlashcardSetService {
     @Autowired
     private StudentFlashcardSetRepository flashcardSetRepository;
     @Autowired
@@ -54,7 +54,7 @@ public class FlashcardSetServiceImpl implements FlashcardSetService {
                 .orElseThrow(() -> new RuntimeException("FlashcardSet not found"));
         flashcardSet.setTitle(request.getTitle());
         flashcardSet.setDescription(request.getDescription());
-        flashcardSet.setPublic(request.isPublic());
+//        flashcardSet.setPublic(request.isPublic());
         flashcardSet = flashcardSetRepository.save(flashcardSet);
         return convertToFlashcardSetResponseDTO(flashcardSet);
     }
@@ -81,14 +81,21 @@ public class FlashcardSetServiceImpl implements FlashcardSetService {
         return convertToFlashcardSetResponseDTO(flashcardSet);    }
 
     @Override
-    public List<FlashcardResponseDTO> getAllFlashcardsInSet(Integer flashcardSetId) {
+    public FlashcardSetResponseDTO getAllFlashcardsInSet(Integer flashcardSetId) {
         StudentFlashcardSet flashcardSet = flashcardSetRepository.findById(flashcardSetId)
                 .orElseThrow(() -> new ResourceNotFoundException("Flashcard Set not found with id: " + flashcardSetId));
         List<Flashcard> flashcards = flashcardRepository.findByStudentFlashCardSetStudentSetId(flashcardSetId);
 
-        return flashcards.stream()
+        FlashcardSetResponseDTO response = new FlashcardSetResponseDTO();
+        response.setStudentSetId(flashcardSet.getStudentSetId());
+        response.setTitle(flashcardSet.getTitle());
+        response.setDescription(flashcardSet.getDescription());
+        response.setIsPublic(flashcardSet.isPublic());
+        response.setFlashcards(flashcards.stream()
                 .map(this::convertToFlashcardResponseDTO)
-                .collect(Collectors.toList());
+                .collect(Collectors.toList()));
+
+        return response;
     }
 
     private FlashcardResponseDTO convertToFlashcardResponseDTO(Flashcard flashcard) {
@@ -114,4 +121,5 @@ public class FlashcardSetServiceImpl implements FlashcardSetService {
 
         return response;
     }
+
 }

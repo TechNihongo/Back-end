@@ -1,4 +1,4 @@
-package org.example.technihongo.services.interfaces;
+package org.example.technihongo.repositories;
 
 import org.example.technihongo.entities.StudentSubscription;
 import org.example.technihongo.entities.SubscriptionPlan;

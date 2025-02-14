@@ -24,9 +24,9 @@ public class FlashcardServiceImpl implements FlashcardService {
         StudentFlashcardSet flashcardSet = studentFlashcardSetRepository.findById(flashcardSetId)
                 .orElseThrow(() -> new ResourceNotFoundException("Flashcard Set not found with id: " + flashcardSetId));
 
-//        if (!flashcardSet.getCreator().getStudentId().equals(studentId)) {
-//            throw new IllegalArgumentException("You don't have permission to add flashcards to this set");
-//        }
+        if (!flashcardSet.getCreator().getStudentId().equals(studentId)) {
+            throw new IllegalArgumentException("You don't have permission to add flashcards to this set");
+        }
 
         Flashcard flashcard = new Flashcard();
         flashcard.setDefinition(request.getJapaneseDefinition());
@@ -43,9 +43,9 @@ public class FlashcardServiceImpl implements FlashcardService {
         Flashcard flashcard = flashcardRepository.findById(flashcardId)
                 .orElseThrow(() -> new ResourceNotFoundException("Flashcard not found with Id: " + flashcardId));
 
-//        if (!flashcard.getStudentFlashCardSet().getCreator().getStudentId().equals(studentId)) {
-//            throw new RuntimeException("You don't have permission to update this flashcard");
-//        } Them sau khi co JWT
+        if (!flashcard.getStudentFlashCardSet().getCreator().getStudentId().equals(studentId)) {
+            throw new RuntimeException("You don't have permission to update this flashcard");
+        }
         flashcard.setDefinition(request.getJapaneseDefinition());
         flashcard.setTranslation(request.getVietEngTranslation());
         flashcard.setImgUrl(request.getImageUrl());
@@ -59,9 +59,9 @@ public class FlashcardServiceImpl implements FlashcardService {
         Flashcard flashcard = flashcardRepository.findById(flashcardId)
                 .orElseThrow(() -> new ResourceNotFoundException("Flashcard not found with id: " + flashcardId));
 
-//        if (!flashcard.getStudentFlashCardSet().getCreator().getStudentId().equals(studentId)) {
-//            throw new RuntimeException("You don't have permission to delete this flashcard");
-//        }
+        if (!flashcard.getStudentFlashCardSet().getCreator().getStudentId().equals(studentId)) {
+            throw new RuntimeException("You don't have permission to delete this flashcard");
+        }
 
         flashcardRepository.deleteById(flashcardId);
     }
