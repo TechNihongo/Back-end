@@ -28,6 +28,8 @@ public class RegistrationDTO {
     )
     private String password;
 
+    private String confirmPassword;
+
     private LocalDate dob;
     private OccupationStatus occupation;
 }

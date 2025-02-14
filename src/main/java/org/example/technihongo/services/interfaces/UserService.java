@@ -18,6 +18,9 @@ public interface UserService {
 
     User createContentManager(ContentManagerDTO dto, Integer userId);
 
+    void updateUserName(Integer userId, UpdateProfileDTO dto);
+    void updatePassword(Integer userId, UpdateProfileDTO dto);
+
 
 
 

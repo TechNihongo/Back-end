@@ -3,7 +3,7 @@ package org.example.technihongo.api;
 import org.example.technihongo.dto.FlashcardSetRequestDTO;
 import org.example.technihongo.dto.FlashcardSetResponseDTO;
 import org.example.technihongo.response.ApiResponse;
-import org.example.technihongo.services.interfaces.FlashcardSetService;
+import org.example.technihongo.services.interfaces.StudentFlashcardSetService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -13,14 +13,14 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("api/flashcard-set")
 public class FlashcardSetController {
     @Autowired
-    private FlashcardSetService flashcardSetService;
+    private StudentFlashcardSetService studentFlashcardSetService;
 
     @PostMapping("/{studentId}/create")
     public ResponseEntity<ApiResponse> createFlashcardSet(
             @PathVariable Integer studentId,
             @RequestBody FlashcardSetRequestDTO request) {
         try {
-            FlashcardSetResponseDTO response = flashcardSetService.createFlashcardSet(studentId, request);
+            FlashcardSetResponseDTO response = studentFlashcardSetService.createFlashcardSet(studentId, request);
             return ResponseEntity.ok(ApiResponse.<FlashcardSetResponseDTO>builder()
                     .success(true)
                     .message("Flashcard set created successfully")
@@ -47,7 +47,7 @@ public class FlashcardSetController {
             @PathVariable("setId") Integer flashcardSetId,
             @RequestBody FlashcardSetRequestDTO request) {
         try {
-            FlashcardSetResponseDTO response = flashcardSetService.updateFlashcardSet(studentId, flashcardSetId, request);
+            FlashcardSetResponseDTO response = studentFlashcardSetService.updateFlashcardSet(studentId, flashcardSetId, request);
             return ResponseEntity.ok(ApiResponse.builder()
                     .success(true)
                     .message("Flashcard set updated successfully")
@@ -73,7 +73,7 @@ public class FlashcardSetController {
             @PathVariable Integer studentId,
             @PathVariable("setId") Integer flashcardSetId) {
         try {
-            flashcardSetService.deleteFlashcardSet(studentId, flashcardSetId);
+            studentFlashcardSetService.deleteFlashcardSet(studentId, flashcardSetId);
             return ResponseEntity.ok(ApiResponse.builder()
                     .success(true)
                     .message("Flashcard set deleted successfully")
@@ -97,7 +97,7 @@ public class FlashcardSetController {
     public ResponseEntity<ApiResponse> getFlashcardSet(
             @PathVariable("setId") Integer flashcardSetId) {
         try {
-            FlashcardSetResponseDTO response = flashcardSetService.getFlashcardSetById(flashcardSetId);
+            FlashcardSetResponseDTO response = studentFlashcardSetService.getFlashcardSetById(flashcardSetId);
             return ResponseEntity.ok(ApiResponse.builder()
                     .success(true)
                     .message("Flashcard set retrieved successfully")
@@ -132,7 +132,7 @@ public class FlashcardSetController {
         }
 
         try {
-            FlashcardSetResponseDTO response = flashcardSetService.updateFlashcardSetVisibility(studentId, flashcardSetId, isPublic);
+            FlashcardSetResponseDTO response = studentFlashcardSetService.updateFlashcardSetVisibility(studentId, flashcardSetId, isPublic);
             return ResponseEntity.ok(ApiResponse.builder()
                     .success(true)
                     .message("Flashcard set visibility updated successfully")
@@ -152,4 +152,30 @@ public class FlashcardSetController {
                             .build());
         }
     }
+    @GetMapping("getAllFlashcardOfSet/{setId}")
+    public ResponseEntity<ApiResponse> getAllFlashcardsInSet(@PathVariable("setId") Integer flashcardSetId) {
+        try {
+            FlashcardSetResponseDTO response = studentFlashcardSetService.getAllFlashcardsInSet(flashcardSetId);
+            return ResponseEntity.ok(ApiResponse.builder()
+                    .success(true)
+                    .message("Flashcards retrieved successfully")
+                    .data(response)
+                    .build());
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(ApiResponse.builder()
+                            .success(false)
+                            .message("Failed to retrieve flashcards: " + e.getMessage())
+                            .build());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponse.builder()
+                            .success(false)
+                            .message("Internal Server Error: " + e.getMessage())
+                            .build());
+        }
+    }
+
+
+
 }

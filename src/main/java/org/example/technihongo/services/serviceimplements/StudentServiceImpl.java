@@ -1,6 +1,5 @@
 package org.example.technihongo.services.serviceimplements;
 
-import org.example.technihongo.dto.StudentDTO;
 import org.example.technihongo.dto.UpdateProfileDTO;
 import org.example.technihongo.entities.DifficultyLevel;
 import org.example.technihongo.entities.Student;
@@ -35,7 +34,7 @@ public class StudentServiceImpl implements StudentService {
 
     @Override
     @Transactional
-    public StudentDTO setDailyGoal(Integer studentId, Integer dailyGoal) {
+    public UpdateProfileDTO setDailyGoal(Integer studentId, Integer dailyGoal) {
         if (studentId == null) {
             throw new IllegalArgumentException("Student ID cannot be null");
         }
@@ -59,7 +58,7 @@ public class StudentServiceImpl implements StudentService {
 
     @Override
     @Transactional
-    public StudentDTO updateDifficultyLevel(Integer studentId, DifficultyLevelEnum difficultyLevelEnum) {
+    public UpdateProfileDTO updateDifficultyLevel(Integer studentId, DifficultyLevelEnum difficultyLevelEnum) {
         if (studentId == null) {
             throw new IllegalArgumentException("Student ID cannot be null");
         }
@@ -84,7 +83,7 @@ public class StudentServiceImpl implements StudentService {
         return convertToDTO(savedStudent);
     }
 
-    private StudentDTO convertToDTO(Student student) {
+    private UpdateProfileDTO convertToDTO(Student student) {
         if (student == null) {
             return null;
         }
@@ -94,39 +93,12 @@ public class StudentServiceImpl implements StudentService {
             difficultyLevel = student.getDifficultyLevel().getTag();
         }
 
-        return StudentDTO.builder()
+        return UpdateProfileDTO.builder()
                 .studentId(student.getStudentId())
                 .dailyGoal(student.getDailyGoal())
                 .difficultyLevel(difficultyLevel)
                 .build();
     }
-
-    @Override
-    @Transactional
-    public void updateUserName(Integer userId, UpdateProfileDTO dto) {
-        User user = userRepository.findByUserId(userId);
-        if(user == null) throw new RuntimeException("User not found!");
-        user.setUserName(dto.getUserName());
-        userRepository.save(user);
-    }
-
-    @Override
-    @Transactional
-    public void updatePassword(Integer userId, UpdateProfileDTO dto) {
-        if (userId == null || dto == null || dto.getPassword() == null) {
-            throw new IllegalArgumentException("User ID or Password cannot be null");
-        }
-
-        User user = userRepository.findByUserId(userId);
-        if (user == null) {
-            throw new ResourceNotFoundException("User not found with id: " + userId);
-        }
-
-        String encodedPassword = passwordEncoder.encode(dto.getPassword());
-        user.setPassword(encodedPassword);
-        userRepository.save(user);
-    }
-
     @Override
     @Transactional
     public void updateStudentProfile(Integer userId, UpdateProfileDTO dto) {
@@ -135,7 +107,6 @@ public class StudentServiceImpl implements StudentService {
             throw new ResourceNotFoundException("Student not found with id: " + userId);
         }
 
-        // Update profile image
         if (dto.getProfileImg() != null) {
             User user = student.getUser();
             user.setProfileImg(dto.getProfileImg());

@@ -3,7 +3,6 @@ package org.example.technihongo.api;
 
 import org.example.technihongo.dto.DailyGoalRequest;
 import org.example.technihongo.dto.DifficultyLevelRequest;
-import org.example.technihongo.dto.StudentDTO;
 import org.example.technihongo.dto.UpdateProfileDTO;
 import org.example.technihongo.enums.DifficultyLevelEnum;
 import org.example.technihongo.exception.InvalidDifficultyLevelException;
@@ -29,7 +28,7 @@ public class StudentController {
             @PathVariable Integer studentId,
             @RequestBody DailyGoalRequest request) {
         try {
-            StudentDTO updatedStudent = studentService.setDailyGoal(studentId, request.getDailyGoal());
+            UpdateProfileDTO updatedStudent = studentService.setDailyGoal(studentId, request.getDailyGoal());
             return ResponseEntity.ok(ApiResponse.builder()
                     .success(true)
                     .message("Daily goal updated successfully")
@@ -63,7 +62,7 @@ public class StudentController {
             @RequestBody DifficultyLevelRequest request) {
         try {
             DifficultyLevelEnum level = DifficultyLevelEnum.valueOf(request.getDifficultyLevel());
-            StudentDTO updatedStudent = studentService.updateDifficultyLevel(studentId, level);
+            UpdateProfileDTO updatedStudent = studentService.updateDifficultyLevel(studentId, level);
             return ResponseEntity.ok(ApiResponse.builder()
                     .success(true)
                     .message("Difficulty level updated successfully")
@@ -89,43 +88,7 @@ public class StudentController {
                             .build());
         }
     }
-    @PatchMapping("/{userId}/username")
-    public ResponseEntity<ApiResponse> updateUserName(
-            @PathVariable Integer userId,
-            @RequestBody UpdateProfileDTO request) {
-        try {
-            studentService.updateUserName(userId, request);
-            return ResponseEntity.ok(ApiResponse.builder()
-                    .success(true)
-                    .message("Username updated successfully")
-                    .build());
-        } catch (RuntimeException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(ApiResponse.builder()
-                            .success(false)
-                            .message("User not found: " + e.getMessage())
-                            .build());
-        }
-    }
 
-    @PatchMapping("/{userId}/password")
-    public ResponseEntity<ApiResponse> updatePassword(
-            @PathVariable Integer userId,
-            @RequestBody UpdateProfileDTO request) {
-        try {
-            studentService.updatePassword(userId, request);
-            return ResponseEntity.ok(ApiResponse.builder()
-                    .success(true)
-                    .message("Password updated successfully")
-                    .build());
-        } catch (RuntimeException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(ApiResponse.builder()
-                            .success(false)
-                            .message("User not found: " + e.getMessage())
-                            .build());
-        }
-    }
     @PatchMapping("/{userId}/profile")
     public ResponseEntity<ApiResponse> updateProfile(
             @PathVariable Integer userId,

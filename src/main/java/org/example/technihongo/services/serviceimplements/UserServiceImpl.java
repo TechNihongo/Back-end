@@ -6,6 +6,7 @@ import org.example.technihongo.dto.*;
 import org.example.technihongo.entities.Role;
 import org.example.technihongo.entities.Student;
 import org.example.technihongo.entities.User;
+import org.example.technihongo.exception.ResourceNotFoundException;
 import org.example.technihongo.repositories.RoleRepository;
 import org.example.technihongo.repositories.UserRepository;
 import org.example.technihongo.services.interfaces.UserService;
@@ -58,21 +59,22 @@ public class UserServiceImpl implements UserService {
     @Transactional
     public LoginResponseDTO register(RegistrationDTO registrationDTO) {
         try {
+            if (!registrationDTO.getPassword().equals(registrationDTO.getConfirmPassword())) {
+                throw new IllegalArgumentException("Password and Confirm Password do not match");
+            }
             if (userRepository.existsByEmail(registrationDTO.getEmail())) {
                 throw new RuntimeException("Email already exists", new IllegalArgumentException("Email: " + registrationDTO.getEmail()));
             }
             if (userRepository.existsByUserName(registrationDTO.getUserName())) {
                 throw new RuntimeException("Username already exists", new IllegalArgumentException("Username: " + registrationDTO.getUserName()));
             }
-
             Role defaultRole;
             try {
                 defaultRole = roleRepository.findById(3)
-                        .orElseThrow(() -> new EntityNotFoundException("Role with ID 3 not found")).getRole();
+                        .orElseThrow(() -> new EntityNotFoundException("Role with ID 3 not found"));
             } catch (EntityNotFoundException e) {
                 throw new RuntimeException("Failed to find default role for registration", e);
             }
-
             User user = User.builder()
                     .userName(registrationDTO.getUserName())
                     .email(registrationDTO.getEmail())
@@ -81,8 +83,6 @@ public class UserServiceImpl implements UserService {
                     .isActive(true)
                     .role(defaultRole)
                     .build();
-
-
             Student student = Student.builder()
                     .user(user)
                     .occupation(registrationDTO.getOccupation())
@@ -99,7 +99,7 @@ public class UserServiceImpl implements UserService {
                         savedUser.getEmail(),
                         savedUser.getRole().getRoleName(),
                         true,
-                        "Registration Successfully"
+                        "Registration Successful"
                 );
             } catch (DataIntegrityViolationException e) {
                 throw new RuntimeException("Failed to save user data", e);
@@ -148,7 +148,7 @@ public class UserServiceImpl implements UserService {
         Role defaultRole;
         try {
             defaultRole = roleRepository.findById(3)
-                    .orElseThrow(() -> new EntityNotFoundException("Role with ID 3 not found")).getRole();
+                    .orElseThrow(() -> new EntityNotFoundException("Role with ID 3 not found"));
         } catch (EntityNotFoundException e) {
             throw new RuntimeException("Failed to find default role for Google registration", e);
         }
@@ -224,7 +224,7 @@ public class UserServiceImpl implements UserService {
         }
 
         Role contentManagerRole = roleRepository.findById(2)
-                .orElseThrow(() -> new RuntimeException("Content Manager role not found")).getRole();
+                .orElseThrow(() -> new RuntimeException("Content Manager role not found"));
 
         User newUser = User.builder()
                 .userName(dto.getUserName())
@@ -240,6 +240,33 @@ public class UserServiceImpl implements UserService {
         } catch (DataIntegrityViolationException e) {
             throw new RuntimeException("Failed to save Content Manager account", e);
         }
+    }
+
+    @Override
+    @Transactional
+    public void updateUserName(Integer userId, UpdateProfileDTO dto) {
+        User user = userRepository.findByUserId(userId);
+        if(user == null) throw new RuntimeException("User not found!");
+        user.setUserName(dto.getUserName());
+        userRepository.save(user);
+    }
+
+    @Override
+    @Transactional
+    public void updatePassword(Integer userId, UpdateProfileDTO dto) {
+        if (userId == null || dto == null || dto.getPassword() == null || dto.getConfirmPassword() == null) {
+            throw new IllegalArgumentException("User ID, Password, or Confirm Password cannot be null");
+        }
+        if (!dto.getPassword().equals(dto.getConfirmPassword())) {
+            throw new IllegalArgumentException("Password and Confirm Password do not match");
+        }
+        User user = userRepository.findByUserId(userId);
+        if (user == null) {
+            throw new ResourceNotFoundException("User not found with id: " + userId);
+        }
+        String encodedPassword = passwordEncoder.encode(dto.getPassword());
+        user.setPassword(encodedPassword);
+        userRepository.save(user);
     }
 
 
