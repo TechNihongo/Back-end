@@ -1,18 +1,25 @@
 package org.example.technihongo.api;
 
 import lombok.RequiredArgsConstructor;
+import org.example.technihongo.core.mail.EmailService;
+import org.example.technihongo.core.security.JWTHelper;
 import org.example.technihongo.core.security.JwtUtil;
 import org.example.technihongo.core.security.MyUserDetailsService;
 import org.example.technihongo.core.security.TokenBlacklist;
 import org.example.technihongo.dto.*;
 import org.example.technihongo.entities.User;
 import org.example.technihongo.response.ApiResponse;
+import org.example.technihongo.services.interfaces.AuthTokenService;
 import org.example.technihongo.services.interfaces.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.util.Date;
 import java.util.List;
 
 @RestController
@@ -27,13 +34,22 @@ public class UserController {
     @Autowired
     private JwtUtil jwtUtil;
     @Autowired
+    private JWTHelper jwtHelper;
+    @Autowired
     private TokenBlacklist tokenBlacklist;
+    @Autowired
+    private AuthTokenService authTokenService;
+    @Autowired
+    private EmailService emailService;
 
     @PostMapping("/login")
     public ResponseEntity<LoginResponseTokenDTO> login(@RequestBody UserLogin userLogin) {
         try {
             LoginResponseDTO response = userService.login(userLogin.getEmail(), userLogin.getPassword());
             String token = myUserDetailsService.loginToken(userLogin);
+            LocalDateTime expired = jwtHelper.getExpirationDateFromToken(token).toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime();
+            authTokenService.saveLoginToken(new CreateLoginTokenDTO(response.getUserId(), token, "LOGIN", expired));
+
             if (response.isSuccess()) {
                 return ResponseEntity.ok(new LoginResponseTokenDTO(response.getUserId(), response.getUserName(),
                         response.getEmail(), response.getRole(), true, response.getMessage(), token));
@@ -41,6 +57,7 @@ public class UserController {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new LoginResponseTokenDTO(response.getUserId(), response.getUserName(),
                         response.getEmail(), response.getRole(), false, response.getMessage(), token));
             }
+
         } catch (Exception e) {
             String errorMessage = "Login failed: " + e.getMessage();
             LoginResponseTokenDTO errorResponse = new LoginResponseTokenDTO(null, null, null, null, false, errorMessage, null);
@@ -85,6 +102,7 @@ public class UserController {
     public ResponseEntity<ApiResponse> logout(@RequestHeader("Authorization") String authorizationHeader) {
         if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
             String token = authorizationHeader.substring(7);
+            authTokenService.setTokenStatus(new TokenStatusDTO(token, false));
             tokenBlacklist.addToken(token);
             return ResponseEntity.ok(ApiResponse.builder()
                     .success(true)
@@ -177,5 +195,35 @@ public class UserController {
                     .message("Internal Server Error: " + e.getMessage())
                     .build());
         }
+    }
+
+    @PostMapping("/forgot-password")
+    public ResponseEntity<ApiResponse> forgotPass(@RequestBody EmailDTO emailDTO){
+        String response = userService.forgotPass(emailDTO.getEmail());
+
+        if(!response.startsWith("Invalid")){
+            response = "http://localhost:3000/api/user/reset-password?token=" + response;
+            emailService.sendSimpleEmail(emailDTO.getEmail(), "Reset Password", "Link: " + response);
+            return ResponseEntity.ok(ApiResponse.builder()
+                    .success(true)
+                    .message("Create token success! Please check email.")
+                    .build());
+        }
+        else{
+            return ResponseEntity.ok(ApiResponse.builder()
+                    .success(false)
+                    .message(response)
+                    .build());
+        }
+    }
+
+    @PutMapping("/reset-password")
+    public ResponseEntity<ApiResponse> resetPass(@RequestParam String token, @RequestBody PasswordResetDTO passwordResetDTO) {
+        String message = userService.resetPass(token, passwordResetDTO);
+        boolean success = message.equals("Your password has been successfully updated.");
+        return ResponseEntity.ok(ApiResponse.builder()
+                .success(success)
+                .message(message)
+                .build());
     }
 }

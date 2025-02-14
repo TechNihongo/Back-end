@@ -21,7 +21,6 @@ public interface UserService {
     void updateUserName(Integer userId, UpdateProfileDTO dto);
     void updatePassword(Integer userId, UpdateProfileDTO dto);
 
-
-
-
+    String forgotPass(String email);
+    String resetPass(String token, PasswordResetDTO passwordResetDTO);
 }
