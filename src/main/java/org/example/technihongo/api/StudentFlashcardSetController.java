@@ -6,6 +6,7 @@ import org.example.technihongo.entities.Student;
 import org.example.technihongo.entities.StudentFlashcardSet;
 import org.example.technihongo.entities.StudyPlan;
 import org.example.technihongo.exception.ResourceNotFoundException;
+import org.example.technihongo.exception.UnauthorizedAccessException;
 import org.example.technihongo.response.ApiResponse;
 import org.example.technihongo.services.interfaces.StudentFlashcardSetService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -159,15 +160,29 @@ public class StudentFlashcardSetController {
                             .build());
         }
     }
-    @GetMapping("getAllFlashcardOfSet/{setId}")
-    public ResponseEntity<ApiResponse> getAllFlashcardsInSet(@PathVariable("setId") Integer flashcardSetId) {
+    @GetMapping("getAllFlashcardOfSet/{userId}/{setId}")
+    public ResponseEntity<ApiResponse> getAllFlashcardsInSet(
+            @PathVariable("userId") Integer userId,
+            @PathVariable("setId") Integer flashcardSetId) {
         try {
-            FlashcardSetResponseDTO response = studentFlashcardSetService.getAllFlashcardsInSet(flashcardSetId);
+            FlashcardSetResponseDTO response = studentFlashcardSetService.getAllFlashcardsInSet(userId, flashcardSetId);
             return ResponseEntity.ok(ApiResponse.builder()
                     .success(true)
                     .message("Flashcards retrieved successfully")
                     .data(response)
                     .build());
+        } catch (ResourceNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(ApiResponse.builder()
+                            .success(false)
+                            .message(e.getMessage())
+                            .build());
+        } catch (UnauthorizedAccessException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(ApiResponse.builder()
+                            .success(false)
+                            .message(e.getMessage())
+                            .build());
         } catch (RuntimeException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(ApiResponse.builder()
@@ -182,6 +197,7 @@ public class StudentFlashcardSetController {
                             .build());
         }
     }
+
 
     @GetMapping("/all/{studentId}")
     public ResponseEntity<ApiResponse> getAllStudentFlashcardSet(@PathVariable Integer studentId) {

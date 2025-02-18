@@ -1,6 +1,7 @@
 package org.example.technihongo.dto;
 
 import lombok.*;
+import org.example.technihongo.enums.DifficultyLevelEnum;
 
 @Getter
 @Setter
@@ -10,5 +11,8 @@ import lombok.*;
 public class SystemFlashcardSetRequestDTO {
     private String title;
     private String description;
-    private boolean isPublic;
+    private Boolean isPublic;
+    private Boolean isPremium;
+    private Integer domainId;
+    private DifficultyLevelEnum difficultyLevel;
 }
