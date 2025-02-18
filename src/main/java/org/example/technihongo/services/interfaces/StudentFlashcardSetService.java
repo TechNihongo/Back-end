@@ -13,7 +13,7 @@ public interface StudentFlashcardSetService {
 
     FlashcardSetResponseDTO updateFlashcardSetVisibility(Integer studentId, Integer flashcardSetId, Boolean isPublic);
 
-    FlashcardSetResponseDTO getAllFlashcardsInSet(Integer flashcardSetId);
+    FlashcardSetResponseDTO getAllFlashcardsInSet(Integer studentId ,Integer flashcardSetId);
 
     List<FlashcardSetResponseDTO> studentFlashcardList(Integer studentId);
 

@@ -16,7 +16,7 @@ public interface SystemFlashcardSetService {
 
     SystemFlashcardSetResponseDTO getSystemFlashcardSetById(Integer flashcardSetId);
     SystemFlashcardSetResponseDTO updateSystemFlashcardSetVisibility(Integer userId,Integer flashcardSetId,Boolean isPublic);
-    SystemFlashcardSetResponseDTO getAllFlashcardsInSet(Integer flashcardSetId);
+    SystemFlashcardSetResponseDTO getAllFlashcardsInSet(Integer userId ,Integer flashcardSetId);
 
     List<SystemFlashcardSetResponseDTO> systemFlashcardList(Integer userId);
 
