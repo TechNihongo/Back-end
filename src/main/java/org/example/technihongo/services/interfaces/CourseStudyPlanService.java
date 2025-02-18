@@ -13,4 +13,5 @@ public interface CourseStudyPlanService {
     List<CourseWithStudyPlanListDTO> getCourseListWithStudyPlans();
     Optional<CourseWithStudyPlanListDTO> getCourseWithStudyPlans(Integer courseId);
     CourseStudyPlan createCourseStudyPlan(CreateCourseStudyPlanDTO createCourseStudyPlanDTO);
+    void deleteCourseStudyPlan(Integer courseStudyPlanId);
 }

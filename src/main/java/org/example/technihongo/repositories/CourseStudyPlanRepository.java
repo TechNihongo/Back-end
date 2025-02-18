@@ -10,5 +10,7 @@ import java.util.List;
 public interface CourseStudyPlanRepository extends JpaRepository<CourseStudyPlan, Integer> {
     CourseStudyPlan findByCoursePlanId(Integer id);
     boolean existsByCourseAndStudyPlan(Course course, StudyPlan studyPlan);
+    List<CourseStudyPlan> findByCourse_CourseId(Integer courseId);
+    boolean existsByStudyPlan(StudyPlan studyPlan);
 }
 

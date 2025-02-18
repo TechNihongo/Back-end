@@ -5,17 +5,18 @@ import org.example.technihongo.dto.CourseWithStudyPlanListDTO;
 import org.example.technihongo.dto.CreateCourseStudyPlanDTO;
 import org.example.technihongo.entities.Course;
 import org.example.technihongo.entities.CourseStudyPlan;
+import org.example.technihongo.entities.Lesson;
 import org.example.technihongo.entities.StudyPlan;
-import org.example.technihongo.repositories.CourseRepository;
-import org.example.technihongo.repositories.CourseStudyPlanRepository;
-import org.example.technihongo.repositories.StudyPlanRepository;
+import org.example.technihongo.repositories.*;
 import org.example.technihongo.services.interfaces.CourseStudyPlanService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -27,6 +28,12 @@ public class CourseStudyPlanServiceImpl implements CourseStudyPlanService {
     private StudyPlanRepository studyPlanRepository;
     @Autowired
     private CourseStudyPlanRepository courseStudyPlanRepository;
+    @Autowired
+    private StudentStudyPlanRepository studentStudyPlanRepository;
+    @Autowired
+    private LessonRepository lessonRepository;
+    @Autowired
+    private LessonResourceRepository lessonResourceRepository;
 
     @Override
     public List<CourseWithStudyPlanListDTO> getCourseListWithStudyPlans() {
@@ -74,4 +81,29 @@ public class CourseStudyPlanServiceImpl implements CourseStudyPlanService {
                 .studyPlan(studyPlan)
                 .build());
     }
+
+    @Override
+    @Transactional
+    public void deleteCourseStudyPlan(Integer courseStudyPlanId) {
+        if(courseStudyPlanRepository.findByCoursePlanId(courseStudyPlanId) == null){
+            throw new RuntimeException("CourseStudyPlan ID not found!");
+        }
+
+        boolean existsInStudentStudyPlan = studentStudyPlanRepository.existsByCourseStudyPlan_CoursePlanId(courseStudyPlanId);
+        if (existsInStudentStudyPlan) {
+            throw new IllegalStateException("Cannot delete CourseStudyPlan because it is referenced in StudentStudyPlan.");
+        }
+
+        List<Lesson> lessons = lessonRepository.findByCourseStudyPlan_CoursePlanId(courseStudyPlanId);
+
+        List<Integer> lessonIds = lessons.stream().map(Lesson::getLessonId).collect(Collectors.toList());
+        if (!lessonIds.isEmpty()) {
+            lessonResourceRepository.deleteByLesson_LessonIdIn(lessonIds);
+        }
+
+        lessonRepository.deleteByCourseStudyPlan_CoursePlanId(courseStudyPlanId);
+
+        courseStudyPlanRepository.deleteById(courseStudyPlanId);
+    }
+
 }

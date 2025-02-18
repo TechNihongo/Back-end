@@ -6,4 +6,6 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface DomainRepository extends JpaRepository<Domain, Integer> {
+    Domain findByDomainId(Integer domainId);
 }
+
