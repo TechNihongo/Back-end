@@ -98,6 +98,15 @@ public class StudentFlashcardSetServiceImpl implements StudentFlashcardSetServic
         return response;
     }
 
+    @Override
+    public List<FlashcardSetResponseDTO> studentFlashcardList(Integer studentId) {
+        List<StudentFlashcardSet> flashcardSets = flashcardSetRepository.findByCreatorStudentId(studentId);
+        return flashcardSets.stream()
+                .map(this::convertToFlashcardSetResponseDTO)
+                .collect(Collectors.toList());
+    }
+
+
     private FlashcardResponseDTO convertToFlashcardResponseDTO(Flashcard flashcard) {
         FlashcardResponseDTO response = new FlashcardResponseDTO();
         response.setFlashcardId(flashcard.getFlashCardId());

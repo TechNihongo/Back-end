@@ -9,4 +9,5 @@ import java.util.List;
 @Repository
 public interface FlashcardRepository extends JpaRepository<Flashcard, Integer> {
     List<Flashcard> findByStudentFlashCardSetStudentSetId(Integer studentSetId);
+    List<Flashcard> findBySystemFlashCardSetSystemSetId(Integer systemSetId);
 }
