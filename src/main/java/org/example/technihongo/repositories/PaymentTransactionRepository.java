@@ -13,12 +13,14 @@ import java.util.List;
 @Repository
 public interface PaymentTransactionRepository extends JpaRepository<PaymentTransaction, Integer> {
     //for user
-    @Query("SELECT pt FROM PaymentTransaction pt JOIN pt.subscription ss WHERE ss.student.studentId = :studentId")
-    List<PaymentTransaction> findByStudentId(@Param("studentId") Integer studentId);
+//    @Query("SELECT pt FROM PaymentTransaction pt JOIN pt.subscription ss WHERE ss.student.studentId = :studentId")
+//    List<PaymentTransaction> findByStudentId(@Param("studentId") Integer studentId);
+
+    List<PaymentTransaction> findBySubscription_Student_StudentId(Integer studentId);
 
     //for admin
-    @Query("SELECT pt FROM PaymentTransaction pt")
-    List<PaymentTransaction> findAllTransactions();
+//    @Query("SELECT pt FROM PaymentTransaction pt")
+//    List<PaymentTransaction> findAllTransactions();
 
 }
 
