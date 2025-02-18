@@ -2,13 +2,20 @@ package org.example.technihongo.services.serviceimplements;
 
 import lombok.RequiredArgsConstructor;
 import org.example.technihongo.dto.CoursePublicDTO;
+import org.example.technihongo.dto.CreateCourseDTO;
+import org.example.technihongo.dto.UpdateCourseDTO;
 import org.example.technihongo.entities.Course;
+import org.example.technihongo.entities.Domain;
 import org.example.technihongo.repositories.CourseRepository;
+import org.example.technihongo.repositories.DifficultyLevelRepository;
+import org.example.technihongo.repositories.DomainRepository;
+import org.example.technihongo.repositories.UserRepository;
 import org.example.technihongo.services.interfaces.CourseService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -19,6 +26,13 @@ import java.util.stream.Collectors;
 public class CourseServiceImpl implements CourseService {
     @Autowired
     private CourseRepository courseRepository;
+    @Autowired
+    private UserRepository userRepository;
+    @Autowired
+    private DomainRepository domainRepository;
+    @Autowired
+    private DifficultyLevelRepository difficultyLevelRepository;
+
     @Override
     public List<Course> courseList() {
         return courseRepository.findAll();
@@ -51,5 +65,64 @@ public class CourseServiceImpl implements CourseService {
                         course.getDescription(), course.getDomain(), course.getDifficultyLevel(),
                         course.getAttachmentUrl(), course.getThumbnailUrl(), course.getEstimatedDuration()))
                 .findFirst();
+    }
+
+    @Override
+    public Course createCourse(Integer creatorId, CreateCourseDTO createCourseDTO) {
+        if(userRepository.findByUserId(creatorId) == null){
+            throw new RuntimeException("Creator ID not found!");
+        }
+
+        if(domainRepository.findByDomainId(createCourseDTO.getDomainId()) == null){
+            throw new RuntimeException("Domain ID not found!");
+        }
+
+        if(difficultyLevelRepository.findByLevelId(createCourseDTO.getDifficultyLevelId()) == null){
+            throw new RuntimeException("DifficultyLevel ID not found!");
+        }
+
+
+        Course course = courseRepository.save(Course.builder()
+                .title(createCourseDTO.getTitle())
+                .description(createCourseDTO.getDescription())
+                .creator(userRepository.findByUserId(creatorId))
+                .domain(domainRepository.findByDomainId(createCourseDTO.getDomainId()))
+                .difficultyLevel(difficultyLevelRepository.findByLevelId(createCourseDTO.getDifficultyLevelId()))
+                .attachmentUrl(createCourseDTO.getAttachmentUrl())
+                .thumbnailUrl(createCourseDTO.getThumbnailUrl())
+                .estimatedDuration(createCourseDTO.getEstimatedDuration())
+                .isPremium(createCourseDTO.isPremium())
+                .build());
+
+        return course;
+    }
+
+    @Override
+    public void updateCourse(Integer courseId, UpdateCourseDTO updateCourseDTO) {
+        if(courseRepository.findByCourseId(courseId) == null){
+            throw new RuntimeException("Course ID not found!");
+        }
+
+        if(domainRepository.findByDomainId(updateCourseDTO.getDomainId()) == null){
+            throw new RuntimeException("Domain ID not found!");
+        }
+
+        if(difficultyLevelRepository.findByLevelId(updateCourseDTO.getDifficultyLevelId()) == null){
+            throw new RuntimeException("DifficultyLevel ID not found!");
+        }
+
+        Course course = courseRepository.findByCourseId(courseId);
+        course.setTitle(updateCourseDTO.getTitle());
+        course.setDescription(updateCourseDTO.getDescription());
+        course.setDomain(domainRepository.findByDomainId(updateCourseDTO.getDomainId()));
+        course.setDifficultyLevel(difficultyLevelRepository.findByLevelId(updateCourseDTO.getDifficultyLevelId()));
+        course.setAttachmentUrl(updateCourseDTO.getAttachmentUrl());
+        course.setThumbnailUrl(updateCourseDTO.getThumbnailUrl());
+        course.setEstimatedDuration(updateCourseDTO.getEstimatedDuration());
+        course.setPublic(updateCourseDTO.isPublic());
+        course.setPremium(updateCourseDTO.isPremium());
+        course.setUpdateAt(LocalDateTime.now());
+
+        courseRepository.save(course);
     }
 }

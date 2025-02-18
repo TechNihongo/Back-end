@@ -20,7 +20,7 @@ public class PaymentHistoryServiceImpl implements PaymentHistoryService {
     private PaymentTransactionRepository paymentTransactionRepository;
     @Override
     public List<PaymentTransactionDTO> getPaymentHistoryByStudentId(Integer studentId) {
-        List<PaymentTransaction> transactions = paymentTransactionRepository.findByStudentId(studentId);
+        List<PaymentTransaction> transactions = paymentTransactionRepository.findBySubscription_Student_StudentId(studentId);
         return transactions.stream()
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
@@ -31,12 +31,12 @@ public class PaymentHistoryServiceImpl implements PaymentHistoryService {
         List<PaymentTransaction> transactions;
 
         if (request == null) {
-            transactions = paymentTransactionRepository.findAllTransactions();
+            transactions = paymentTransactionRepository.findAll();
         } else {
             if (request.getStudentId() != null) {
-                transactions = paymentTransactionRepository.findByStudentId(request.getStudentId());
+                transactions = paymentTransactionRepository.findBySubscription_Student_StudentId(request.getStudentId());
             } else {
-                transactions = paymentTransactionRepository.findAllTransactions();
+                transactions = paymentTransactionRepository.findAll();
             }
             if (request.getTransactionStatus() != null) {
                 transactions = transactions.stream()

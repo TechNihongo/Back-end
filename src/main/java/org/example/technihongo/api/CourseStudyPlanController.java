@@ -8,6 +8,7 @@ import org.example.technihongo.entities.CourseStudyPlan;
 import org.example.technihongo.response.ApiResponse;
 import org.example.technihongo.services.interfaces.CourseStudyPlanService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -24,35 +25,51 @@ public class CourseStudyPlanController {
 
     @GetMapping("/all")
     public ResponseEntity<ApiResponse> getAllCoursesWithStudyPlan() throws Exception {
-        List<CourseWithStudyPlanListDTO> courseDTOS = courseStudyPlanService.getCourseListWithStudyPlans();
-        if(courseDTOS.isEmpty()){
-            return ResponseEntity.ok(ApiResponse.builder()
-                    .success(false)
-                    .message("List courses is empty!")
-                    .build());
-        }else{
-            return ResponseEntity.ok(ApiResponse.builder()
-                    .success(true)
-                    .message("Get All Courses With Study Plan")
-                    .data(courseDTOS)
-                    .build());
+        try{
+            List<CourseWithStudyPlanListDTO> courseDTOS = courseStudyPlanService.getCourseListWithStudyPlans();
+            if(courseDTOS.isEmpty()){
+                return ResponseEntity.ok(ApiResponse.builder()
+                        .success(false)
+                        .message("List courses is empty!")
+                        .build());
+            }else{
+                return ResponseEntity.ok(ApiResponse.builder()
+                        .success(true)
+                        .message("Get All Courses With Study Plan")
+                        .data(courseDTOS)
+                        .build());
+            }
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponse.builder()
+                            .success(false)
+                            .message("Internal Server Error: " + e.getMessage())
+                            .build());
         }
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<ApiResponse> getCourseWithStudyPlan(@PathVariable Integer id) throws Exception {
-        Optional<CourseWithStudyPlanListDTO> courseDTO = courseStudyPlanService.getCourseWithStudyPlans(id);
-        if(courseDTO.isEmpty()){
-            return ResponseEntity.ok(ApiResponse.builder()
-                    .success(false)
-                    .message("Course not found!")
-                    .build());
-        }else{
-            return ResponseEntity.ok(ApiResponse.builder()
-                    .success(true)
-                    .message("Get Course With Study Plan")
-                    .data(courseDTO)
-                    .build());
+        try{
+            Optional<CourseWithStudyPlanListDTO> courseDTO = courseStudyPlanService.getCourseWithStudyPlans(id);
+            if(courseDTO.isEmpty()){
+                return ResponseEntity.ok(ApiResponse.builder()
+                        .success(false)
+                        .message("Course not found!")
+                        .build());
+            }else{
+                return ResponseEntity.ok(ApiResponse.builder()
+                        .success(true)
+                        .message("Get Course With Study Plan")
+                        .data(courseDTO)
+                        .build());
+            }
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponse.builder()
+                            .success(false)
+                            .message("Internal Server Error: " + e.getMessage())
+                            .build());
         }
     }
 
@@ -71,6 +88,29 @@ public class CourseStudyPlanController {
                     .success(false)
                     .message("Create CourseStudyPlan fail! Error: " + e.getMessage())
                     .build());
+        }
+    }
+
+    @DeleteMapping("/delete/{id}")
+    public ResponseEntity<ApiResponse> deleteCourseStudyPlan(@PathVariable Integer id) {
+        try{
+            courseStudyPlanService.deleteCourseStudyPlan(id);
+            return ResponseEntity.ok(ApiResponse.builder()
+                    .success(true)
+                    .message("CourseStudyPlan removed successfully!")
+                    .build());
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(ApiResponse.builder()
+                            .success(false)
+                            .message("Failed to delete CourseStudyPlan: " + e.getMessage())
+                            .build());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponse.builder()
+                            .success(false)
+                            .message("Internal Server Error: " + e.getMessage())
+                            .build());
         }
     }
 }
