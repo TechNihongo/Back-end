@@ -6,4 +6,5 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface DifficultyLevelRepository extends JpaRepository<DifficultyLevel, Integer> {
     DifficultyLevel findByTag(DifficultyLevelEnum tag);
+    DifficultyLevel findByLevelId(Integer levelId);
 }

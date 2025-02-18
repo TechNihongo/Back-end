@@ -118,18 +118,26 @@ public class UserController {
 
     @GetMapping("/all")
     public ResponseEntity<ApiResponse> getAllUser() throws Exception {
-        List<User> userList = userService.userList();
-        if(userList.isEmpty()){
-            return ResponseEntity.ok(ApiResponse.builder()
-                    .success(false)
-                    .message("List user is empty!")
-                    .build());
-        }else{
-            return ResponseEntity.ok(ApiResponse.builder()
-                    .success(true)
-                    .message("Get All User")
-                    .data(userList)
-                    .build());
+        try{
+            List<User> userList = userService.userList();
+            if(userList.isEmpty()){
+                return ResponseEntity.ok(ApiResponse.builder()
+                        .success(false)
+                        .message("List user is empty!")
+                        .build());
+            }else{
+                return ResponseEntity.ok(ApiResponse.builder()
+                        .success(true)
+                        .message("Get All User")
+                        .data(userList)
+                        .build());
+            }
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponse.builder()
+                            .success(false)
+                            .message("Internal Server Error: " + e.getMessage())
+                            .build());
         }
     }
 
@@ -219,11 +227,19 @@ public class UserController {
 
     @PutMapping("/reset-password")
     public ResponseEntity<ApiResponse> resetPass(@RequestParam String token, @RequestBody PasswordResetDTO passwordResetDTO) {
-        String message = userService.resetPass(token, passwordResetDTO);
-        boolean success = message.equals("Your password has been successfully updated.");
-        return ResponseEntity.ok(ApiResponse.builder()
-                .success(success)
-                .message(message)
-                .build());
+        try{
+            String message = userService.resetPass(token, passwordResetDTO);
+            boolean success = message.equals("Your password has been successfully updated.");
+            return ResponseEntity.ok(ApiResponse.builder()
+                    .success(success)
+                    .message(message)
+                    .build());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponse.builder()
+                            .success(false)
+                            .message("Internal Server Error: " + e.getMessage())
+                            .build());
+        }
     }
 }
