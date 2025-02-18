@@ -7,6 +7,7 @@ import org.example.technihongo.entities.Flashcard;
 import org.example.technihongo.entities.Student;
 import org.example.technihongo.entities.StudentFlashcardSet;
 import org.example.technihongo.exception.ResourceNotFoundException;
+import org.example.technihongo.exception.UnauthorizedAccessException;
 import org.example.technihongo.repositories.FlashcardRepository;
 import org.example.technihongo.repositories.StudentFlashcardSetRepository;
 import org.example.technihongo.repositories.StudentRepository;
@@ -38,7 +39,7 @@ public class StudentFlashcardSetServiceImpl implements StudentFlashcardSetServic
         StudentFlashcardSet flashcardSet = new StudentFlashcardSet();
         flashcardSet.setTitle(request.getTitle());
         flashcardSet.setDescription(request.getDescription());
-        flashcardSet.setPublic(request.isPublic());
+        flashcardSet.setPublic(request.getIsPublic());
         flashcardSet.setCreator(student);
 
         flashcardSet.setTotalCard(0);
@@ -52,9 +53,17 @@ public class StudentFlashcardSetServiceImpl implements StudentFlashcardSetServic
     public FlashcardSetResponseDTO updateFlashcardSet(Integer studentId, Integer flashcardSetId, FlashcardSetRequestDTO request) {
         StudentFlashcardSet flashcardSet = flashcardSetRepository.findById(flashcardSetId)
                 .orElseThrow(() -> new RuntimeException("FlashcardSet not found"));
-        flashcardSet.setTitle(request.getTitle());
-        flashcardSet.setDescription(request.getDescription());
-//        flashcardSet.setPublic(request.isPublic());
+
+        if (request.getTitle() != null) {
+            flashcardSet.setTitle(request.getTitle());
+        }
+        if (request.getDescription() != null) {
+            flashcardSet.setDescription(request.getDescription());
+        }
+        if (request.getIsPublic() != null) {
+            flashcardSet.setPublic(request.getIsPublic());
+        }
+
         flashcardSet = flashcardSetRepository.save(flashcardSet);
         return convertToFlashcardSetResponseDTO(flashcardSet);
     }
@@ -81,9 +90,13 @@ public class StudentFlashcardSetServiceImpl implements StudentFlashcardSetServic
         return convertToFlashcardSetResponseDTO(flashcardSet);    }
 
     @Override
-    public FlashcardSetResponseDTO getAllFlashcardsInSet(Integer flashcardSetId) {
+    public FlashcardSetResponseDTO getAllFlashcardsInSet(Integer studentId,Integer flashcardSetId) {
         StudentFlashcardSet flashcardSet = flashcardSetRepository.findById(flashcardSetId)
                 .orElseThrow(() -> new ResourceNotFoundException("Flashcard Set not found with id: " + flashcardSetId));
+
+        if(!flashcardSet.getCreator().getStudentId().equals(studentId)) {
+            throw new UnauthorizedAccessException("You do not have permission to access this Flashcard Set.");
+        }
         List<Flashcard> flashcards = flashcardRepository.findByStudentFlashCardSetStudentSetId(flashcardSetId);
 
         FlashcardSetResponseDTO response = new FlashcardSetResponseDTO();

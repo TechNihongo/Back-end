@@ -3,6 +3,7 @@ package org.example.technihongo.api;
 import org.example.technihongo.dto.SystemFlashcardSetRequestDTO;
 import org.example.technihongo.dto.SystemFlashcardSetResponseDTO;
 import org.example.technihongo.exception.ResourceNotFoundException;
+import org.example.technihongo.exception.UnauthorizedAccessException;
 import org.example.technihongo.response.ApiResponse;
 import org.example.technihongo.services.interfaces.SystemFlashcardSetService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,7 +16,6 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/system-flashcard-set")
 public class SystemFlashcardSetController {
-
     @Autowired
     private SystemFlashcardSetService systemFlashcardSetService;
 
@@ -59,6 +59,12 @@ public class SystemFlashcardSetController {
                     .build());
         } catch (ResourceNotFoundException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(ApiResponse.builder()
+                            .success(false)
+                            .message(e.getMessage())
+                            .build());
+        } catch (UnauthorizedAccessException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ApiResponse.builder()
                             .success(false)
                             .message(e.getMessage())
@@ -148,10 +154,12 @@ public class SystemFlashcardSetController {
         }
     }
 
-    @GetMapping("getAllFlashcardOfSet/{setId}")
-    public ResponseEntity<ApiResponse> getAllFlashcardsInSet(@PathVariable Integer setId) {
+    @GetMapping("getAllFlashcardOfSet/{userId}/{setId}")
+    public ResponseEntity<ApiResponse> getAllFlashcardsInSet(
+            @PathVariable Integer userId,
+            @PathVariable Integer setId) {
         try {
-            SystemFlashcardSetResponseDTO response = systemFlashcardSetService.getAllFlashcardsInSet(setId);
+            SystemFlashcardSetResponseDTO response = systemFlashcardSetService.getAllFlashcardsInSet(userId, setId);
             return ResponseEntity.ok(ApiResponse.builder()
                     .success(true)
                     .message("Flashcards retrieved successfully")
@@ -159,6 +167,12 @@ public class SystemFlashcardSetController {
                     .build());
         } catch (ResourceNotFoundException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(ApiResponse.builder()
+                            .success(false)
+                            .message(e.getMessage())
+                            .build());
+        } catch (UnauthorizedAccessException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ApiResponse.builder()
                             .success(false)
                             .message(e.getMessage())
@@ -171,6 +185,7 @@ public class SystemFlashcardSetController {
                             .build());
         }
     }
+
 
     @GetMapping("/{userId}/all")
     public ResponseEntity<ApiResponse> getAllByContentManagerId(@PathVariable Integer userId) {

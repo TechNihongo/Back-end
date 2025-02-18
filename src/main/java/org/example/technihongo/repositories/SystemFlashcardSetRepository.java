@@ -8,4 +8,5 @@ import java.util.List;
 
 @Repository
 public interface SystemFlashcardSetRepository extends JpaRepository<SystemFlashcardSet, Integer> {
-    List<SystemFlashcardSet> findByCreatorUserId(Integer userId);}
+    List<SystemFlashcardSet> findByCreatorUserId(Integer userId);
+}
