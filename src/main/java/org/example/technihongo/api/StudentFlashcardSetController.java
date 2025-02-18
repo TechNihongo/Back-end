@@ -2,6 +2,10 @@ package org.example.technihongo.api;
 
 import org.example.technihongo.dto.FlashcardSetRequestDTO;
 import org.example.technihongo.dto.FlashcardSetResponseDTO;
+import org.example.technihongo.entities.Student;
+import org.example.technihongo.entities.StudentFlashcardSet;
+import org.example.technihongo.entities.StudyPlan;
+import org.example.technihongo.exception.ResourceNotFoundException;
 import org.example.technihongo.response.ApiResponse;
 import org.example.technihongo.services.interfaces.StudentFlashcardSetService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -9,9 +13,12 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Collections;
+import java.util.List;
+
 @RestController
 @RequestMapping("api/flashcard-set")
-public class FlashcardSetController {
+public class StudentFlashcardSetController {
     @Autowired
     private StudentFlashcardSetService studentFlashcardSetService;
 
@@ -175,6 +182,41 @@ public class FlashcardSetController {
                             .build());
         }
     }
+
+    @GetMapping("/all/{studentId}")
+    public ResponseEntity<ApiResponse> getAllStudentFlashcardSet(@PathVariable Integer studentId) {
+        try {
+            List<FlashcardSetResponseDTO> studentFlashcardList = studentFlashcardSetService.studentFlashcardList(studentId);
+
+            if (studentFlashcardList.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.NO_CONTENT)
+                        .body(ApiResponse.builder()
+                                .success(true)
+                                .message("Student has no flashcard sets")
+                                .data(Collections.emptyList())
+                                .build());
+            }
+            return ResponseEntity.ok(ApiResponse.builder()
+                    .success(true)
+                    .message("Retrieved all flashcard sets successfully")
+                    .data(studentFlashcardList)
+                    .build());
+
+        } catch (ResourceNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(ApiResponse.builder()
+                            .success(false)
+                            .message("Student not found with ID: " + studentId)
+                            .build());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponse.builder()
+                            .success(false)
+                            .message("Error retrieving flashcard sets: " + e.getMessage())
+                            .build());
+        }
+    }
+
 
 
 

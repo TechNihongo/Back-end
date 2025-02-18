@@ -31,6 +31,11 @@ public class SystemFlashcardSet {
 
     @ManyToOne
     @NotNull
+    @JoinColumn(name = "creator_id", referencedColumnName = "user_id", nullable = false)
+    private User creator;
+
+    @ManyToOne
+    @NotNull
     @JoinColumn(name = "domain_id", referencedColumnName = "domain_id",nullable = false )
     private Domain domain;
 
