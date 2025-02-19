@@ -48,13 +48,20 @@ public class PaymentHistoryController {
         try {
             PaymentHistoryRequestDTO request = new PaymentHistoryRequestDTO();
             request.setStudentId(studentId);
-            request.setTransactionStatus(TransactionStatus.valueOf(transactionStatus));
+            if (transactionStatus != null) {
+                request.setTransactionStatus(TransactionStatus.valueOf(transactionStatus.toUpperCase()));
+            }
 
             List<PaymentTransactionDTO> history = paymentHistoryService.getAllPaymentHistory(request);
             return ResponseEntity.ok(ApiResponse.builder()
                     .success(true)
                     .message("Payment history retrieved successfully!")
                     .data(history)
+                    .build());
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ApiResponse.builder()
+                    .success(false)
+                    .message("Invalid transaction status: " + e.getMessage())
                     .build());
         } catch (RuntimeException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ApiResponse.builder()

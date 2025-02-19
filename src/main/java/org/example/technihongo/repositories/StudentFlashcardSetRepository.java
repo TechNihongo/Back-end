@@ -9,4 +9,6 @@ import java.util.List;
 @Repository
 public interface StudentFlashcardSetRepository extends JpaRepository<StudentFlashcardSet, Integer> {
     List<StudentFlashcardSet> findByCreatorStudentId(Integer studentId);
+
+    List<StudentFlashcardSet> findByTitleContainingIgnoreCase(String keyword);
 }

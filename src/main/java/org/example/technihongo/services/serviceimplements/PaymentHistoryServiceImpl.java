@@ -56,23 +56,42 @@ public class PaymentHistoryServiceImpl implements PaymentHistoryService {
 
 
     private PaymentTransactionDTO convertToDTO(PaymentTransaction transaction) {
+        if (transaction == null) {
+            throw new IllegalArgumentException("Transaction is null");
+        }
+
+        String subscriptionPlanName = "Unknown Plan";
+        if (transaction.getSubscription() != null && transaction.getSubscription().getSubscriptionPlan() != null) {
+            subscriptionPlanName = transaction.getSubscription().getSubscriptionPlan().getName();
+        }
+
+        String paymentMethod = "Unknown Method";
+        if (transaction.getPaymentMethod() != null && transaction.getPaymentMethod().getName() != null) {
+            paymentMethod = transaction.getPaymentMethod().getName().toString();
+        }
+
+        BigDecimal transactionAmount = transaction.getTransactionAmount() != null
+                ? transaction.getTransactionAmount()
+                : BigDecimal.ZERO;
+
+        String currency = transaction.getCurrency() != null ? transaction.getCurrency() : "Unknown Currency";
+
+        TransactionStatus transactionStatus = transaction.getTransactionStatus() != null
+                ? transaction.getTransactionStatus()
+                : TransactionStatus.UNKNOWN;
+
+        LocalDateTime paymentDate = transaction.getPaymentDate() != null ? transaction.getPaymentDate() : LocalDateTime.now();
+        LocalDateTime createdAt = transaction.getCreatedAt() != null ? transaction.getCreatedAt() : LocalDateTime.now();
+
         return PaymentTransactionDTO.builder()
                 .transactionId(transaction.getTransactionId())
-                .subscriptionPlanName(transaction.getSubscription() != null && transaction.getSubscription().getSubscriptionPlan() != null
-                        ? transaction.getSubscription().getSubscriptionPlan().getName()
-                        : "Unknown Plan")
-                .paymentMethod(transaction.getPaymentMethod() != null && transaction.getPaymentMethod().getName() != null
-                        ? transaction.getPaymentMethod().getName().toString()
-                        : "Unknown Method")
-                .transactionAmount(transaction.getTransactionAmount() != null
-                        ? transaction.getTransactionAmount()
-                        : BigDecimal.ZERO)
-                .currency(transaction.getCurrency() != null ? transaction.getCurrency() : "Unknown Currency")
-                .transactionStatus(transaction.getTransactionStatus() != null
-                        ? transaction.getTransactionStatus()
-                        : TransactionStatus.UNKNOWN)
-                .paymentDate(transaction.getPaymentDate() != null ? transaction.getPaymentDate() : LocalDateTime.now())
-                .createdAt(transaction.getCreatedAt() != null ? transaction.getCreatedAt() : LocalDateTime.now())
+                .subscriptionPlanName(subscriptionPlanName)
+                .paymentMethod(paymentMethod)
+                .transactionAmount(transactionAmount)
+                .currency(currency)
+                .transactionStatus(transactionStatus)
+                .paymentDate(paymentDate)
+                .createdAt(createdAt)
                 .build();
     }
 
