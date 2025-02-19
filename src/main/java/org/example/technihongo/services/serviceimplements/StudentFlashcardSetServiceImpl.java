@@ -16,6 +16,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -115,6 +116,17 @@ public class StudentFlashcardSetServiceImpl implements StudentFlashcardSetServic
     public List<FlashcardSetResponseDTO> studentFlashcardList(Integer studentId) {
         List<StudentFlashcardSet> flashcardSets = flashcardSetRepository.findByCreatorStudentId(studentId);
         return flashcardSets.stream()
+                .map(this::convertToFlashcardSetResponseDTO)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<FlashcardSetResponseDTO> searchTitle(String keyword) {
+        if(keyword == null || keyword.trim().isEmpty()) {
+            return new ArrayList<>();
+        }
+        List<StudentFlashcardSet> studentFlashcardSets = flashcardSetRepository.findByTitleContainingIgnoreCase(keyword.trim());
+        return studentFlashcardSets.stream()
                 .map(this::convertToFlashcardSetResponseDTO)
                 .collect(Collectors.toList());
     }

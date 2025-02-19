@@ -233,6 +233,31 @@ public class StudentFlashcardSetController {
         }
     }
 
+    @GetMapping("/searchTitle")
+    public ResponseEntity<ApiResponse> searchTitle(@RequestParam String keyword){
+        try {
+            List<FlashcardSetResponseDTO> responseDTO = studentFlashcardSetService.searchTitle(keyword);
+            if(responseDTO.isEmpty()) {
+                return ResponseEntity.ok(ApiResponse.builder()
+                                .success(false)
+                                .message("Not found FlashcardSet you need: " + keyword)
+                                .build());
+            }
+            return ResponseEntity.ok(ApiResponse.builder()
+                            .success(true)
+                            .message("Here is FlashcardSet we thing we need!!")
+                            .data(responseDTO)
+                    .build());
+        }
+        catch(Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponse.builder()
+                            .success(false)
+                            .message("Failed to search Title: " + e.getMessage())
+                            .build());
+        }
+    }
+
 
 
 
