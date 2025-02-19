@@ -26,7 +26,7 @@ public class AuthToken {
     @Column(name = "token")
     private String token;
 
-    @Column(name = "token_type")
+    @Column(name = "token_type", length = 50)
     private String tokenType;
 
     @Column(name = "expires_at")

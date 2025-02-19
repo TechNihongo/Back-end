@@ -4,9 +4,9 @@ import lombok.RequiredArgsConstructor;
 import org.example.technihongo.core.security.JwtUtil;
 import org.example.technihongo.dto.*;
 import org.example.technihongo.entities.Course;
+import org.example.technihongo.entities.LearningPath;
 import org.example.technihongo.response.ApiResponse;
-import org.example.technihongo.services.interfaces.CourseService;
-import org.example.technihongo.services.interfaces.UserService;
+import org.example.technihongo.services.interfaces.LearningPathService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -16,49 +16,47 @@ import java.util.List;
 import java.util.Optional;
 
 @RestController
-@RequestMapping("/api/course")
+@RequestMapping("/api/learning-path")
 @RequiredArgsConstructor
-public class CourseController {
+public class LearningPathController {
     @Autowired
-    private CourseService courseService;
+    private LearningPathService learningPathService;
     @Autowired
     private JwtUtil jwtUtil;
-    @Autowired
-    private UserService userService;
 
     @GetMapping("/all")
-    public ResponseEntity<ApiResponse> getAllCourses(@RequestHeader("Authorization") String authorizationHeader) throws Exception {
+    public ResponseEntity<ApiResponse> getAllLearningPaths(@RequestHeader("Authorization") String authorizationHeader) throws Exception {
         try{
             if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
                 String token = authorizationHeader.substring(7);
                 int roleId = jwtUtil.extractUserRoleId(token);
 
                 if (roleId == 1 || roleId == 2) {
-                    List<Course> courseList = courseService.courseList();
-                    if (courseList.isEmpty()) {
+                    List<LearningPath> learningPaths = learningPathService.getAllLearningPaths();
+                    if (learningPaths.isEmpty()) {
                         return ResponseEntity.ok(ApiResponse.builder()
                                 .success(false)
-                                .message("List courses is empty!")
+                                .message("List LearningPath is empty!")
                                 .build());
                     } else {
                         return ResponseEntity.ok(ApiResponse.builder()
                                 .success(true)
-                                .message("Get All Courses")
-                                .data(courseList)
+                                .message("Get All LearningPaths")
+                                .data(learningPaths)
                                 .build());
                     }
                 } else {
-                    List<CoursePublicDTO> courseList = courseService.getPublicCourses();
-                    if (courseList.isEmpty()) {
+                    List<LearningPath> learningPaths = learningPathService.getPublicLearningPaths();
+                    if (learningPaths.isEmpty()) {
                         return ResponseEntity.ok(ApiResponse.builder()
                                 .success(false)
-                                .message("List courses is empty!")
+                                .message("List LearningPaths is empty!")
                                 .build());
                     } else {
                         return ResponseEntity.ok(ApiResponse.builder()
                                 .success(true)
-                                .message("Get All Public Courses")
-                                .data(courseList)
+                                .message("Get All Public LearningPaths")
+                                .data(learningPaths)
                                 .build());
                     }
                 }
@@ -73,33 +71,8 @@ public class CourseController {
         }
     }
 
-//    @GetMapping("/public/all")
-//    public ResponseEntity<ApiResponse> getPublicCourses() throws Exception {
-//        try{
-//            List<CoursePublicDTO> courseList = courseService.getPublicCourses();
-//            if(courseList.isEmpty()){
-//                return ResponseEntity.ok(ApiResponse.builder()
-//                        .success(false)
-//                        .message("List courses is empty!")
-//                        .build());
-//            }else{
-//                return ResponseEntity.ok(ApiResponse.builder()
-//                        .success(true)
-//                        .message("Get All Public Courses")
-//                        .data(courseList)
-//                        .build());
-//            }
-//        } catch (Exception e) {
-//            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-//                    .body(ApiResponse.builder()
-//                            .success(false)
-//                            .message("Internal Server Error: " + e.getMessage())
-//                            .build());
-//        }
-//    }
-
     @GetMapping("/{id}")
-    public ResponseEntity<ApiResponse> viewCourse(@PathVariable Integer id,
+    public ResponseEntity<ApiResponse> viewLearningPath(@PathVariable Integer id,
                                                   @RequestHeader("Authorization") String authorizationHeader) throws Exception {
         try{
             if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
@@ -107,32 +80,32 @@ public class CourseController {
                 int roleId = jwtUtil.extractUserRoleId(token);
 
                 if (roleId == 1 || roleId == 2) {
-                    Optional<Course> course = courseService.getCourseById(id);
-                    if (course.isEmpty()) {
+                    LearningPath learningPath = learningPathService.getLearningPathById(id);
+                    if (learningPath == null) {
                         return ResponseEntity.ok(ApiResponse.builder()
                                 .success(false)
-                                .message("Course not found!")
+                                .message("LearningPath not found!")
                                 .build());
                     } else {
                         return ResponseEntity.ok(ApiResponse.builder()
                                 .success(true)
-                                .message("Get Course")
-                                .data(course)
+                                .message("Get LearningPath")
+                                .data(learningPath)
                                 .build());
                     }
                 }
                 else{
-                    Optional<CoursePublicDTO> course = courseService.getPublicCourseById(id);
-                    if(course.isEmpty()){
+                    LearningPath learningPath = learningPathService.getPublicLearningPathById(id);
+                    if(learningPath == null){
                         return ResponseEntity.ok(ApiResponse.builder()
                                 .success(false)
-                                .message("Course not found!")
+                                .message("LearningPath not found!")
                                 .build());
                     }else{
                         return ResponseEntity.ok(ApiResponse.builder()
                                 .success(true)
-                                .message("Get Course")
-                                .data(course)
+                                .message("Get LearningPath")
+                                .data(learningPath)
                                 .build());
                     }
                 }
@@ -147,44 +120,19 @@ public class CourseController {
         }
     }
 
-//    @GetMapping("/public/{id}")
-//    public ResponseEntity<ApiResponse> viewPublicCourse(@PathVariable Integer id) throws Exception {
-//        try{
-//            Optional<CoursePublicDTO> course = courseService.getPublicCourseById(id);
-//            if(course.isEmpty()){
-//                return ResponseEntity.ok(ApiResponse.builder()
-//                        .success(false)
-//                        .message("Course not found!")
-//                        .build());
-//            }else{
-//                return ResponseEntity.ok(ApiResponse.builder()
-//                        .success(true)
-//                        .message("Get Course")
-//                        .data(course)
-//                        .build());
-//            }
-//        } catch (Exception e) {
-//            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-//                    .body(ApiResponse.builder()
-//                            .success(false)
-//                            .message("Internal Server Error: " + e.getMessage())
-//                            .build());
-//        }
-//    }
-
     @PostMapping("/create")
-    public ResponseEntity<ApiResponse> createCourse(@RequestBody CreateCourseDTO createCourseDTO,
+    public ResponseEntity<ApiResponse> createLearningPath(@RequestBody CreateLearningPathDTO createLearningPathDTO,
                                                     @RequestHeader("Authorization") String authorizationHeader) {
         try {
             if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
                 String token = authorizationHeader.substring(7);
                 Integer userId = jwtUtil.extractUserId(token);
 
-                Course course = courseService.createCourse(userId, createCourseDTO);
+                LearningPath learningPath = learningPathService.createLearningPath(userId, createLearningPathDTO);
                 return ResponseEntity.ok(ApiResponse.builder()
                         .success(true)
-                        .message("Course created successfully!")
-                        .data(course)
+                        .message("LearningPath created successfully!")
+                        .data(learningPath)
                         .build());
             }
             else throw new Exception("Authorization failed!");
@@ -193,7 +141,7 @@ public class CourseController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(ApiResponse.builder()
                             .success(false)
-                            .message("Failed to create course: " + e.getMessage())
+                            .message("Failed to create LearningPath: " + e.getMessage())
                             .build());
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
@@ -204,20 +152,20 @@ public class CourseController {
         }
     }
 
-    @PatchMapping("/update/{courseId}")
-    public ResponseEntity<ApiResponse> updateCourse(@PathVariable Integer courseId,
-                                                    @RequestBody UpdateCourseDTO updateCourseDTO) {
+    @PatchMapping("/update/{pathId}")
+    public ResponseEntity<ApiResponse> updateLearningPath(@PathVariable Integer pathId,
+                                                    @RequestBody UpdateLearningPathDTO updateLearningPathDTO) {
         try{
-            courseService.updateCourse(courseId, updateCourseDTO);
+            learningPathService.updateLearningPath(pathId, updateLearningPathDTO);
             return ResponseEntity.ok(ApiResponse.builder()
                     .success(true)
-                    .message("Course updated successfully")
+                    .message("LearningPath updated successfully")
                     .build());
         } catch (RuntimeException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(ApiResponse.builder()
                             .success(false)
-                            .message("Failed to update course: " + e.getMessage())
+                            .message("Failed to update LearningPath: " + e.getMessage())
                             .build());
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
@@ -229,21 +177,44 @@ public class CourseController {
     }
 
     @GetMapping("/search/{keyword}")
-    public ResponseEntity<ApiResponse> searchCourseByTitle(@PathVariable String keyword) throws Exception {
+    public ResponseEntity<ApiResponse> searchLearningPathByTitle(@PathVariable String keyword) throws Exception {
         try{
-            List<Course> course = courseService.searchCourseByTitle(keyword);
-            if(course.isEmpty()){
+            List<LearningPath> learningPaths = learningPathService.getLearningPathsByTitle(keyword);
+            if(learningPaths.isEmpty()){
                 return ResponseEntity.ok(ApiResponse.builder()
                         .success(false)
-                        .message("List courses is empty!")
+                        .message("List LearningPaths is empty!")
                         .build());
             }else{
                 return ResponseEntity.ok(ApiResponse.builder()
                         .success(true)
-                        .message("Get Courses List By Keyword")
-                        .data(course)
+                        .message("Get LearningPaths List By Keyword")
+                        .data(learningPaths)
                         .build());
             }
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponse.builder()
+                            .success(false)
+                            .message("Internal Server Error: " + e.getMessage())
+                            .build());
+        }
+    }
+
+    @DeleteMapping("/delete/{id}")
+    public ResponseEntity<ApiResponse> deleteLearningPath(@PathVariable Integer id) {
+        try{
+            learningPathService.deleteLearningPath(id);
+            return ResponseEntity.ok(ApiResponse.builder()
+                    .success(true)
+                    .message("LearningPath removed successfully!")
+                    .build());
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(ApiResponse.builder()
+                            .success(false)
+                            .message("Failed to delete LearningPath: " + e.getMessage())
+                            .build());
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(ApiResponse.builder()

@@ -6,10 +6,7 @@ import org.example.technihongo.dto.CreateCourseDTO;
 import org.example.technihongo.dto.UpdateCourseDTO;
 import org.example.technihongo.entities.Course;
 import org.example.technihongo.entities.Domain;
-import org.example.technihongo.repositories.CourseRepository;
-import org.example.technihongo.repositories.DifficultyLevelRepository;
-import org.example.technihongo.repositories.DomainRepository;
-import org.example.technihongo.repositories.UserRepository;
+import org.example.technihongo.repositories.*;
 import org.example.technihongo.services.interfaces.CourseService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -32,6 +29,8 @@ public class CourseServiceImpl implements CourseService {
     private DomainRepository domainRepository;
     @Autowired
     private DifficultyLevelRepository difficultyLevelRepository;
+    @Autowired
+    private StudentStudyPlanRepository studentStudyPlanRepository;
 
     @Override
     public List<Course> courseList() {
@@ -111,6 +110,14 @@ public class CourseServiceImpl implements CourseService {
             throw new RuntimeException("DifficultyLevel ID not found!");
         }
 
+        boolean hasStudents = studentStudyPlanRepository.findAll().stream()
+                .anyMatch(s -> s.getCourseStudyPlan().getCourse().getCourseId().equals(courseId)
+                            && s.getStatus().equalsIgnoreCase("Active"));
+
+        if (Boolean.FALSE.equals(updateCourseDTO.isPublic()) && hasStudents) {
+            throw new RuntimeException("Cannot deactivate Course because students are currently enrolled.");
+        }
+
         Course course = courseRepository.findByCourseId(courseId);
         course.setTitle(updateCourseDTO.getTitle());
         course.setDescription(updateCourseDTO.getDescription());
@@ -124,5 +131,11 @@ public class CourseServiceImpl implements CourseService {
         course.setUpdateAt(LocalDateTime.now());
 
         courseRepository.save(course);
+    }
+
+    @Override
+    public List<Course> searchCourseByTitle(String keyword) {
+        return courseRepository.findByTitleContainingIgnoreCase(keyword)
+                        .stream().filter(Course::isPublic).toList();
     }
 }
