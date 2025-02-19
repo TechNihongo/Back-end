@@ -39,6 +39,25 @@ public class JwtUtil {
         return userId;
     }
 
+    public int extractUserRoleId(String token) {
+        logger.info("Secret Key: {}", secretKey);
+        logger.info("Token: {}", token);
+
+        Claims claims = extractAllClaims(token);
+
+        String email = jwtHelper.getEmailFromToken(token);
+        int roleId = userRepository.findByEmail(email).get().getRole().getRoleId();
+
+//        if (claims == null || claims.get("cid") == null) {
+        if (claims == null) {
+            logger.error("uid claim is missing or null");
+            throw new IllegalArgumentException("Invalid token: uid claim is missing or null");
+        }
+
+        //return Integer.parseInt(claims.get("cid").toString());
+        return roleId;
+    }
+
     private Claims extractAllClaims(String token) {
         try {
             return Jwts.parser()

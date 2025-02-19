@@ -71,7 +71,8 @@ public class StudyPlanServiceImpl implements StudyPlanService {
                 .orElseThrow(() -> new RuntimeException("StudyPlan not found with id: " + planId));
 
         boolean hasStudents = studentStudyPlanRepository.findAll().stream()
-                .anyMatch(s -> s.getCourseStudyPlan().getStudyPlan().getStudyPlanId().equals(planId));
+                .anyMatch(s -> s.getCourseStudyPlan().getStudyPlan().getStudyPlanId().equals(planId)
+                && s.getStatus().equalsIgnoreCase("Active"));
 
         if (Boolean.FALSE.equals(updateStudyPlanDTO.getIsActive()) && hasStudents) {
             throw new RuntimeException("Cannot deactivate StudyPlan because students are currently enrolled.");
