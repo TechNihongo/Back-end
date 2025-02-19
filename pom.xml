@@ -127,5 +127,6 @@
                 </configuration>
             </plugin>
         </plugins>
+        <finalName>technihongo</finalName>
     </build>
 </project>
