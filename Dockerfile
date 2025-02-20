@@ -12,3 +12,4 @@ RUN mkdir -p /var/opt/mssql/data
 CMD ["/opt/mssql/bin/sqlservr"]
 
 
+
