@@ -8,21 +8,21 @@ import org.hibernate.annotations.UpdateTimestamp;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "QuizAnswerOption")
+@Table(name = "QuestionAnswerOption")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class QuizAnswerOption {
+public class QuestionAnswerOption {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "option_id")
     private Integer optionId;
 
     @ManyToOne
-    @JoinColumn(name = "quiz_question_id", nullable = false, referencedColumnName = "quiz_question_id")
-    private QuizQuestion quizQuestion;
+    @JoinColumn(name = "question_id", nullable = false, referencedColumnName = "question_id")
+    private Question question;
 
     @Column(name = "option_text", length = 255)
     private String optionText;
