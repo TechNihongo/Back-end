@@ -1,4 +1,9 @@
-FROM openjdk:21
+FROM openjdk:21-slim
+
+WORKDIR /app
+
+COPY target/technihongo.jar technihongo.jar
+
 EXPOSE 3000
-ADD target/technihongo.jar technihongo.jar
-ENTRYPOINT ["java", "-jar","/technihongo.jar"]
+
+ENTRYPOINT ["java", "-jar", "technihongo.jar"]
