@@ -24,7 +24,7 @@ public class QuizAnswerResponse {
     @ManyToOne
     @NotNull
     @JoinColumn(name = "selected_option_id", referencedColumnName = "option_id", nullable = false)
-    private QuizAnswerOption selectedOption;
+    private QuestionAnswerOption selectedOption;
 
     @Column(name = "is_correct", nullable = false)
     private boolean isCorrect;

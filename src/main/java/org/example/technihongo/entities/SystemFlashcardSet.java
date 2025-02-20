@@ -1,5 +1,6 @@
 package org.example.technihongo.entities;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
@@ -58,9 +59,11 @@ public class SystemFlashcardSet {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
-    @OneToMany(mappedBy = "systemFlashCardSet", cascade = CascadeType.ALL)
+    @JsonIgnore
+    @OneToMany(mappedBy = "systemFlashCardSet", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     private Set<Flashcard> flashcards = new HashSet<>();
 
-    @OneToMany(mappedBy = "systemFlashcardSet", cascade = CascadeType.ALL)
+    @JsonIgnore
+    @OneToMany(mappedBy = "systemFlashcardSet", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     private Set<StudentFlashcardSetProgress> progresses = new HashSet<>();
 }

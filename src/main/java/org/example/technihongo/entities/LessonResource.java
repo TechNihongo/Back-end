@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
 
@@ -32,21 +33,26 @@ public class LessonResource {
     private Integer typeOrder;
 
     @ManyToOne
-    @NotNull
-    @JoinColumn(name = "resource_id", referencedColumnName = "resource_id", nullable = false)
+    @JoinColumn(name = "resource_id", referencedColumnName = "resource_id", nullable = true)
     private LearningResource learningResource;
 
     @ManyToOne
-    @NotNull
-    @JoinColumn(name = "system_set_id", referencedColumnName = "system_set_id", nullable = false)
+    @JoinColumn(name = "system_set_id", referencedColumnName = "system_set_id", nullable = true)
     private SystemFlashcardSet systemFlashCardSet;
 
     @ManyToOne
-    @NotNull
-    @JoinColumn(name = "quiz_id", referencedColumnName = "quiz_id", nullable = false)
+    @JoinColumn(name = "quiz_id", referencedColumnName = "quiz_id", nullable = true)
     private Quiz quiz;
+
+    @Builder.Default
+    @Column(name = "is_active", nullable = false)
+    private boolean isActive = false;
 
     @CreationTimestamp
     @Column(name = "created_at")
     private LocalDateTime createdAt;
+
+    @UpdateTimestamp
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
 }

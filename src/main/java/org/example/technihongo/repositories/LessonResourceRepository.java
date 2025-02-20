@@ -9,4 +9,5 @@ import java.util.List;
 @Repository
 public interface LessonResourceRepository extends JpaRepository<LessonResource, Integer> {
     void deleteByLesson_LessonIdIn(List<Integer> lessonIds);
+    Integer countByLesson_LessonId(Integer lessonId);
 }
