@@ -49,6 +49,7 @@ public class UserController {
             String token = myUserDetailsService.loginToken(userLogin);
             LocalDateTime expired = jwtHelper.getExpirationDateFromToken(token).toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime();
             authTokenService.saveLoginToken(new CreateLoginTokenDTO(response.getUserId(), token, "LOGIN", expired));
+            authTokenService.updateLoginTokenStatus(response.getUserId());
 
             if (response.isSuccess()) {
                 return ResponseEntity.ok(new LoginResponseTokenDTO(response.getUserId(), response.getUserName(),

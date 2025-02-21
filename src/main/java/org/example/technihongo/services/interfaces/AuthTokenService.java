@@ -6,4 +6,5 @@ import org.example.technihongo.dto.TokenStatusDTO;
 public interface AuthTokenService {
     void saveLoginToken(CreateLoginTokenDTO createLoginTokenDTO);
     void setTokenStatus(TokenStatusDTO tokenStatus);
+    void updateLoginTokenStatus(Integer userId);
 }

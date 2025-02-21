@@ -14,6 +14,6 @@ public interface LessonResourceService {
     LessonResource getActiveLessonResourceById(Integer lessonResourceId);
     LessonResource createLessonResource(CreateLessonResourceDTO createLessonResourceDTO);
     void updateLessonResource(Integer lessonResourceId, UpdateLessonResourceDTO updateLessonResourceDTO);
-    void updateLessonResourceOrder(Integer lessonResourceId, UpdateLessonResourceOrderDTO updateLessonResourceOrderDTO);
+    void updateLessonResourceOrder(Integer lessonId, UpdateLessonResourceOrderDTO updateLessonResourceOrderDTO);
     void deleteLessonResource(Integer lessonResourceId);
 }
