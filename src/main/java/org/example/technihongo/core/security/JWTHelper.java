@@ -14,7 +14,7 @@ import java.util.function.Function;
 @Component
 public class JWTHelper {
     //requirement :
-    public static final long JWT_TOKEN_VALIDITY = 3 * 60 * 60;
+    public static final long JWT_TOKEN_VALIDITY = 24 * 60 * 60;
 
     private String secret = "qwertyuiopasdfghjklzxcvbnm1234567890poiuytrewqlkjhgfdsamnbvcxz1234567890pokmnjhbgvfcdxsza";
 

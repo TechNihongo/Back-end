@@ -11,6 +11,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
+import java.util.List;
+
 @Service
 @RequiredArgsConstructor
 @Component
@@ -35,5 +38,22 @@ public class AuthTokenServiceImpl implements AuthTokenService {
         AuthToken authToken = authTokenRepository.findByToken(tokenStatus.getToken());
         authToken.setIsActive(tokenStatus.isActive());
         authTokenRepository.save(authToken);
+    }
+
+    @Override
+    public void updateLoginTokenStatus(Integer userId) {
+        List<AuthToken> authTokenList = authTokenRepository.findAll().stream()
+                .filter(authToken -> authToken.getUser().getUserId().equals(userId) &&
+                        authToken.getTokenType().equalsIgnoreCase("LOGIN") &&
+                        authToken.getIsActive())
+                .toList();
+
+        for(AuthToken a : authTokenList){
+            if(a.getExpiresAt().isBefore(LocalDateTime.now())){
+                a.setIsActive(false);
+            }
+        }
+
+        authTokenRepository.saveAll(authTokenList);
     }
 }

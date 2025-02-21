@@ -1,6 +1,8 @@
 package org.example.technihongo.api;
 
 import org.example.technihongo.core.security.JwtUtil;
+import org.example.technihongo.dto.*;
+import org.example.technihongo.entities.Lesson;
 import org.example.technihongo.entities.LessonResource;
 import org.example.technihongo.entities.QuestionAnswerOption;
 import org.example.technihongo.response.ApiResponse;
@@ -93,6 +95,102 @@ public class LessonResourceController {
                     .body(ApiResponse.builder()
                             .success(false)
                             .message("Get LessonResource failed: " + e.getMessage())
+                            .build());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponse.builder()
+                            .success(false)
+                            .message("Internal Server Error: " + e.getMessage())
+                            .build());
+        }
+    }
+
+    @PostMapping("/create")
+    public ResponseEntity<ApiResponse> createLessonResource(@RequestBody CreateLessonResourceDTO createLessonResourceDTO){
+        try {
+            LessonResource lessonResource = lessonResourceService.createLessonResource(createLessonResourceDTO);
+            return ResponseEntity.ok(ApiResponse.builder()
+                    .success(true)
+                    .message("LessonResource created successfully!")
+                    .data(lessonResource)
+                    .build());
+
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(ApiResponse.builder()
+                            .success(false)
+                            .message("Failed to create LessonResource: " + e.getMessage())
+                            .build());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponse.builder()
+                            .success(false)
+                            .message("Internal Server Error: " + e.getMessage())
+                            .build());
+        }
+    }
+
+    @PatchMapping("/update/{id}")
+    public ResponseEntity<ApiResponse> updateLessonResource(@PathVariable Integer id,
+                                                    @RequestBody UpdateLessonResourceDTO updateLessonResourceDTO) {
+        try{
+            lessonResourceService.updateLessonResource(id, updateLessonResourceDTO);
+            return ResponseEntity.ok(ApiResponse.builder()
+                    .success(true)
+                    .message("LessonResource updated successfully")
+                    .build());
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(ApiResponse.builder()
+                            .success(false)
+                            .message("Failed to update LessonResource: " + e.getMessage())
+                            .build());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponse.builder()
+                            .success(false)
+                            .message("Internal Server Error: " + e.getMessage())
+                            .build());
+        }
+    }
+
+    @PatchMapping("/update-order/{lessonId}")
+    public ResponseEntity<ApiResponse> updateLessonResourceOrder(@PathVariable Integer lessonId,
+                                                         @RequestBody UpdateLessonResourceOrderDTO updateLessonResourceOrderDTO) {
+        try{
+            lessonResourceService.updateLessonResourceOrder(lessonId, updateLessonResourceOrderDTO);
+            return ResponseEntity.ok(ApiResponse.builder()
+                    .success(true)
+                    .message("LessonResources updated successfully")
+                    .build());
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(ApiResponse.builder()
+                            .success(false)
+                            .message("Failed to update LessonResources: " + e.getMessage())
+                            .build());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponse.builder()
+                            .success(false)
+                            .message("Internal Server Error: " + e.getMessage())
+                            .build());
+        }
+    }
+
+    @DeleteMapping("/delete/{id}")
+    public ResponseEntity<ApiResponse> deleteLessonResource(@PathVariable Integer id) {
+        try{
+            lessonResourceService.deleteLessonResource(id);
+            return ResponseEntity.ok(ApiResponse.builder()
+                    .success(true)
+                    .message("LessonResource removed successfully!")
+                    .build());
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(ApiResponse.builder()
+                            .success(false)
+                            .message("Failed to delete LessonResource: " + e.getMessage())
                             .build());
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
