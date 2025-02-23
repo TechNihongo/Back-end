@@ -1,5 +1,6 @@
 package org.example.technihongo.entities;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
@@ -20,6 +21,7 @@ public class QuestionAnswerOption {
     @Column(name = "option_id")
     private Integer optionId;
 
+    @JsonIgnore
     @ManyToOne
     @JoinColumn(name = "question_id", nullable = false, referencedColumnName = "question_id")
     private Question question;

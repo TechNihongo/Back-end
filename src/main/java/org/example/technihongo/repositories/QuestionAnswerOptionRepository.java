@@ -7,4 +7,5 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface QuestionAnswerOptionRepository extends JpaRepository<QuestionAnswerOption, Integer> {
     QuestionAnswerOption findByOptionId(Integer optionId);
+    void deleteByQuestion_QuestionId(Integer questionId);
 }

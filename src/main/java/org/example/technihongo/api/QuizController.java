@@ -1,7 +1,7 @@
 package org.example.technihongo.api;
 
 import org.example.technihongo.core.security.JwtUtil;
-import org.example.technihongo.dto.CoursePublicDTO;
+import org.example.technihongo.dto.*;
 import org.example.technihongo.entities.Course;
 import org.example.technihongo.entities.Quiz;
 import org.example.technihongo.response.ApiResponse;
@@ -102,6 +102,86 @@ public class QuizController {
                     .body(ApiResponse.builder()
                             .success(false)
                             .message("Failed to get quiz: " + e.getMessage())
+                            .build());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponse.builder()
+                            .success(false)
+                            .message("Internal Server Error: " + e.getMessage())
+                            .build());
+        }
+    }
+
+    @PostMapping("/create")
+    public ResponseEntity<ApiResponse> createQuiz(@RequestBody CreateQuizDTO createQuizDTO,
+                                                    @RequestHeader("Authorization") String authorizationHeader) {
+        try {
+            if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
+                String token = authorizationHeader.substring(7);
+                Integer userId = jwtUtil.extractUserId(token);
+
+                Quiz quiz = quizService.createQuiz(userId, createQuizDTO);
+                return ResponseEntity.ok(ApiResponse.builder()
+                        .success(true)
+                        .message("Quiz created successfully!")
+                        .data(quiz)
+                        .build());
+            }
+            else throw new Exception("Authorization failed!");
+
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(ApiResponse.builder()
+                            .success(false)
+                            .message("Failed to create Quiz: " + e.getMessage())
+                            .build());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponse.builder()
+                            .success(false)
+                            .message("Internal Server Error: " + e.getMessage())
+                            .build());
+        }
+    }
+
+    @PatchMapping("/update/{quizId}")
+    public ResponseEntity<ApiResponse> updateQuiz(@PathVariable Integer quizId,
+                                                    @RequestBody UpdateQuizDTO updateQuizDTO) {
+        try{
+            quizService.updateQuiz(quizId, updateQuizDTO);
+            return ResponseEntity.ok(ApiResponse.builder()
+                    .success(true)
+                    .message("Quiz updated successfully")
+                    .build());
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(ApiResponse.builder()
+                            .success(false)
+                            .message("Failed to update Quiz: " + e.getMessage())
+                            .build());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponse.builder()
+                            .success(false)
+                            .message("Internal Server Error: " + e.getMessage())
+                            .build());
+        }
+    }
+
+    @PatchMapping("/update-status/{quizId}")
+    public ResponseEntity<ApiResponse> updateQuizStatus(@PathVariable Integer quizId,
+                                                  @RequestBody UpdateQuizStatusDTO updateQuizStatusDTO) {
+        try{
+            quizService.updateQuizStatus(quizId, updateQuizStatusDTO);
+            return ResponseEntity.ok(ApiResponse.builder()
+                    .success(true)
+                    .message("Quiz updated successfully")
+                    .build());
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(ApiResponse.builder()
+                            .success(false)
+                            .message("Failed to update Quiz: " + e.getMessage())
                             .build());
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)

@@ -1,53 +1,51 @@
 package org.example.technihongo.api;
 
 import lombok.RequiredArgsConstructor;
-import org.example.technihongo.dto.CreateLessonDTO;
-import org.example.technihongo.dto.CreatePathCourseDTO;
-import org.example.technihongo.dto.UpdateLessonOrderDTO;
-import org.example.technihongo.dto.UpdatePathCourseOrderDTO;
-import org.example.technihongo.entities.Lesson;
-import org.example.technihongo.entities.PathCourse;
+import org.example.technihongo.dto.CreateQuizQuestionDTO;
+import org.example.technihongo.dto.UpdateQuizQuestionOrderDTO;
+import org.example.technihongo.entities.QuizQuestion;
+import org.example.technihongo.entities.Quiz;
+import org.example.technihongo.entities.QuizQuestion;
 import org.example.technihongo.response.ApiResponse;
-import org.example.technihongo.services.interfaces.LearningPathService;
-import org.example.technihongo.services.interfaces.PathCourseService;
+import org.example.technihongo.services.interfaces.QuizQuestionService;
+import org.example.technihongo.services.interfaces.QuizService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Optional;
 
 @RestController
-@RequestMapping("/api/path-course")
+@RequestMapping("/api/quiz-question")
 @RequiredArgsConstructor
-public class PathCourseController {
+public class QuizQuestionController {
     @Autowired
-    private PathCourseService pathCourseService;
+    private QuizQuestionService quizQuestionService;
     @Autowired
-    private LearningPathService learningPathService;
+    private QuizService quizService;
 
-    @GetMapping("/learning-path/{pathId}")
-    public ResponseEntity<ApiResponse> getPathCourseListByLearningPathId(@PathVariable Integer pathId) throws Exception {
+    @GetMapping("/quiz/{quizId}")
+    public ResponseEntity<ApiResponse> getQuizQuestionListByQuizId(@PathVariable Integer quizId) throws Exception {
         try{
-            List<PathCourse> pathCourses = pathCourseService.getPathCoursesByLearningPathId(pathId);
-            if(pathCourses.isEmpty()){
+            List<QuizQuestion> quizQuestions = quizQuestionService.getQuizQuestionsByQuizId(quizId);
+            if(quizQuestions.isEmpty()){
                 return ResponseEntity.ok(ApiResponse.builder()
                         .success(false)
-                        .message("List PathCourse is empty!")
+                        .message("List QuizQuestion is empty!")
                         .build());
             }else{
                 return ResponseEntity.ok(ApiResponse.builder()
                         .success(true)
-                        .message("Get PathCourse List")
-                        .data(pathCourses)
+                        .message("Get QuizQuestion List")
+                        .data(quizQuestions)
                         .build());
             }
         } catch (RuntimeException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(ApiResponse.builder()
                             .success(false)
-                            .message("Failed to get PathCourses: " + e.getMessage())
+                            .message("Failed to get QuizQuestions: " + e.getMessage())
                             .build());
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
@@ -59,26 +57,26 @@ public class PathCourseController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<ApiResponse> getPathCourseById(@PathVariable Integer id) throws Exception {
+    public ResponseEntity<ApiResponse> getQuizQuestionById(@PathVariable Integer id) throws Exception {
         try{
-            PathCourse pathCourse = pathCourseService.getPathCourseById(id);
-            if(pathCourse == null){
+            QuizQuestion quizQuestion = quizQuestionService.getQuizQuestionById(id);
+            if(quizQuestion == null){
                 return ResponseEntity.ok(ApiResponse.builder()
                         .success(false)
-                        .message("PathCourse not found!")
+                        .message("QuizQuestion not found!")
                         .build());
             }else{
                 return ResponseEntity.ok(ApiResponse.builder()
                         .success(true)
-                        .message("Get PathCourse")
-                        .data(pathCourse)
+                        .message("Get QuizQuestion")
+                        .data(quizQuestion)
                         .build());
             }
         } catch (RuntimeException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(ApiResponse.builder()
                             .success(false)
-                            .message("Failed to get PathCourse: " + e.getMessage())
+                            .message("Failed to get QuizQuestion: " + e.getMessage())
                             .build());
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
@@ -90,21 +88,21 @@ public class PathCourseController {
     }
 
     @PostMapping("/create")
-    public ResponseEntity<ApiResponse> createPathCourse(@RequestBody CreatePathCourseDTO createPathCourseDTO){
+    public ResponseEntity<ApiResponse> createQuizQuestion(@RequestBody CreateQuizQuestionDTO createQuizQuestionDTO){
         try {
-            PathCourse pathCourse = pathCourseService.createPathCourse(createPathCourseDTO);
-            learningPathService.updateTotalCourses(createPathCourseDTO.getPathId());
+            QuizQuestion quizQuestion = quizQuestionService.createQuizQuestion(createQuizQuestionDTO);
+            quizService.updateTotalQuestions(createQuizQuestionDTO.getQuizId());
             return ResponseEntity.ok(ApiResponse.builder()
                     .success(true)
-                    .message("PathCourse created successfully!")
-                    .data(pathCourse)
+                    .message("QuizQuestion created successfully!")
+                    .data(quizQuestion)
                     .build());
 
         } catch (RuntimeException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(ApiResponse.builder()
                             .success(false)
-                            .message("Failed to create PathCourse: " + e.getMessage())
+                            .message("Failed to create QuizQuestion: " + e.getMessage())
                             .build());
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
@@ -115,20 +113,20 @@ public class PathCourseController {
         }
     }
 
-    @PatchMapping("/update-order/{pathId}")
-    public ResponseEntity<ApiResponse> updatePathCourseOrder(@PathVariable Integer pathId,
-                                                         @RequestBody UpdatePathCourseOrderDTO updatePathCourseOrderDTO) {
+    @PatchMapping("/update-order/{quizId}")
+    public ResponseEntity<ApiResponse> updateQuizQuestionOrder(@PathVariable Integer quizId,
+                                                             @RequestBody UpdateQuizQuestionOrderDTO updateQuizQuestionOrderDTO) {
         try{
-            pathCourseService.updatePathCourseOrder(pathId, updatePathCourseOrderDTO);
+            quizQuestionService.updateQuizQuestionOrder(quizId, updateQuizQuestionOrderDTO);
             return ResponseEntity.ok(ApiResponse.builder()
                     .success(true)
-                    .message("PathCourse updated successfully")
+                    .message("QuizQuestion updated successfully")
                     .build());
         } catch (RuntimeException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(ApiResponse.builder()
                             .success(false)
-                            .message("Failed to update PathCourse: " + e.getMessage())
+                            .message("Failed to update QuizQuestion: " + e.getMessage())
                             .build());
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
@@ -140,21 +138,21 @@ public class PathCourseController {
     }
 
     @DeleteMapping("/delete/{id}")
-    public ResponseEntity<ApiResponse> deletePathCourse(@PathVariable Integer id) {
+    public ResponseEntity<ApiResponse> deleteQuizQuestion(@PathVariable Integer id) {
         try{
-            Integer pathId = pathCourseService.getPathCourseById(id).getLearningPath().getPathId();
-            pathCourseService.deletePathCourse(id);
-            learningPathService.updateTotalCourses(pathId);
+            Integer quizId = quizQuestionService.getQuizQuestionById(id).getQuiz().getQuizId();
+            quizQuestionService.deleteQuizQuestion(id);
+            quizService.updateTotalQuestions(quizId);
 
             return ResponseEntity.ok(ApiResponse.builder()
                     .success(true)
-                    .message("PathCourse removed successfully!")
+                    .message("QuizQuestion removed successfully!")
                     .build());
         } catch (RuntimeException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(ApiResponse.builder()
                             .success(false)
-                            .message("Failed to delete PathCourse: " + e.getMessage())
+                            .message("Failed to delete QuizQuestion: " + e.getMessage())
                             .build());
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
