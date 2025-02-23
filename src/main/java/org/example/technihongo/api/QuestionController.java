@@ -1,8 +1,6 @@
 package org.example.technihongo.api;
 
-import org.example.technihongo.dto.CreateLessonResourceDTO;
-import org.example.technihongo.dto.CreateUpdateQuestionDTO;
-import org.example.technihongo.dto.UpdateLessonResourceDTO;
+import org.example.technihongo.dto.*;
 import org.example.technihongo.entities.LessonResource;
 import org.example.technihongo.entities.Question;
 import org.example.technihongo.entities.StudyPlan;
@@ -107,6 +105,56 @@ public class QuestionController {
             return ResponseEntity.ok(ApiResponse.builder()
                     .success(true)
                     .message("Question updated successfully")
+                    .build());
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(ApiResponse.builder()
+                            .success(false)
+                            .message("Failed to update question: " + e.getMessage())
+                            .build());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponse.builder()
+                            .success(false)
+                            .message("Internal Server Error: " + e.getMessage())
+                            .build());
+        }
+    }
+
+    @PostMapping("/options/create")
+    public ResponseEntity<ApiResponse> createQuestionWithOptions(@RequestBody QuestionWithOptionsDTO questionWithOptionsDTO){
+        try {
+            QuestionWithOptionsRespondDTO question = questionService.createQuestionWithOptions(questionWithOptionsDTO);
+            return ResponseEntity.ok(ApiResponse.builder()
+                    .success(true)
+                    .message("Question created successfully!")
+                    .data(question)
+                    .build());
+
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(ApiResponse.builder()
+                            .success(false)
+                            .message("Failed to create question: " + e.getMessage())
+                            .build());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponse.builder()
+                            .success(false)
+                            .message("Internal Server Error: " + e.getMessage())
+                            .build());
+        }
+    }
+
+    @PatchMapping("/options/update/{id}")
+    public ResponseEntity<ApiResponse> updateQuestionWithOptions(@PathVariable Integer id,
+                                                      @RequestBody QuestionWithOptionsDTO questionWithOptionsDTO) {
+        try{
+            QuestionWithOptionsRespondDTO question =  questionService.updateQuestionWithOptions(id, questionWithOptionsDTO);
+            return ResponseEntity.ok(ApiResponse.builder()
+                    .success(true)
+                    .message("Question updated successfully")
+                    .data(question)
                     .build());
         } catch (RuntimeException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
