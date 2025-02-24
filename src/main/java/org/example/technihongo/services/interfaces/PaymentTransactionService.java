@@ -5,7 +5,7 @@ import org.example.technihongo.dto.PaymentTransactionDTO;
 
 import java.util.List;
 
-public interface PaymentHistoryService {
+public interface PaymentTransactionService {
     List<PaymentTransactionDTO> getPaymentHistoryByStudentId(Integer studentId);
 
     List<PaymentTransactionDTO> getAllPaymentHistory(PaymentHistoryRequestDTO requestDTO);
