@@ -4,7 +4,7 @@ import org.example.technihongo.dto.PaymentHistoryRequestDTO;
 import org.example.technihongo.dto.PaymentTransactionDTO;
 import org.example.technihongo.enums.TransactionStatus;
 import org.example.technihongo.response.ApiResponse;
-import org.example.technihongo.services.interfaces.PaymentHistoryService;
+import org.example.technihongo.services.interfaces.PaymentTransactionService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -14,15 +14,15 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/payment-history")
-public class PaymentHistoryController {
+public class PaymentTransactionController {
 
     @Autowired
-    private PaymentHistoryService paymentHistoryService;
+    private PaymentTransactionService paymentTransactionService;
 
     @GetMapping("/student/{studentId}")
     public ResponseEntity<ApiResponse> getPaymentHistoryByStudentId(@PathVariable Integer studentId) {
         try {
-            List<PaymentTransactionDTO> history = paymentHistoryService.getPaymentHistoryByStudentId(studentId);
+            List<PaymentTransactionDTO> history = paymentTransactionService.getPaymentHistoryByStudentId(studentId);
             return ResponseEntity.ok(ApiResponse.builder()
                     .success(true)
                     .message("Payment history retrieved successfully!")
@@ -52,7 +52,7 @@ public class PaymentHistoryController {
                 request.setTransactionStatus(TransactionStatus.valueOf(transactionStatus.toUpperCase()));
             }
 
-            List<PaymentTransactionDTO> history = paymentHistoryService.getAllPaymentHistory(request);
+            List<PaymentTransactionDTO> history = paymentTransactionService.getAllPaymentHistory(request);
             return ResponseEntity.ok(ApiResponse.builder()
                     .success(true)
                     .message("Payment history retrieved successfully!")

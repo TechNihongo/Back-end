@@ -5,7 +5,7 @@ import org.example.technihongo.dto.PaymentTransactionDTO;
 import org.example.technihongo.entities.PaymentTransaction;
 import org.example.technihongo.enums.TransactionStatus;
 import org.example.technihongo.repositories.PaymentTransactionRepository;
-import org.example.technihongo.services.interfaces.PaymentHistoryService;
+import org.example.technihongo.services.interfaces.PaymentTransactionService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -15,7 +15,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 @Service
-public class PaymentHistoryServiceImpl implements PaymentHistoryService {
+public class PaymentTransactionServiceImpl implements PaymentTransactionService {
     @Autowired
     private PaymentTransactionRepository paymentTransactionRepository;
     @Override
