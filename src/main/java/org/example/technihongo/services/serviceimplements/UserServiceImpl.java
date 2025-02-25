@@ -7,22 +7,19 @@ import org.example.technihongo.entities.AuthToken;
 import org.example.technihongo.entities.Role;
 import org.example.technihongo.entities.Student;
 import org.example.technihongo.entities.User;
-import org.example.technihongo.repositories.AuthTokenRepository;
 import org.example.technihongo.exception.ResourceNotFoundException;
+import org.example.technihongo.repositories.AuthTokenRepository;
 import org.example.technihongo.repositories.RoleRepository;
 import org.example.technihongo.repositories.UserRepository;
 import org.example.technihongo.services.interfaces.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.web.client.RestTemplate;
 
-import java.time.Duration;
-import java.time.Instant;
 import java.time.LocalDateTime;
-import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -89,6 +86,7 @@ public class UserServiceImpl implements UserService {
                     .email(registrationDTO.getEmail())
                     .password(passwordEncoder.encode(registrationDTO.getPassword()))
                     .dob(registrationDTO.getDob())
+                    .profileImg("https://cdn-icons-png.flaticon.com/512/8801/8801434.png")
                     .isActive(true)
                     .role(defaultRole)
                     .build();
