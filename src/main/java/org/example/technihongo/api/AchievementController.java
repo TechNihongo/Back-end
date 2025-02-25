@@ -1,10 +1,8 @@
 package org.example.technihongo.api;
 
 import org.example.technihongo.entities.Achievement;
-import org.example.technihongo.entities.StudyPlan;
 import org.example.technihongo.response.ApiResponse;
 import org.example.technihongo.services.interfaces.AchievementService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -16,11 +14,14 @@ import java.util.List;
 @RestController
 @RequestMapping("api/achievement")
 public class AchievementController {
-    @Autowired
-    private AchievementService achievementService;
+    private final AchievementService achievementService;
+
+    public AchievementController(AchievementService achievementService) {
+        this.achievementService = achievementService;
+    }
 
     @GetMapping("/all")
-    public ResponseEntity<ApiResponse> getAllAchievement() throws Exception {
+    public ResponseEntity<ApiResponse> getAllAchievement() {
         try{
             List<Achievement> achievementList = achievementService.achievementList();
             if(achievementList.isEmpty()){
