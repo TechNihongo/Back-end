@@ -334,7 +334,6 @@ public class UserServiceImpl implements UserService {
 
     private String generateToken() {
         StringBuilder token = new StringBuilder();
-
         return token.append(UUID.randomUUID())
                 .append(UUID.randomUUID()).toString();
     }
