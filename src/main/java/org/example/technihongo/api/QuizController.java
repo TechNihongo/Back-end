@@ -2,7 +2,6 @@ package org.example.technihongo.api;
 
 import org.example.technihongo.core.security.JwtUtil;
 import org.example.technihongo.dto.*;
-import org.example.technihongo.entities.Course;
 import org.example.technihongo.entities.Quiz;
 import org.example.technihongo.response.ApiResponse;
 import org.example.technihongo.services.interfaces.QuizService;
@@ -13,7 +12,6 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/quiz")

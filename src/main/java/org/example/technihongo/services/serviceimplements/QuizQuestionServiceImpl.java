@@ -3,7 +3,6 @@ package org.example.technihongo.services.serviceimplements;
 import lombok.RequiredArgsConstructor;
 import org.example.technihongo.dto.CreateQuizQuestionDTO;
 import org.example.technihongo.dto.UpdateQuizQuestionOrderDTO;
-import org.example.technihongo.entities.PathCourse;
 import org.example.technihongo.entities.QuizQuestion;
 import org.example.technihongo.repositories.QuestionRepository;
 import org.example.technihongo.repositories.QuizQuestionRepository;

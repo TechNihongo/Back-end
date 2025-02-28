@@ -1,10 +1,8 @@
 package org.example.technihongo.api;
 
 import org.example.technihongo.entities.DifficultyLevel;
-import org.example.technihongo.entities.StudyPlan;
 import org.example.technihongo.enums.DifficultyLevelEnum;
 import org.example.technihongo.exception.ResourceNotFoundException;
-import org.example.technihongo.repositories.DifficultyLevelRepository;
 import org.example.technihongo.response.ApiResponse;
 import org.example.technihongo.services.interfaces.DifficultyLevelService;
 import org.springframework.beans.factory.annotation.Autowired;

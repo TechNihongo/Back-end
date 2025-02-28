@@ -1,6 +1,5 @@
 package org.example.technihongo.repositories;
 
-import org.example.technihongo.entities.Course;
 import org.example.technihongo.entities.PathCourse;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;

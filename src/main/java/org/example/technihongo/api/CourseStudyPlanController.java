@@ -3,14 +3,12 @@ package org.example.technihongo.api;
 import lombok.RequiredArgsConstructor;
 import org.example.technihongo.dto.CourseWithStudyPlanListDTO;
 import org.example.technihongo.dto.CreateCourseStudyPlanDTO;
-import org.example.technihongo.entities.Course;
 import org.example.technihongo.entities.CourseStudyPlan;
 import org.example.technihongo.response.ApiResponse;
 import org.example.technihongo.services.interfaces.CourseStudyPlanService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;

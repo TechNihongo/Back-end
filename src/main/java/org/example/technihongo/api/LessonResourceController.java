@@ -2,9 +2,7 @@ package org.example.technihongo.api;
 
 import org.example.technihongo.core.security.JwtUtil;
 import org.example.technihongo.dto.*;
-import org.example.technihongo.entities.Lesson;
 import org.example.technihongo.entities.LessonResource;
-import org.example.technihongo.entities.QuestionAnswerOption;
 import org.example.technihongo.response.ApiResponse;
 import org.example.technihongo.services.interfaces.LessonResourceService;
 import org.springframework.beans.factory.annotation.Autowired;

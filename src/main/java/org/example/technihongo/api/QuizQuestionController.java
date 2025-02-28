@@ -4,8 +4,6 @@ import lombok.RequiredArgsConstructor;
 import org.example.technihongo.dto.CreateQuizQuestionDTO;
 import org.example.technihongo.dto.UpdateQuizQuestionOrderDTO;
 import org.example.technihongo.entities.QuizQuestion;
-import org.example.technihongo.entities.Quiz;
-import org.example.technihongo.entities.QuizQuestion;
 import org.example.technihongo.response.ApiResponse;
 import org.example.technihongo.services.interfaces.QuizQuestionService;
 import org.example.technihongo.services.interfaces.QuizService;

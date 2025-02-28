@@ -1,9 +1,7 @@
 package org.example.technihongo.api;
 
 import org.example.technihongo.dto.QuestionAnswerOptionListDTO;
-import org.example.technihongo.dto.QuestionWithOptionsDTO;
 import org.example.technihongo.dto.QuestionWithOptionsRespondDTO;
-import org.example.technihongo.entities.Question;
 import org.example.technihongo.entities.QuestionAnswerOption;
 import org.example.technihongo.response.ApiResponse;
 import org.example.technihongo.services.interfaces.QuestionAnswerOptionService;

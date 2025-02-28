@@ -1,6 +1,5 @@
 package org.example.technihongo.dto;
 
-
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -10,10 +9,9 @@ import lombok.Setter;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-public class GoogleUserInfoDTO {
-    private String email;
+public class StudentFolderDTO {
+    private Integer folderId;
+    private Integer studentId;
     private String name;
-    private String picture;
-    private String sub;
-    private boolean email_verified;
+    private String description;
 }

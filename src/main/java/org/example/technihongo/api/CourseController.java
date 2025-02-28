@@ -6,7 +6,6 @@ import org.example.technihongo.dto.*;
 import org.example.technihongo.entities.Course;
 import org.example.technihongo.response.ApiResponse;
 import org.example.technihongo.services.interfaces.CourseService;
-import org.example.technihongo.services.interfaces.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -23,9 +22,6 @@ public class CourseController {
     private CourseService courseService;
     @Autowired
     private JwtUtil jwtUtil;
-    @Autowired
-    private UserService userService;
-
     @GetMapping("/all")
     public ResponseEntity<ApiResponse> getAllCourses(@RequestHeader("Authorization") String authorizationHeader) throws Exception {
         try{

@@ -2,9 +2,6 @@ package org.example.technihongo.api;
 
 import org.example.technihongo.dto.FlashcardSetRequestDTO;
 import org.example.technihongo.dto.FlashcardSetResponseDTO;
-import org.example.technihongo.entities.Student;
-import org.example.technihongo.entities.StudentFlashcardSet;
-import org.example.technihongo.entities.StudyPlan;
 import org.example.technihongo.exception.ResourceNotFoundException;
 import org.example.technihongo.exception.UnauthorizedAccessException;
 import org.example.technihongo.response.ApiResponse;
@@ -29,20 +26,20 @@ public class StudentFlashcardSetController {
             @RequestBody FlashcardSetRequestDTO request) {
         try {
             FlashcardSetResponseDTO response = studentFlashcardSetService.createFlashcardSet(studentId, request);
-            return ResponseEntity.ok(ApiResponse.<FlashcardSetResponseDTO>builder()
+            return ResponseEntity.ok(ApiResponse.builder()
                     .success(true)
                     .message("Flashcard set created successfully")
                     .data(response)
                     .build());
         } catch (RuntimeException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(ApiResponse.<FlashcardSetResponseDTO>builder()
+                    .body(ApiResponse.builder()
                             .success(false)
                             .message("Failed to create flashcard set: " + e.getMessage())
                             .build());
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(ApiResponse.<FlashcardSetResponseDTO>builder()
+                    .body(ApiResponse.builder()
                             .success(false)
                             .message("Internal Server Error: " + e.getMessage())
                             .build());

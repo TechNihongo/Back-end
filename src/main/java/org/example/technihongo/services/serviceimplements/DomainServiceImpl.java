@@ -2,10 +2,8 @@ package org.example.technihongo.services.serviceimplements;
 
 import org.example.technihongo.dto.DomainRequestDTO;
 import org.example.technihongo.dto.DomainResponseDTO;
-import org.example.technihongo.entities.Course;
 import org.example.technihongo.entities.Domain;
 import org.example.technihongo.exception.ResourceNotFoundException;
-import org.example.technihongo.repositories.CourseRepository;
 import org.example.technihongo.repositories.DomainRepository;
 import org.example.technihongo.services.interfaces.DomainService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,8 +19,6 @@ import java.util.stream.Collectors;
 public class DomainServiceImpl implements DomainService {
     @Autowired
     private DomainRepository domainRepository;
-    @Autowired
-    private CourseRepository courseRepository;
     @Override
     public DomainResponseDTO createDomain(DomainRequestDTO request) {
         Domain domain = new Domain();

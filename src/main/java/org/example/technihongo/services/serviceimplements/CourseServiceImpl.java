@@ -5,7 +5,6 @@ import org.example.technihongo.dto.CoursePublicDTO;
 import org.example.technihongo.dto.CreateCourseDTO;
 import org.example.technihongo.dto.UpdateCourseDTO;
 import org.example.technihongo.entities.Course;
-import org.example.technihongo.entities.Domain;
 import org.example.technihongo.repositories.*;
 import org.example.technihongo.services.interfaces.CourseService;
 import org.springframework.beans.factory.annotation.Autowired;

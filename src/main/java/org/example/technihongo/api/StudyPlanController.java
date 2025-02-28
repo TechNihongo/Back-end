@@ -1,12 +1,8 @@
 package org.example.technihongo.api;
 
 import lombok.RequiredArgsConstructor;
-import org.example.technihongo.dto.CreateLessonDTO;
 import org.example.technihongo.dto.CreateStudyPlanDTO;
-import org.example.technihongo.dto.UpdateLessonDTO;
 import org.example.technihongo.dto.UpdateStudyPlanDTO;
-import org.example.technihongo.entities.Course;
-import org.example.technihongo.entities.Lesson;
 import org.example.technihongo.entities.StudyPlan;
 import org.example.technihongo.response.ApiResponse;
 import org.example.technihongo.services.interfaces.StudyPlanService;

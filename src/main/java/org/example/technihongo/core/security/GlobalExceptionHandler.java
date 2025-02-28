@@ -1,6 +1,5 @@
 package org.example.technihongo.core.security;
 
-import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
 import org.example.technihongo.response.ApiResponse;
 import org.springframework.http.HttpStatus;
