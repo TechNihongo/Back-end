@@ -43,6 +43,18 @@ public class LearningResource {
     @Column(name = "is_premium")
     private boolean isPremium;
 
+    @Column(name = "video_url")
+    private String videoUrl;
+
+    @Column(name = "video_filename", length = 100)
+    private String videoFilename;
+
+    @Column(name = "pdf_url")
+    private String pdfUrl;
+
+    @Column(name = "pdf_filename", length = 100)
+    private String pdfFilename;
+
     @CreationTimestamp
     @Column(name = "created_at")
     private LocalDateTime createdAt;

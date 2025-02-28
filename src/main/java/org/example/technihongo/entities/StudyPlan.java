@@ -16,27 +16,32 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 public class StudyPlan {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "study_plan_id")
     private Integer studyPlanId;
 
     @NotNull
+    @ManyToOne
+    @JoinColumn(name = "course_id", nullable = false, referencedColumnName = "course_id")
+    private Course course;
+
+    @NotNull
     @Size(max = 50)
     @Column(name = "title", nullable = false, length = 50)
     private String title;
 
-    @Size(max = 255)
-    @Column(name = "description", length = 255)
+    @Size(max = 50)
+    @Column(name = "description", length = 50)
     private String description;
 
     @NotNull
     @Column(name = "hours_per_day")
     private Integer hoursPerDay;
 
-    @NotNull
-    @Column(name = "total_months")
-    private Integer totalMonths;
+    @Column(name = "is_default")
+    private boolean isDefault;
 
     @Builder.Default
     @Column(name = "is_active")

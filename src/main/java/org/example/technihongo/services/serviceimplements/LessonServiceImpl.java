@@ -4,9 +4,9 @@ import lombok.RequiredArgsConstructor;
 import org.example.technihongo.dto.CreateLessonDTO;
 import org.example.technihongo.dto.UpdateLessonDTO;
 import org.example.technihongo.dto.UpdateLessonOrderDTO;
-import org.example.technihongo.entities.CourseStudyPlan;
+import org.example.technihongo.entities.StudyPlan;
 import org.example.technihongo.entities.Lesson;
-import org.example.technihongo.repositories.CourseStudyPlanRepository;
+import org.example.technihongo.repositories.StudyPlanRepository;
 import org.example.technihongo.repositories.LessonRepository;
 import org.example.technihongo.services.interfaces.LessonService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,7 +25,7 @@ public class LessonServiceImpl implements LessonService {
     @Autowired
     private LessonRepository lessonRepository;
     @Autowired
-    private CourseStudyPlanRepository courseStudyPlanRepository;
+    private StudyPlanRepository studyPlanRepository;
 
     @Override
     public Optional<Lesson> getLessonById(Integer lessonId) {
@@ -33,21 +33,21 @@ public class LessonServiceImpl implements LessonService {
     }
 
     @Override
-    public List<Lesson> getLessonListByCourseStudyPlanId(Integer coursePlanId) {
-        return lessonRepository.findByCourseStudyPlan_CoursePlanIdOrderByLessonOrderAsc(coursePlanId);
+    public List<Lesson> getLessonListByStudyPlanId(Integer studyPlanId) {
+        return lessonRepository.findByStudyPlan_StudyPlanIdOrderByLessonOrderAsc(studyPlanId);
     }
 
     @Override
     public Lesson createLesson(CreateLessonDTO createLessonDTO) {
-        CourseStudyPlan csp = courseStudyPlanRepository.findByCoursePlanId(createLessonDTO.getCoursePlanId());
+        StudyPlan csp = studyPlanRepository.findByStudyPlanId(createLessonDTO.getStudyPlanId());
         if(csp == null){
-            throw new RuntimeException("CourseStudyPlan ID not found!");
+            throw new RuntimeException("StudyPlan ID not found!");
         }
 
         Lesson lesson = lessonRepository.save(Lesson.builder()
-                .courseStudyPlan(csp)
+                .studyPlan(csp)
                 .title(createLessonDTO.getTitle())
-                .lessonOrder(lessonRepository.countLessonByCourseStudyPlan(csp) + 1)
+                .lessonOrder(lessonRepository.countLessonByStudyPlan(csp) + 1)
                 .build());
 
         return lesson;
@@ -68,12 +68,12 @@ public class LessonServiceImpl implements LessonService {
 
     @Override
     @Transactional
-    public void updateLessonOrder(Integer coursePlanId, UpdateLessonOrderDTO updateLessonOrderDTO) {
-        if(courseStudyPlanRepository.findByCoursePlanId(coursePlanId) == null){
-            throw new RuntimeException("CourseStudyPlan ID not found!");
+    public void updateLessonOrder(Integer studyPlanId, UpdateLessonOrderDTO updateLessonOrderDTO) {
+        if(studyPlanRepository.findByStudyPlanId(studyPlanId) == null){
+            throw new RuntimeException("StudyPlan ID not found!");
         }
 
-        List<Lesson> lessons = lessonRepository.findByCourseStudyPlan_CoursePlanIdOrderByLessonOrderAsc(coursePlanId);
+        List<Lesson> lessons = lessonRepository.findByStudyPlan_StudyPlanIdOrderByLessonOrderAsc(studyPlanId);
         List<Integer> newOrder = updateLessonOrderDTO.getNewLessonOrder();
 
         if (lessons.size() != newOrder.size()) {

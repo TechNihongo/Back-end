@@ -63,6 +63,10 @@ public class User {
     @Column(name = "profile_img")
     private String profileImg;
 
+    @Builder.Default
+    @Column(name = "is_verified")
+    private boolean isVerified = false;
+
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
     private Student student;
 

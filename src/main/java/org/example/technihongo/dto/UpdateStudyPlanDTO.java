@@ -10,7 +10,7 @@ import lombok.NoArgsConstructor;
 public class UpdateStudyPlanDTO {
     private String title;
     private String description;
-    private Integer hours_per_day;
-    private Integer total_months;
+    private Integer hoursPerDay;
+    private Boolean isDefault;
     private Boolean isActive;
 }

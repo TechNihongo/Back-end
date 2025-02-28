@@ -33,7 +33,7 @@ public class FolderItemController {
                             .build());
         }
     }
-    @PostMapping("/remove")
+    @DeleteMapping("/remove")
     public ResponseEntity<ApiResponse> removeFolderItem(
             @RequestBody RemoveItemDTO request) {
         try {
