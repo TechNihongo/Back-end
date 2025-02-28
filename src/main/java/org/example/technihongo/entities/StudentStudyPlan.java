@@ -26,12 +26,12 @@ public class StudentStudyPlan {
     private Student student;
 
     @ManyToOne
-    @JoinColumn(name = "course_plan_id", nullable = false, referencedColumnName = "course_plan_id")
-    private CourseStudyPlan courseStudyPlan;
+    @JoinColumn(name = "study_plan_id", nullable = false, referencedColumnName = "study_plan_id")
+    private StudyPlan studyPlan;
 
     @ManyToOne
-    @JoinColumn(name = "previous_plan_id", referencedColumnName = "course_plan_id")
-    private CourseStudyPlan previousPlan;
+    @JoinColumn(name = "previous_plan_id", referencedColumnName = "study_plan_id")
+    private StudyPlan previousPlan;
 
     @Column(name = "start_date")
     private LocalDateTime startDate;

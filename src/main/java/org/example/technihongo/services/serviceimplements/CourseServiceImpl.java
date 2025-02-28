@@ -110,7 +110,7 @@ public class CourseServiceImpl implements CourseService {
         }
 
         boolean hasStudents = studentStudyPlanRepository.findAll().stream()
-                .anyMatch(s -> s.getCourseStudyPlan().getCourse().getCourseId().equals(courseId)
+                .anyMatch(s -> s.getStudyPlan().getCourse().getCourseId().equals(courseId)
                             && s.getStatus().equalsIgnoreCase("Active"));
 
         if (Boolean.FALSE.equals(updateCourseDTO.isPublic()) && hasStudents) {

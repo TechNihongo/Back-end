@@ -6,7 +6,6 @@ import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
@@ -24,8 +23,8 @@ public class Lesson {
 
     @ManyToOne
     @NotNull
-    @JoinColumn(name = "course_plan_id", nullable = false, referencedColumnName = "course_plan_id")
-    private CourseStudyPlan courseStudyPlan;
+    @JoinColumn(name = "study_plan_id", nullable = false, referencedColumnName = "study_plan_id")
+    private StudyPlan studyPlan;
 
     @Column(name = "title")
     private String title;

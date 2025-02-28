@@ -10,8 +10,8 @@ import java.util.Optional;
 
 public interface LessonService {
     Optional<Lesson> getLessonById(Integer lessonId);
-    List<Lesson> getLessonListByCourseStudyPlanId(Integer coursePlanId);
+    List<Lesson> getLessonListByStudyPlanId(Integer studyPlanId);
     Lesson createLesson(CreateLessonDTO createLessonDTO);
     void updateLesson(Integer lessonId, UpdateLessonDTO updateLessonDTO);
-    void updateLessonOrder(Integer coursePlanId, UpdateLessonOrderDTO updateLessonOrderDTO);
+    void updateLessonOrder(Integer studyPlanId, UpdateLessonOrderDTO updateLessonOrderDTO);
 }

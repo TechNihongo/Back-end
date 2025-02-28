@@ -8,8 +8,8 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class CreateStudyPlanDTO {
+    private Integer courseId;
     private String title;
     private String description;
-    private Integer hours_per_day;
-    private Integer total_months;
+    private Integer hoursPerDay;
 }

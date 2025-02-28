@@ -48,7 +48,7 @@ public class LessonController {
     @GetMapping("/csp/{id}")
     public ResponseEntity<ApiResponse> getLessonListByCourseStudyPlanId(@PathVariable Integer id) throws Exception {
         try{
-            List<Lesson> lessonList = lessonService.getLessonListByCourseStudyPlanId(id);
+            List<Lesson> lessonList = lessonService.getLessonListByStudyPlanId(id);
             if(lessonList.isEmpty()){
                 return ResponseEntity.ok(ApiResponse.builder()
                         .success(false)
