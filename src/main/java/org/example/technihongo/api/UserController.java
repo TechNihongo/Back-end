@@ -3,7 +3,6 @@ package org.example.technihongo.api;
 import lombok.RequiredArgsConstructor;
 import org.example.technihongo.core.mail.EmailService;
 import org.example.technihongo.core.security.JWTHelper;
-import org.example.technihongo.core.security.JwtUtil;
 import org.example.technihongo.core.security.MyUserDetailsService;
 import org.example.technihongo.core.security.TokenBlacklist;
 import org.example.technihongo.dto.*;
@@ -16,10 +15,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
-import java.util.Date;
 import java.util.List;
 
 @RestController
@@ -31,8 +28,8 @@ public class UserController {
     private UserService userService;
     @Autowired
     private MyUserDetailsService myUserDetailsService;
-    @Autowired
-    private JwtUtil jwtUtil;
+    
+
     @Autowired
     private JWTHelper jwtHelper;
     @Autowired

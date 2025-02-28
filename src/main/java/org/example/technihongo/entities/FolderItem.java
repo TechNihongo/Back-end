@@ -31,6 +31,7 @@ public class FolderItem {
     private StudentFlashcardSet studentFlashcardSet;
 
 
+    @CreationTimestamp
     @Column(name = "added_at")
-    private LocalDateTime addedAt = LocalDateTime.now();
+    private LocalDateTime addedAt;
 }

@@ -12,7 +12,6 @@ import org.example.technihongo.repositories.StudentRepository;
 import org.example.technihongo.repositories.UserRepository;
 import org.example.technihongo.services.interfaces.StudentService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -29,9 +28,7 @@ public class StudentServiceImpl implements StudentService {
     @Autowired
     private DifficultyLevelRepository difficultyLevelRepository;
 
-    @Autowired
-    private PasswordEncoder passwordEncoder;
-
+    
     @Override
     @Transactional
     public UpdateProfileDTO setDailyGoal(Integer studentId, Integer dailyGoal) {

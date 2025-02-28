@@ -3,7 +3,6 @@ package org.example.technihongo.services.serviceimplements;
 import lombok.RequiredArgsConstructor;
 import org.example.technihongo.dto.CreatePathCourseDTO;
 import org.example.technihongo.dto.UpdatePathCourseOrderDTO;
-import org.example.technihongo.entities.Lesson;
 import org.example.technihongo.entities.PathCourse;
 import org.example.technihongo.repositories.CourseRepository;
 import org.example.technihongo.repositories.LearningPathRepository;

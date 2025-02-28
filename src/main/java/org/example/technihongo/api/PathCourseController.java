@@ -1,11 +1,8 @@
 package org.example.technihongo.api;
 
 import lombok.RequiredArgsConstructor;
-import org.example.technihongo.dto.CreateLessonDTO;
 import org.example.technihongo.dto.CreatePathCourseDTO;
-import org.example.technihongo.dto.UpdateLessonOrderDTO;
 import org.example.technihongo.dto.UpdatePathCourseOrderDTO;
-import org.example.technihongo.entities.Lesson;
 import org.example.technihongo.entities.PathCourse;
 import org.example.technihongo.response.ApiResponse;
 import org.example.technihongo.services.interfaces.LearningPathService;
@@ -16,7 +13,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/path-course")

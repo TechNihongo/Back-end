@@ -15,4 +15,6 @@ public class LoginResponseDTO {
     private String role;
     private boolean success;
     private String message;
+
+
 }

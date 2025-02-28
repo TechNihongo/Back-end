@@ -8,7 +8,6 @@ import org.example.technihongo.entities.CourseStudyPlan;
 import org.example.technihongo.entities.Lesson;
 import org.example.technihongo.repositories.CourseStudyPlanRepository;
 import org.example.technihongo.repositories.LessonRepository;
-import org.example.technihongo.services.interfaces.CourseStudyPlanService;
 import org.example.technihongo.services.interfaces.LessonService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;

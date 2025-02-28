@@ -21,7 +21,6 @@ public class StudentFolder {
     private Integer folderId;
 
     @ManyToOne
-    @NonNull
     @JoinColumn(name = "student_id", nullable = false, referencedColumnName = "student_id")
     private Student student;
 

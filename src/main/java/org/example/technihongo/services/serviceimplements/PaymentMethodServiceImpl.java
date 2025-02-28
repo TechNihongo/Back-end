@@ -2,7 +2,6 @@ package org.example.technihongo.services.serviceimplements;
 
 import org.example.technihongo.dto.UpdatePaymentMethodRequestDTO;
 import org.example.technihongo.entities.PaymentMethod;
-import org.example.technihongo.enums.PaymentMethodType;
 import org.example.technihongo.repositories.PaymentMethodRepository;
 import org.example.technihongo.services.interfaces.PaymentMethodService;
 import org.springframework.beans.factory.annotation.Autowired;

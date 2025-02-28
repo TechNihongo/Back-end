@@ -1,9 +1,7 @@
 package org.example.technihongo.api;
 
 import org.example.technihongo.dto.*;
-import org.example.technihongo.entities.LessonResource;
 import org.example.technihongo.entities.Question;
-import org.example.technihongo.entities.StudyPlan;
 import org.example.technihongo.response.ApiResponse;
 import org.example.technihongo.services.interfaces.QuestionService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,7 +11,6 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/question")
