@@ -1,5 +1,6 @@
 package org.example.technihongo.services.serviceimplements;
 
+import org.example.technihongo.dto.ProfileDTO;
 import org.example.technihongo.dto.UpdateProfileDTO;
 import org.example.technihongo.entities.DifficultyLevel;
 import org.example.technihongo.entities.Student;
@@ -132,6 +133,37 @@ public class StudentServiceImpl implements StudentService {
         }
 
         studentRepository.save(student);
+    }
+
+    @Override
+    public ProfileDTO getStudentProfile(Integer studentId) {
+        if (studentId == null) {
+            throw new IllegalArgumentException("Student ID cannot be null");
+        }
+
+        Student student = studentRepository.findById(studentId)
+                .orElseThrow(() -> new ResourceNotFoundException("Student not found with id: " + studentId));
+
+        User user = student.getUser();
+        if (user == null) {
+            throw new ResourceNotFoundException("User not found for student with id: " + studentId);
+        }
+
+        ProfileDTO profileDTO = new ProfileDTO();
+        profileDTO.setUserName(user.getUserName());
+        profileDTO.setProfileImg(user.getProfileImg());
+        profileDTO.setBio(student.getBio());
+        profileDTO.setDob(student.getUser().getDob());
+        profileDTO.setDailyGoal(student.getDailyGoal());
+
+        if (student.getDifficultyLevel() != null) {
+            profileDTO.setDifficultyLevel(student.getDifficultyLevel().getTag());
+        }
+
+        profileDTO.setOccupation(student.getOccupation());
+        profileDTO.setReminderTime(student.getReminderTime());
+
+        return profileDTO;
     }
 
 
