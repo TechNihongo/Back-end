@@ -10,6 +10,8 @@ public interface UserService {
     LoginResponseDTO login(String email, String password) throws Exception;
 
     List<User> userList();
+    List<User> getStudentUsers();
+    List<User> getContentManagerUsers();
 
     LoginResponseDTO register(RegistrationDTO registrationDTO);
 

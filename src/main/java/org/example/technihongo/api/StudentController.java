@@ -3,6 +3,7 @@ package org.example.technihongo.api;
 
 import org.example.technihongo.dto.DailyGoalRequest;
 import org.example.technihongo.dto.DifficultyLevelRequest;
+import org.example.technihongo.dto.ProfileDTO;
 import org.example.technihongo.dto.UpdateProfileDTO;
 import org.example.technihongo.enums.DifficultyLevelEnum;
 import org.example.technihongo.exception.InvalidDifficultyLevelException;
@@ -110,6 +111,30 @@ public class StudentController {
                     .body(ApiResponse.builder()
                             .success(false)
                             .message("Failed to update profile: " + e.getMessage())
+                            .build());
+        }
+    }
+
+    @GetMapping("/profile/{studentId}")
+    public ResponseEntity<ApiResponse> getProfile(@PathVariable Integer studentId) {
+        try {
+            ProfileDTO profileDTO = studentService.getStudentProfile(studentId);
+            return ResponseEntity.ok(ApiResponse.builder()
+                    .success(true)
+                    .message("Profile retrieved successfully")
+                    .data(profileDTO)
+                    .build());
+        } catch (ResourceNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(ApiResponse.builder()
+                            .success(false)
+                            .message("Student not found: " + e.getMessage())
+                            .build());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponse.builder()
+                            .success(false)
+                            .message("Failed to retrieve profile: " + e.getMessage())
                             .build());
         }
     }

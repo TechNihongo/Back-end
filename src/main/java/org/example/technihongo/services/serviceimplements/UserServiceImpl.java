@@ -282,6 +282,16 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    public List<User> getStudentUsers() {
+        return userRepository.findByRole_RoleId(3);
+    }
+
+    @Override
+    public List<User> getContentManagerUsers() {
+        return userRepository.findByRole_RoleId(2);
+    }
+
+    @Override
     public String forgotPass(String email) {
         User user = userRepository.findUserByEmail(email);
 

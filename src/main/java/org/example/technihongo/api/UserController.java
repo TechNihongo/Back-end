@@ -138,6 +138,42 @@ public class UserController {
                             .build());
         }
     }
+    @GetMapping("/get-student")
+    public ResponseEntity<ApiResponse> getStudentUsers() {
+        try {
+            List<User> students = userService.getStudentUsers();
+            return ResponseEntity.ok(ApiResponse.builder()
+                    .success(true)
+                    .message("Student users retrieved successfully")
+                    .data(students)
+                    .build());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponse.builder()
+                            .success(false)
+                            .message("Failed to retrieve student users: " + e.getMessage())
+                            .build());
+        }
+    }
+
+    @GetMapping("/get-content-manager")
+    public ResponseEntity<ApiResponse> getContentManagerUsers() {
+        try {
+            List<User> contentManagers = userService.getContentManagerUsers();
+            return ResponseEntity.ok(ApiResponse.builder()
+                    .success(true)
+                    .message("Content manager users retrieved successfully")
+                    .data(contentManagers)
+                    .build());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponse.builder()
+                            .success(false)
+                            .message("Failed to retrieve content manager users: " + e.getMessage())
+                            .build());
+        }
+    }
+
 
     @PatchMapping("/{userId}/username")
     public ResponseEntity<ApiResponse> updateUserName(
