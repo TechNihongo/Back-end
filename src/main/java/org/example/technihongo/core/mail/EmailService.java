@@ -20,4 +20,19 @@ public class EmailService {
 
         mailSender.send(message);
     }
+
+    public void sendVerificationEmail(String email, String token) {
+        SimpleMailMessage message = new SimpleMailMessage();
+        String link = "http://localhost:3000/api/user/verify-email?token=" + token;
+        String subject = "Verify your email";
+        String body = "Click the link to verify your email: " + link;
+
+        message.setTo(email);
+        message.setSubject(subject);
+        message.setText(body);
+        message.setFrom("songlongdiamond105@gmail.com");
+
+        mailSender.send(message);
+    }
+
 }

@@ -10,6 +10,7 @@ import org.example.technihongo.entities.User;
 import org.example.technihongo.exception.ResourceNotFoundException;
 import org.example.technihongo.repositories.AuthTokenRepository;
 import org.example.technihongo.repositories.RoleRepository;
+import org.example.technihongo.repositories.StudentRepository;
 import org.example.technihongo.repositories.UserRepository;
 import org.example.technihongo.services.interfaces.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,6 +37,8 @@ public class UserServiceImpl implements UserService {
     private RoleRepository roleRepository;
     @Autowired
     private AuthTokenRepository authTokenRepository;
+    @Autowired
+    private StudentRepository studentRepository;
 
     @Autowired
     private BCryptPasswordEncoder passwordEncoder;
@@ -47,6 +50,10 @@ public class UserServiceImpl implements UserService {
     public LoginResponseDTO login(String email, String password) throws Exception {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new Exception("User does not exist"));
+
+        if (!user.isVerified()){
+            throw new Exception("Account not yet verified");
+        }
 
         if (!passwordEncoder.matches(password, user.getPassword())) {
             throw new Exception("Invalid password");
@@ -68,12 +75,35 @@ public class UserServiceImpl implements UserService {
             if (!registrationDTO.getPassword().equals(registrationDTO.getConfirmPassword())) {
                 throw new IllegalArgumentException("Password and Confirm Password do not match");
             }
-            if (userRepository.existsByEmail(registrationDTO.getEmail())) {
-                throw new RuntimeException("Email already exists", new IllegalArgumentException("Email: " + registrationDTO.getEmail()));
-            }
             if (userRepository.existsByUserName(registrationDTO.getUserName())) {
                 throw new RuntimeException("Username already exists", new IllegalArgumentException("Username: " + registrationDTO.getUserName()));
             }
+
+            if (userRepository.existsByEmail(registrationDTO.getEmail())) {
+                User existingUser = userRepository.findUserByEmail(registrationDTO.getEmail());
+                if (existingUser.isVerified()) {
+                    throw new RuntimeException("Email already exists", new IllegalArgumentException("Email: " + registrationDTO.getEmail()));
+                }
+
+                existingUser.setUserName(registrationDTO.getUserName());
+                existingUser.setPassword(passwordEncoder.encode(registrationDTO.getPassword()));
+                existingUser.setDob(registrationDTO.getDob());
+                userRepository.save(existingUser);
+
+                Student student = studentRepository.findByUser_UserId(existingUser.getUserId());
+                student.setOccupation(registrationDTO.getOccupation());
+                studentRepository.save(student);
+
+                return new LoginResponseDTO(
+                        existingUser.getUserId(),
+                        existingUser.getUserName(),
+                        existingUser.getEmail(),
+                        existingUser.getRole().getRoleName(),
+                        true,
+                        "Registration updated. Please check your email for verification."
+                );
+            }
+
             Role defaultRole;
             try {
                 defaultRole = roleRepository.findById(3)
@@ -106,8 +136,10 @@ public class UserServiceImpl implements UserService {
                         savedUser.getEmail(),
                         savedUser.getRole().getRoleName(),
                         true,
-                        "Registration Successful"
+                        "Registration Successful. Please check email to verify your account!"
                 );
+
+
             } catch (DataIntegrityViolationException e) {
                 throw new RuntimeException("Failed to save user data", e);
             }
@@ -240,6 +272,7 @@ public class UserServiceImpl implements UserService {
                 .isActive(true)
                 .role(contentManagerRole)
                 .createdAt(LocalDateTime.now())
+                .isVerified(true)
                 .build();
 
         try {
@@ -348,9 +381,26 @@ public class UserServiceImpl implements UserService {
     }
 
     private String generateToken() {
-        StringBuilder token = new StringBuilder();
-        return token.append(UUID.randomUUID())
-                .append(UUID.randomUUID()).toString();
+        String token = String.valueOf(UUID.randomUUID()) +
+                UUID.randomUUID();
+        return token;
+    }
+
+    @Override
+    public void verifyEmailToken(String token) {
+        AuthToken authToken = authTokenRepository.findByTokenAndTokenTypeAndIsActive(token, "EMAIL_VERIFICATION", true)
+                .orElseThrow(() -> new RuntimeException("Invalid or expired token."));
+
+        if (authToken.getExpiresAt().isBefore(LocalDateTime.now())) {
+            throw new RuntimeException("Token has expired.");
+        }
+
+        User user = authToken.getUser();
+        user.setVerified(true);
+        userRepository.save(user);
+
+        authToken.setIsActive(false);
+        authTokenRepository.save(authToken);
     }
 
 }

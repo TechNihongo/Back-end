@@ -7,4 +7,7 @@ public interface AuthTokenService {
     void saveLoginToken(CreateLoginTokenDTO createLoginTokenDTO);
     void setTokenStatus(TokenStatusDTO tokenStatus);
     void updateLoginTokenStatus(Integer userId);
+    String createEmailVerifyToken(Integer userId);
+    void deactivateAllTokensByUserId(Integer userId, String tokenType);
+    String resendVerificationEmail(String email);
 }
