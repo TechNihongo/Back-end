@@ -292,6 +292,11 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    public User getUserById(Integer userId) {
+        return userRepository.findByUserId(userId);
+    }
+
+    @Override
     public String forgotPass(String email) {
         User user = userRepository.findUserByEmail(email);
 
