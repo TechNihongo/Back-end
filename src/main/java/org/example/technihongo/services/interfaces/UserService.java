@@ -12,6 +12,8 @@ public interface UserService {
     List<User> userList();
     List<User> getStudentUsers();
     List<User> getContentManagerUsers();
+    User getUserById(Integer userId);
+
 
     LoginResponseDTO register(RegistrationDTO registrationDTO);
 

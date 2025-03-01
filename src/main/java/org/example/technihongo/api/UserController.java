@@ -114,6 +114,31 @@ public class UserController {
         }
     }
 
+    @GetMapping("/getUser/{userId}")
+    public ResponseEntity<ApiResponse> getUserById(@PathVariable Integer userId) {
+        try {
+            User user = userService.getUserById(userId);
+            if (user == null) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(ApiResponse.builder()
+                                .success(false)
+                                .message("User not found with id: " + userId)
+                                .build());
+            }
+            return ResponseEntity.ok(ApiResponse.builder()
+                    .success(true)
+                    .message("User retrieved successfully")
+                    .data(user)
+                    .build());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponse.builder()
+                            .success(false)
+                            .message("Failed to retrieve user: " + e.getMessage())
+                            .build());
+        }
+    }
+
     @GetMapping("/all")
     public ResponseEntity<ApiResponse> getAllUser() throws Exception {
         try{
