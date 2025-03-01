@@ -14,7 +14,6 @@ public interface UserService {
     List<User> getContentManagerUsers();
     User getUserById(Integer userId);
 
-
     LoginResponseDTO register(RegistrationDTO registrationDTO);
 
     LoginResponseDTO authenticateWithGoogle(GoogleTokenDTO tokenDTO);
@@ -27,4 +26,6 @@ public interface UserService {
 
     String forgotPass(String email);
     String resetPass(String token, PasswordResetDTO passwordResetDTO);
+
+    void verifyEmailToken(String token);
 }

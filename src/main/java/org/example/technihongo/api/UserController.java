@@ -69,6 +69,9 @@ public class UserController {
             LoginResponseDTO response = userService.register(registrationDTO);
 
             if (response.isSuccess()) {
+                authTokenService.deactivateAllTokensByUserId(response.getUserId(), "EMAIL_VERIFICATION");
+                String token = authTokenService.createEmailVerifyToken(response.getUserId());
+                emailService.sendVerificationEmail(response.getEmail(), token);
                 return ResponseEntity.ok(response);
             } else {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
@@ -284,7 +287,7 @@ public class UserController {
         }
     }
 
-    @PutMapping("/reset-password")
+    @PatchMapping("/reset-password")
     public ResponseEntity<ApiResponse> resetPass(@RequestParam String token, @RequestBody PasswordResetDTO passwordResetDTO) {
         try{
             String message = userService.resetPass(token, passwordResetDTO);
@@ -301,4 +304,50 @@ public class UserController {
                             .build());
         }
     }
+
+    @PostMapping("/resend-verification-email")
+    public ResponseEntity<ApiResponse> resendVerificationEmail(@RequestParam String email) {
+        try {
+            String token = authTokenService.resendVerificationEmail(email);
+            emailService.sendVerificationEmail(email, token);
+            return ResponseEntity.ok(ApiResponse.builder()
+                    .success(true)
+                    .message("Verification email resent successfully.")
+                    .build());
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ApiResponse.builder()
+                .success(false)
+                .message("Failed to resend verification email: " + e.getMessage())
+                .build());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponse.builder()
+                            .success(false)
+                            .message("Internal Server Error: " + e.getMessage())
+                            .build());
+        }
+    }
+
+    @PatchMapping("/verify-email")
+    public ResponseEntity<ApiResponse> verifyEmail(@RequestParam String token) {
+        try {
+            userService.verifyEmailToken(token);
+            return ResponseEntity.ok(ApiResponse.builder()
+                    .success(true)
+                    .message("Email verified successfully.")
+                    .build());
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ApiResponse.builder()
+                    .success(false)
+                    .message("Failed to resend verification email: " + e.getMessage())
+                    .build());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponse.builder()
+                            .success(false)
+                            .message("Internal Server Error: " + e.getMessage())
+                            .build());
+        }
+    }
+
 }

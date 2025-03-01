@@ -1,9 +1,11 @@
 package org.example.technihongo.services.serviceimplements;
 
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.example.technihongo.dto.CreateLoginTokenDTO;
 import org.example.technihongo.dto.TokenStatusDTO;
 import org.example.technihongo.entities.AuthToken;
+import org.example.technihongo.entities.User;
 import org.example.technihongo.repositories.AuthTokenRepository;
 import org.example.technihongo.repositories.UserRepository;
 import org.example.technihongo.services.interfaces.AuthTokenService;
@@ -13,6 +15,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -55,5 +58,40 @@ public class AuthTokenServiceImpl implements AuthTokenService {
         }
 
         authTokenRepository.saveAll(authTokenList);
+    }
+
+    @Override
+    public String createEmailVerifyToken(Integer userId) {
+        String token = UUID.randomUUID().toString();
+        AuthToken authToken = new AuthToken();
+        authToken.setUser(userRepository.findById(userId).get());
+        authToken.setToken(token);
+        authToken.setTokenType("EMAIL_VERIFICATION");
+        authToken.setExpiresAt(LocalDateTime.now().plusHours(24));
+        authToken.setIsActive(true);
+        authTokenRepository.save(authToken);
+        return token;
+    }
+
+    @Override
+    public void deactivateAllTokensByUserId(Integer userId, String tokenType) {
+        List<AuthToken> tokens = authTokenRepository.findAllByUser_UserIdAndTokenType(userId, tokenType);
+        for (AuthToken token : tokens) {
+            token.setIsActive(false);
+        }
+        authTokenRepository.saveAll(tokens);
+    }
+
+    @Override
+    public String resendVerificationEmail(String email) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found."));
+
+        if (user.isVerified()) {
+            throw new RuntimeException("Email is already verified.");
+        }
+
+        deactivateAllTokensByUserId(user.getUserId(), "EMAIL_VERIFICATION");
+        return createEmailVerifyToken(user.getUserId());
     }
 }
