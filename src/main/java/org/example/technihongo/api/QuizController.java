@@ -39,7 +39,7 @@ public class QuizController {
                     } else {
                         return ResponseEntity.ok(ApiResponse.builder()
                                 .success(true)
-                                .message("Get All Courses")
+                                .message("Get All Quizzes")
                                 .data(quizList)
                                 .build());
                     }

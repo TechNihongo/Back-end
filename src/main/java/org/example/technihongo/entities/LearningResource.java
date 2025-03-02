@@ -37,11 +37,13 @@ public class LearningResource {
     @JoinColumn(name = "creator_id", referencedColumnName = "user_id", nullable = false)
     private User creator;
 
+    @Builder.Default
     @Column(name = "is_public")
-    private boolean isPublic;
+    private boolean isPublic = false;
 
+    @Builder.Default
     @Column(name = "is_premium")
-    private boolean isPremium;
+    private boolean isPremium = false;
 
     @Column(name = "video_url")
     private String videoUrl;

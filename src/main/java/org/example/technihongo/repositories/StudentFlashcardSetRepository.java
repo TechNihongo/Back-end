@@ -11,4 +11,5 @@ public interface StudentFlashcardSetRepository extends JpaRepository<StudentFlas
     List<StudentFlashcardSet> findByCreatorStudentId(Integer studentId);
 
     List<StudentFlashcardSet> findByTitleContainingIgnoreCase(String keyword);
+    Boolean existsByLearningResource_ResourceId(Integer learningResourceId);
 }
