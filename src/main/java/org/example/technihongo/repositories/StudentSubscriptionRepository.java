@@ -8,4 +8,5 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface StudentSubscriptionRepository extends JpaRepository<StudentSubscription, Integer> {
     boolean existsBySubscriptionPlan(SubscriptionPlan subscriptionPlan);
+    boolean existsByStudent_StudentIdAndIsActive(Integer studentId, boolean isActive);
 }
