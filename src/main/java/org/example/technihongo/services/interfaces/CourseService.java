@@ -16,4 +16,5 @@ public interface CourseService {
     Course createCourse(Integer creatorId, CreateCourseDTO createCourseDTO);
     void updateCourse(Integer courseId, UpdateCourseDTO updateCourseDTO);
     List<Course> searchCourseByTitle(String keyword);
+    List<Course> getListCoursesByCreatorId(Integer creatorId);
 }

@@ -3,6 +3,7 @@ package org.example.technihongo.api;
 import lombok.RequiredArgsConstructor;
 import org.example.technihongo.core.security.JwtUtil;
 import org.example.technihongo.dto.*;
+import org.example.technihongo.entities.Course;
 import org.example.technihongo.entities.LearningPath;
 import org.example.technihongo.response.ApiResponse;
 import org.example.technihongo.services.interfaces.LearningPathService;
@@ -212,6 +213,43 @@ public class LearningPathController {
                     .body(ApiResponse.builder()
                             .success(false)
                             .message("Failed to delete LearningPath: " + e.getMessage())
+                            .build());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponse.builder()
+                            .success(false)
+                            .message("Internal Server Error: " + e.getMessage())
+                            .build());
+        }
+    }
+
+    @GetMapping("/creator")
+    public ResponseEntity<ApiResponse> getLearningPathListByCreator(@RequestHeader("Authorization") String authorizationHeader) throws Exception {
+        try{
+            if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
+                String token = authorizationHeader.substring(7);
+                Integer userId = jwtUtil.extractUserId(token);
+
+                List<LearningPath> learningPaths = learningPathService.getListLearningPathsByCreatorId(userId);
+                if (learningPaths.isEmpty()) {
+                    return ResponseEntity.ok(ApiResponse.builder()
+                            .success(false)
+                            .message("List LearningPaths is empty!")
+                            .build());
+                } else {
+                    return ResponseEntity.ok(ApiResponse.builder()
+                            .success(true)
+                            .message("Get LearningPaths List By Creator")
+                            .data(learningPaths)
+                            .build());
+                }
+            }
+            else throw new Exception("Authorization failed!");
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(ApiResponse.builder()
+                            .success(false)
+                            .message("Failed to get LearningPaths: " + e.getMessage())
                             .build());
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)

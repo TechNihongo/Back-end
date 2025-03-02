@@ -137,4 +137,11 @@ public class CourseServiceImpl implements CourseService {
         return courseRepository.findByTitleContainingIgnoreCase(keyword)
                         .stream().filter(Course::isPublic).toList();
     }
+
+    @Override
+    public List<Course> getListCoursesByCreatorId(Integer creatorId) {
+        userRepository.findById(creatorId)
+                .orElseThrow(() -> new RuntimeException("User ID not found."));
+        return courseRepository.findByCreator_UserId(creatorId);
+    }
 }

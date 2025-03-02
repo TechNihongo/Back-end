@@ -189,4 +189,41 @@ public class QuizController {
                             .build());
         }
     }
+
+    @GetMapping("/creator")
+    public ResponseEntity<ApiResponse> getQuizListByCreator(@RequestHeader("Authorization") String authorizationHeader) throws Exception {
+        try{
+            if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
+                String token = authorizationHeader.substring(7);
+                Integer userId = jwtUtil.extractUserId(token);
+
+                List<Quiz> quizList = quizService.getListQuizzesByCreatorId(userId);
+                if (quizList.isEmpty()) {
+                    return ResponseEntity.ok(ApiResponse.builder()
+                            .success(false)
+                            .message("List Quizzes is empty!")
+                            .build());
+                } else {
+                    return ResponseEntity.ok(ApiResponse.builder()
+                            .success(true)
+                            .message("Get Quizzes List By Creator")
+                            .data(quizList)
+                            .build());
+                }
+            }
+            else throw new Exception("Authorization failed!");
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(ApiResponse.builder()
+                            .success(false)
+                            .message("Failed to get Quizzes: " + e.getMessage())
+                            .build());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponse.builder()
+                            .success(false)
+                            .message("Internal Server Error: " + e.getMessage())
+                            .build());
+        }
+    }
 }
