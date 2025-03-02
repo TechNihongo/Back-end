@@ -192,4 +192,41 @@ public class LearningResourceController {
                             .build());
         }
     }
+
+    @GetMapping("/creator")
+    public ResponseEntity<ApiResponse> getLearningResourceListByCreator(@RequestHeader("Authorization") String authorizationHeader) throws Exception {
+        try{
+            if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
+                String token = authorizationHeader.substring(7);
+                Integer userId = jwtUtil.extractUserId(token);
+
+                List<LearningResource> learningResourceList = learningResourceService.getListLearningResourcesByCreatorId(userId);
+                if (learningResourceList.isEmpty()) {
+                    return ResponseEntity.ok(ApiResponse.builder()
+                            .success(false)
+                            .message("List LearningResources is empty!")
+                            .build());
+                } else {
+                    return ResponseEntity.ok(ApiResponse.builder()
+                            .success(true)
+                            .message("Get LearningResources List By Creator")
+                            .data(learningResourceList)
+                            .build());
+                }
+            }
+            else throw new Exception("Authorization failed!");
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(ApiResponse.builder()
+                            .success(false)
+                            .message("Failed to get LearningResources: " + e.getMessage())
+                            .build());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponse.builder()
+                            .success(false)
+                            .message("Internal Server Error: " + e.getMessage())
+                            .build());
+        }
+    }
 }

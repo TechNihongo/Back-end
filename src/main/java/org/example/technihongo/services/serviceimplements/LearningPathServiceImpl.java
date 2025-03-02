@@ -127,4 +127,11 @@ public class LearningPathServiceImpl implements LearningPathService {
         learningPath.setTotalCourses(pathCourseRepository.countByLearningPath_PathId(pathId));
         learningPathRepository.save(learningPath);
     }
+
+    @Override
+    public List<LearningPath> getListLearningPathsByCreatorId(Integer creatorId) {
+        userRepository.findById(creatorId)
+                .orElseThrow(() -> new RuntimeException("User ID not found."));
+        return learningPathRepository.findByCreator_UserId(creatorId);
+    }
 }

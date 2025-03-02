@@ -248,4 +248,41 @@ public class CourseController {
                             .build());
         }
     }
+
+    @GetMapping("/creator")
+    public ResponseEntity<ApiResponse> getCourseListByCreator(@RequestHeader("Authorization") String authorizationHeader) throws Exception {
+        try{
+            if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
+                String token = authorizationHeader.substring(7);
+                Integer userId = jwtUtil.extractUserId(token);
+
+                List<Course> course = courseService.getListCoursesByCreatorId(userId);
+                if (course.isEmpty()) {
+                    return ResponseEntity.ok(ApiResponse.builder()
+                            .success(false)
+                            .message("List courses is empty!")
+                            .build());
+                } else {
+                    return ResponseEntity.ok(ApiResponse.builder()
+                            .success(true)
+                            .message("Get Courses List By Creator")
+                            .data(course)
+                            .build());
+                }
+            }
+            else throw new Exception("Authorization failed!");
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(ApiResponse.builder()
+                            .success(false)
+                            .message("Failed to get courses: " + e.getMessage())
+                            .build());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponse.builder()
+                            .success(false)
+                            .message("Internal Server Error: " + e.getMessage())
+                            .build());
+        }
+    }
 }

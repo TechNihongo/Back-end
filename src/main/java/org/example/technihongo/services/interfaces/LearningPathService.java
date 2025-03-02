@@ -16,4 +16,5 @@ public interface LearningPathService {
     void updateLearningPath(Integer pathId, UpdateLearningPathDTO updateLearningPathDTO);
     void deleteLearningPath(Integer pathId);
     void updateTotalCourses(Integer pathId);
+    List<LearningPath> getListLearningPathsByCreatorId(Integer creatorId);
 }

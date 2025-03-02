@@ -15,4 +15,5 @@ public interface QuizService {
     void updateQuiz(Integer quizId, UpdateQuizDTO updateQuizDTO);
     void updateQuizStatus(Integer quizId, UpdateQuizStatusDTO updateQuizStatusDTO);
     void updateTotalQuestions(Integer quizId);
+    List<Quiz> getListQuizzesByCreatorId(Integer creatorId);
 }

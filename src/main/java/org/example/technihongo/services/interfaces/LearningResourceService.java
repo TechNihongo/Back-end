@@ -14,4 +14,5 @@ public interface LearningResourceService {
     void updateLearningResource(Integer learningResourceId, LearningResourceDTO learningResourceDTO);
     void updateLearningResourceStatus(Integer learningResourceId, LearningResourceStatusDTO learningResourceStatusDTO);
     void deleteLearningResource(Integer learningResourceId);
+    List<LearningResource> getListLearningResourcesByCreatorId(Integer creatorId);
 }
