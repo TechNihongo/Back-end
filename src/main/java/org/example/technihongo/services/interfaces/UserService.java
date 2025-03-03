@@ -12,10 +12,14 @@ public interface UserService {
     List<User> userList();
     List<User> getStudentUsers();
     List<User> getContentManagerUsers();
-    User getUserById(Integer userId);
 
+    PageResponseDTO<User> userListPaginated(int pageNo, int pageSize, String sortBy, String sortDir);
+    PageResponseDTO<User> getStudentUsersPaginated(int pageNo, int pageSize, String sortBy, String sortDir);
+    PageResponseDTO<User> getContentManagerUsersPaginated(int pageNo, int pageSize, String sortBy, String sortDir);
     LoginResponseDTO register(RegistrationDTO registrationDTO);
 
+
+    User getUserById(Integer userId);
     LoginResponseDTO authenticateWithGoogle(GoogleTokenDTO tokenDTO);
     GoogleUserInfoDTO verifyGoogleToken(String accessToken);
 

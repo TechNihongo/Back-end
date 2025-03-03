@@ -1,5 +1,7 @@
 package org.example.technihongo.api;
 
+import jakarta.validation.Valid;
+import org.example.technihongo.dto.CreateFlashcardSetFromResourceDTO;
 import org.example.technihongo.dto.FlashcardSetRequestDTO;
 import org.example.technihongo.dto.FlashcardSetResponseDTO;
 import org.example.technihongo.exception.ResourceNotFoundException;
@@ -254,6 +256,32 @@ public class StudentFlashcardSetController {
                             .build());
         }
     }
+
+    @PostMapping("/from-resource/{studentId}")
+    public ResponseEntity<ApiResponse> createFlashcardSetFromResource(
+            @PathVariable Integer studentId,
+            @Valid @RequestBody CreateFlashcardSetFromResourceDTO request) {
+
+        try {
+            FlashcardSetResponseDTO responseDTO = studentFlashcardSetService
+                    .createFlashcardSetFromResource(studentId, request);
+
+            return ResponseEntity.status(HttpStatus.CREATED)
+                    .body(ApiResponse.builder()
+                            .success(true)
+                            .message("Flashcard set created successfully from learning resource")
+                            .data(responseDTO)
+                            .build());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponse.builder()
+                            .success(false)
+                            .message("Failed to create flashcard set: " + e.getMessage())
+                            .build());
+        }
+    }
+
+
 
 
 

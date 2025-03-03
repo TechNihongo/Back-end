@@ -15,6 +15,10 @@ import org.example.technihongo.repositories.UserRepository;
 import org.example.technihongo.services.interfaces.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -325,6 +329,42 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    public PageResponseDTO<User> userListPaginated(int pageNo, int pageSize, String sortBy, String sortDir) {
+        Sort sort = sortDir.equalsIgnoreCase(Sort.Direction.ASC.name())
+                ? Sort.by(sortBy).ascending()
+                : Sort.by(sortBy).descending();
+
+        Pageable pageable = PageRequest.of(pageNo, pageSize, sort);
+        Page<User> users = userRepository.findAll(pageable);
+
+        return getPageResponseDTO(users);
+    }
+
+    @Override
+    public PageResponseDTO<User> getStudentUsersPaginated(int pageNo, int pageSize, String sortBy, String sortDir) {
+        Sort sort = sortDir.equalsIgnoreCase(Sort.Direction.ASC.name())
+                ? Sort.by(sortBy).ascending()
+                : Sort.by(sortBy).descending();
+
+        Pageable pageable = PageRequest.of(pageNo, pageSize, sort);
+        Page<User> users = userRepository.findByRole_RoleId(3, pageable);
+
+        return getPageResponseDTO(users);
+    }
+
+    @Override
+    public PageResponseDTO<User> getContentManagerUsersPaginated(int pageNo, int pageSize, String sortBy, String sortDir) {
+        Sort sort = sortDir.equalsIgnoreCase(Sort.Direction.ASC.name())
+                ? Sort.by(sortBy).ascending()
+                : Sort.by(sortBy).descending();
+
+        Pageable pageable = PageRequest.of(pageNo, pageSize, sort);
+        Page<User> users = userRepository.findByRole_RoleId(2, pageable);
+
+        return getPageResponseDTO(users);
+    }
+
+    @Override
     public User getUserById(Integer userId) {
         return userRepository.findByUserId(userId);
     }
@@ -401,6 +441,17 @@ public class UserServiceImpl implements UserService {
 
         authToken.setIsActive(false);
         authTokenRepository.save(authToken);
+    }
+
+    private PageResponseDTO<User> getPageResponseDTO(Page<User> page) {
+        return PageResponseDTO.<User>builder()
+                .content(page.getContent())
+                .pageNo(page.getNumber())
+                .pageSize(page.getSize())
+                .totalElements(page.getTotalElements())
+                .totalPages(page.getTotalPages())
+                .last(page.isLast())
+                .build();
     }
 
 }

@@ -4,7 +4,7 @@ import org.example.technihongo.dto.DomainRequestDTO;
 import org.example.technihongo.dto.DomainResponseDTO;
 import org.example.technihongo.entities.Domain;
 import org.example.technihongo.exception.ResourceNotFoundException;
-import org.example.technihongo.repositories.DomainRepository;
+import org.example.technihongo.repositories.*;
 import org.example.technihongo.services.interfaces.DomainService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -19,6 +19,22 @@ import java.util.stream.Collectors;
 public class DomainServiceImpl implements DomainService {
     @Autowired
     private DomainRepository domainRepository;
+
+    @Autowired
+    private LearningPathRepository learningPathRepository;
+
+    @Autowired
+    private LearningResourceRepository learningResourceRepository;
+
+    @Autowired
+    private CourseRepository courseRepository;
+
+    @Autowired
+    private SystemFlashcardSetRepository systemFlashcardSetRepository;
+
+    @Autowired
+    private QuizRepository quizRepository;
+
     @Override
     public DomainResponseDTO createDomain(DomainRequestDTO request) {
         Domain domain = new Domain();
@@ -65,10 +81,40 @@ public class DomainServiceImpl implements DomainService {
     }
 
 
-    @Override
     public void deleteDomain(Integer domainId) {
         Domain domain = domainRepository.findById(domainId)
                 .orElseThrow(() -> new ResourceNotFoundException("Domain not found with ID: " + domainId));
+
+        if (domain.getSubDomains() != null && !domain.getSubDomains().isEmpty()) {
+            throw new RuntimeException("Cannot delete domain with ID: " + domainId +
+                    " because it has associated child domains.");
+        }
+
+        if (learningPathRepository.existsByDomainDomainId(domainId)) {
+            throw new RuntimeException("Cannot delete domain with ID: " + domainId +
+                    " because it is referenced by one or more learning paths.");
+        }
+
+        if (learningResourceRepository.existsByDomainDomainId(domainId)) {
+            throw new RuntimeException("Cannot delete domain with ID: " + domainId +
+                    " because it is referenced by one or more learning resources.");
+        }
+
+        if (courseRepository.existsByDomainDomainId(domainId)) {
+            throw new RuntimeException("Cannot delete domain with ID: " + domainId +
+                    " because it is referenced by one or more courses.");
+        }
+
+        if (systemFlashcardSetRepository.existsByDomainDomainId(domainId)) {
+            throw new RuntimeException("Cannot delete domain with ID: " + domainId +
+                    " because it is referenced by one or more flashcard sets.");
+        }
+
+        if (quizRepository.existsByDomainDomainId(domainId)) {
+            throw new RuntimeException("Cannot delete domain with ID: " + domainId +
+                    " because it is referenced by one or more quizzes.");
+        }
+
         domainRepository.delete(domain);
     }
 

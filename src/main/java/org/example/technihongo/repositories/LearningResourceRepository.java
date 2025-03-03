@@ -10,4 +10,7 @@ import java.util.List;
 public interface LearningResourceRepository extends JpaRepository<LearningResource, Integer> {
     LearningResource findByResourceId(Integer resourceId);
     List<LearningResource> findByCreator_UserId(Integer creatorId);
+
+    boolean existsByDomainDomainId(Integer domainId);
+
 }
