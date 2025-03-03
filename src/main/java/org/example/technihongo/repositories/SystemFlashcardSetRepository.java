@@ -10,4 +10,6 @@ import java.util.List;
 public interface SystemFlashcardSetRepository extends JpaRepository<SystemFlashcardSet, Integer> {
     List<SystemFlashcardSet> findByCreatorUserId(Integer userId);
     SystemFlashcardSet findBySystemSetId(Integer setId);
+    boolean existsByDomainDomainId(Integer domainId);
+
 }

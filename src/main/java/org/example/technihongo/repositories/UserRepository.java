@@ -1,5 +1,7 @@
 package org.example.technihongo.repositories;
-
+import lombok.NonNull;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.example.technihongo.entities.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
@@ -16,4 +18,10 @@ public interface UserRepository extends JpaRepository<User, Integer> {
     boolean existsByEmail(String email);
     User findByUserId(Integer userId);
     List<User> findByRole_RoleId(Integer roleId);
+
+    @NonNull
+    Page<User> findAll(@NonNull Pageable pageable);
+    @NonNull
+    Page<User> findByRole_RoleId(Integer roleId, Pageable pageable);
+
 }

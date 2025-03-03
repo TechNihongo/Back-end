@@ -1,22 +1,24 @@
 package org.example.technihongo.services.serviceimplements;
 
-import org.example.technihongo.dto.FlashcardResponseDTO;
-import org.example.technihongo.dto.FlashcardSetRequestDTO;
-import org.example.technihongo.dto.FlashcardSetResponseDTO;
+import org.example.technihongo.dto.*;
 import org.example.technihongo.entities.Flashcard;
+import org.example.technihongo.entities.LearningResource;
 import org.example.technihongo.entities.Student;
 import org.example.technihongo.entities.StudentFlashcardSet;
 import org.example.technihongo.exception.ResourceNotFoundException;
 import org.example.technihongo.exception.UnauthorizedAccessException;
 import org.example.technihongo.repositories.FlashcardRepository;
+import org.example.technihongo.repositories.LearningResourceRepository;
 import org.example.technihongo.repositories.StudentFlashcardSetRepository;
 import org.example.technihongo.repositories.StudentRepository;
 import org.example.technihongo.services.interfaces.StudentFlashcardSetService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -29,6 +31,10 @@ public class StudentFlashcardSetServiceImpl implements StudentFlashcardSetServic
     private StudentRepository studentRepository;
     @Autowired
     private FlashcardRepository flashcardRepository;
+    @Autowired
+    private LearningResourceRepository learningResourceRepository;
+    @Autowired
+    private StudentFlashcardSetRepository studentFlashcardSetRepository;
 
     @Override
     public FlashcardSetResponseDTO createFlashcardSet(Integer studentId, FlashcardSetRequestDTO request) {
@@ -131,6 +137,46 @@ public class StudentFlashcardSetServiceImpl implements StudentFlashcardSetServic
                 .collect(Collectors.toList());
     }
 
+    @Override
+    public FlashcardSetResponseDTO createFlashcardSetFromResource(Integer studentId, CreateFlashcardSetFromResourceDTO request) {
+        Student student = studentRepository.findById(studentId)
+                .orElseThrow(() -> new ResourceNotFoundException("Student not found with Id: " + studentId));
+
+        LearningResource resource = learningResourceRepository.findByResourceId(request.getResourceId());
+        if(resource == null) {
+            throw new ResourceNotFoundException("Resource not found with Id: " + request.getResourceId());
+        }
+        if(resource.getVideoUrl() == null || resource.getVideoUrl().trim().isEmpty()) {
+            throw new IllegalArgumentException("Resource must have a video URL to create Flashcard Set.");
+        }
+        if(request.getFlashcards() == null || request.getFlashcards().isEmpty()) {
+            throw new IllegalArgumentException("You must provide at least one Flashcard to create Flashcard Set.");
+        }
+
+        StudentFlashcardSet flashcardSet = StudentFlashcardSet.builder()
+                .creator(student)
+                .learningResource(resource)
+                .title(StringUtils.hasText(request.getTitle()) ? request.getTitle() : resource.getTitle())
+                .description(request.getDescription())
+                .isPublic(request.getIsPublic() != null ? request.getIsPublic() : true)
+                .totalCard(request.getFlashcards().size())
+                .totalView(0)
+                .flashcards(new HashSet<>())
+                .build();
+
+        StudentFlashcardSet savedFlashcardSet = flashcardSetRepository.save(flashcardSet);
+
+        List<Flashcard> flashcards = createFlashcards(savedFlashcardSet, request.getFlashcards());
+        savedFlashcardSet.setFlashcards(new HashSet<>(flashcards));
+
+        savedFlashcardSet.setTotalCard(flashcards.size());
+
+        studentFlashcardSetRepository.save(savedFlashcardSet);
+
+        return  mapToFlashcardSetResponseDTO(savedFlashcardSet, flashcards);
+
+    }
+
 
     private FlashcardResponseDTO convertToFlashcardResponseDTO(Flashcard flashcard) {
         FlashcardResponseDTO response = new FlashcardResponseDTO();
@@ -154,6 +200,51 @@ public class StudentFlashcardSetServiceImpl implements StudentFlashcardSetServic
                 .collect(Collectors.toList()));
 
         return response;
+    }
+
+    private List<Flashcard> createFlashcards(StudentFlashcardSet flashcardSet, List<FlashcardRequestDTO> flashcardDTOs) {
+        List<Flashcard> flashcards = new ArrayList<>();
+
+        for (int i = 0; i < flashcardDTOs.size(); i++) {
+            FlashcardRequestDTO dto = flashcardDTOs.get(i);
+
+            Flashcard flashcard = Flashcard.builder()
+                    .studentFlashCardSet(flashcardSet)
+                    .definition(dto.getJapaneseDefinition())
+                    .translation(dto.getVietEngTranslation())
+                    .imgUrl(dto.getImageUrl())
+                    .vocabOrder(i + 1)
+                    .build();
+
+            flashcards.add(flashcardRepository.save(flashcard));
+        }
+
+        return flashcards;
+    }
+
+    private FlashcardSetResponseDTO mapToFlashcardSetResponseDTO(StudentFlashcardSet flashcardSet, List<Flashcard> flashcards) {
+        List<FlashcardResponseDTO> flashcardDTOs = flashcards.stream()
+                .map(this::mapToFlashcardResponseDTO)
+                .collect(Collectors.toList());
+
+        FlashcardSetResponseDTO responseDTO = new FlashcardSetResponseDTO();
+        responseDTO.setStudentSetId(flashcardSet.getStudentSetId());
+        responseDTO.setTitle(flashcardSet.getTitle());
+        responseDTO.setDescription(flashcardSet.getDescription());
+        responseDTO.setIsPublic(flashcardSet.isPublic());
+        responseDTO.setFlashcards(flashcardDTOs);
+
+        return responseDTO;
+    }
+
+    private FlashcardResponseDTO mapToFlashcardResponseDTO(Flashcard flashcard) {
+        FlashcardResponseDTO responseDTO = new FlashcardResponseDTO();
+        responseDTO.setFlashcardId(flashcard.getFlashCardId());
+        responseDTO.setJapaneseDefinition(flashcard.getDefinition());
+        responseDTO.setVietEngTranslation(flashcard.getTranslation());
+        responseDTO.setImageUrl(flashcard.getImgUrl());
+
+        return responseDTO;
     }
 
 }

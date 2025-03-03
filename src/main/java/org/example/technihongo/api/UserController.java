@@ -201,6 +201,85 @@ public class UserController {
                             .build());
         }
     }
+    @GetMapping("/paginated")
+    public ResponseEntity<ApiResponse> getAllUsersPaginated(
+            @RequestParam(defaultValue = "0") int pageNo,
+            @RequestParam(defaultValue = "10") int pageSize,
+            @RequestParam(defaultValue = "userId") String sortBy,
+            @RequestParam(defaultValue = "asc") String sortDir) {
+
+        try {
+            PageResponseDTO<User> pageResponse = userService.userListPaginated(pageNo, pageSize, sortBy, sortDir);
+
+            if(pageResponse.getContent().isEmpty()){
+                return ResponseEntity.ok(ApiResponse.builder()
+                        .success(false)
+                        .message("List user is empty!")
+                        .build());
+            } else {
+                return ResponseEntity.ok(ApiResponse.builder()
+                        .success(true)
+                        .message("Users retrieved successfully")
+                        .data(pageResponse)
+                        .build());
+            }
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponse.builder()
+                            .success(false)
+                            .message("Internal Server Error: " + e.getMessage())
+                            .build());
+        }
+    }
+
+    @GetMapping("/student/paginated")
+    public ResponseEntity<ApiResponse> getStudentUsersPaginated(
+            @RequestParam(defaultValue = "0") int pageNo,
+            @RequestParam(defaultValue = "10") int pageSize,
+            @RequestParam(defaultValue = "userId") String sortBy,
+            @RequestParam(defaultValue = "asc") String sortDir) {
+
+        try {
+            PageResponseDTO<User> pageResponse = userService.getStudentUsersPaginated(pageNo, pageSize, sortBy, sortDir);
+
+            return ResponseEntity.ok(ApiResponse.builder()
+                    .success(true)
+                    .message("Student users retrieved successfully")
+                    .data(pageResponse)
+                    .build());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponse.builder()
+                            .success(false)
+                            .message("Failed to retrieve student users: " + e.getMessage())
+                            .build());
+        }
+    }
+
+    @GetMapping("/content-managers/paginated")
+    public ResponseEntity<ApiResponse> getContentManagerUsersPaginated(
+            @RequestParam(defaultValue = "0") int pageNo,
+            @RequestParam(defaultValue = "10") int pageSize,
+            @RequestParam(defaultValue = "userId") String sortBy,
+            @RequestParam(defaultValue = "asc") String sortDir) {
+
+        try {
+            PageResponseDTO<User> pageResponse = userService.getContentManagerUsersPaginated(pageNo, pageSize, sortBy, sortDir);
+
+            return ResponseEntity.ok(ApiResponse.builder()
+                    .success(true)
+                    .message("Content manager users retrieved successfully")
+                    .data(pageResponse)
+                    .build());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponse.builder()
+                            .success(false)
+                            .message("Failed to retrieve content manager users: " + e.getMessage())
+                            .build());
+        }
+    }
+
 
 
     @PatchMapping("/{userId}/username")

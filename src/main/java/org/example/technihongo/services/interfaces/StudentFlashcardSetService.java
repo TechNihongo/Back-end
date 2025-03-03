@@ -1,6 +1,6 @@
 package org.example.technihongo.services.interfaces;
 
-import org.example.technihongo.dto.DomainResponseDTO;
+import org.example.technihongo.dto.CreateFlashcardSetFromResourceDTO;
 import org.example.technihongo.dto.FlashcardSetRequestDTO;
 import org.example.technihongo.dto.FlashcardSetResponseDTO;
 
@@ -19,5 +19,7 @@ public interface StudentFlashcardSetService {
     List<FlashcardSetResponseDTO> studentFlashcardList(Integer studentId);
 
     List<FlashcardSetResponseDTO> searchTitle(String keyword);
+
+    FlashcardSetResponseDTO createFlashcardSetFromResource(Integer studentId, CreateFlashcardSetFromResourceDTO request);
 
 }
