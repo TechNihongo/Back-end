@@ -15,7 +15,7 @@ public interface CourseRepository extends JpaRepository<Course, Integer> {
     List<Course> findByCreator_UserId(Integer creatorId);
     boolean existsByDomainDomainId(Integer domainId);
 
-    Page<Course> findCoursesByPublicIs(boolean isPublic, Pageable pageable);
+    Page<Course> findCoursesByPublicStatus(boolean isPublic, Pageable pageable);
     Page<Course> findByCreator_UserId(Integer creatorId, Pageable pageable);
-    Page<Course> findByTitleContainingIgnoreCaseAndPublic(String keyword, Boolean isPublic, Pageable pageable);
+    Page<Course> findByTitleContainingIgnoreCaseAndPublicStatus(String keyword, Boolean isPublic, Pageable pageable);
 }

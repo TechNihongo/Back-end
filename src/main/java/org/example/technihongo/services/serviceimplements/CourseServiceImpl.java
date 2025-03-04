@@ -47,7 +47,7 @@ public class CourseServiceImpl implements CourseService {
         List<Course> courseList = courseRepository.findAll();
 
         return courseList.stream()
-                .filter(Course::isPublic)
+                .filter(Course::isPublicStatus)
                 .map(course -> new CoursePublicDTO(course.getCourseId(), course.getTitle(),
                         course.getDescription(), course.getDomain(), course.getDifficultyLevel(),
                         course.getAttachmentUrl(), course.getThumbnailUrl(), course.getEstimatedDuration()))
@@ -64,7 +64,7 @@ public class CourseServiceImpl implements CourseService {
         List<Course> courseList = courseRepository.findAll();
 
         return courseList.stream()
-                .filter(course -> course.isPublic() && course.getCourseId().equals(courseId))
+                .filter(course -> course.isPublicStatus() && course.getCourseId().equals(courseId))
                 .map(course -> new CoursePublicDTO(course.getCourseId(), course.getTitle(),
                         course.getDescription(), course.getDomain(), course.getDifficultyLevel(),
                         course.getAttachmentUrl(), course.getThumbnailUrl(), course.getEstimatedDuration()))
@@ -131,7 +131,7 @@ public class CourseServiceImpl implements CourseService {
         course.setAttachmentUrl(updateCourseDTO.getAttachmentUrl());
         course.setThumbnailUrl(updateCourseDTO.getThumbnailUrl());
         course.setEstimatedDuration(updateCourseDTO.getEstimatedDuration());
-        course.setPublic(updateCourseDTO.isPublic());
+        course.setPublicStatus(updateCourseDTO.isPublic());
         course.setPremium(updateCourseDTO.isPremium());
         course.setUpdateAt(LocalDateTime.now());
 
@@ -141,7 +141,7 @@ public class CourseServiceImpl implements CourseService {
     @Override
     public List<Course> searchCourseByTitle(String keyword) {
         return courseRepository.findByTitleContainingIgnoreCase(keyword)
-                        .stream().filter(Course::isPublic).toList();
+                        .stream().filter(Course::isPublicStatus).toList();
     }
 
     @Override
@@ -170,7 +170,7 @@ public class CourseServiceImpl implements CourseService {
                 : Sort.by(sortBy).descending();
 
         Pageable pageable = PageRequest.of(pageNo, pageSize, sort);
-        Page<Course> courses = courseRepository.findCoursesByPublicIs(true, pageable);
+        Page<Course> courses = courseRepository.findCoursesByPublicStatus(true, pageable);
 
         return getPageResponseDTO(courses);
     }
@@ -197,7 +197,7 @@ public class CourseServiceImpl implements CourseService {
                 : Sort.by(sortBy).descending();
 
         Pageable pageable = PageRequest.of(pageNo, pageSize, sort);
-        Page<Course> courses = courseRepository.findByTitleContainingIgnoreCaseAndPublic(keyword, true, pageable);
+        Page<Course> courses = courseRepository.findByTitleContainingIgnoreCaseAndPublicStatus(keyword, true, pageable);
 
         return getPageResponseDTO(courses);
     }
