@@ -87,14 +87,38 @@ public class UserController {
         }
     }
 
+//    @PostMapping("/google-auth")
+//    public ResponseEntity<LoginResponseDTO> authenticateWithGoogle(@RequestBody GoogleTokenDTO googleTokenDTO) {
+//        try {
+//            LoginResponseDTO response = userService.authenticateWithGoogle(googleTokenDTO);
+//            return ResponseEntity.ok(response);
+//        } catch (Exception e) {
+//            String errorMessage = "Google authentication failed: " + e.getMessage();
+//            LoginResponseDTO errorResponse = new LoginResponseDTO(null, null, null, null, false, errorMessage);
+//            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorResponse);
+//        }
+//    }
+
     @PostMapping("/google-auth")
-    public ResponseEntity<LoginResponseDTO> authenticateWithGoogle(@RequestBody GoogleTokenDTO googleTokenDTO) {
+    public ResponseEntity<LoginResponseTokenDTO> authenticateWithGoogle(@RequestBody GoogleTokenDTO googleTokenDTO) {
         try {
             LoginResponseDTO response = userService.authenticateWithGoogle(googleTokenDTO);
-            return ResponseEntity.ok(response);
+            UserLogin userLogin = new UserLogin(response.getEmail(), "");
+            String token = myUserDetailsService.loginToken(userLogin);
+            LocalDateTime expired = jwtHelper.getExpirationDateFromToken(token).toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime();
+            authTokenService.saveLoginToken(new CreateLoginTokenDTO(response.getUserId(), token, "LOGIN_GOOGLE", expired));
+            authTokenService.updateLoginTokenStatus(response.getUserId());
+
+            if (response.isSuccess()) {
+                return ResponseEntity.ok(new LoginResponseTokenDTO(response.getUserId(), response.getUserName(),
+                        response.getEmail(), response.getRole(), true, response.getMessage(), token));
+            } else {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new LoginResponseTokenDTO(response.getUserId(), response.getUserName(),
+                        response.getEmail(), response.getRole(), false, response.getMessage(), token));
+            }
         } catch (Exception e) {
             String errorMessage = "Google authentication failed: " + e.getMessage();
-            LoginResponseDTO errorResponse = new LoginResponseDTO(null, null, null, null, false, errorMessage);
+            LoginResponseTokenDTO errorResponse = new LoginResponseTokenDTO(null, null, null, null, false, errorMessage, null);
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorResponse);
         }
     }

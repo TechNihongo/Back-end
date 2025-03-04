@@ -187,6 +187,7 @@ public class UserServiceImpl implements UserService {
         );
     }
 
+
     private User createNewUserFromGoogle(GoogleUserInfoDTO googleUser) {
         Role defaultRole;
         try {
@@ -200,6 +201,7 @@ public class UserServiceImpl implements UserService {
             User user = User.builder()
                     .email(googleUser.getEmail())
                     .userName(generateUsername(googleUser.getEmail()))
+                    .password(passwordEncoder.encode("GOOGLE_AUTH_USER"))
                     .isActive(true)
                     .role(defaultRole)
                     .profileImg(googleUser.getPicture())

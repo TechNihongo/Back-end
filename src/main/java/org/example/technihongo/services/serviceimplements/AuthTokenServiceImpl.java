@@ -10,6 +10,7 @@ import org.example.technihongo.repositories.AuthTokenRepository;
 import org.example.technihongo.repositories.UserRepository;
 import org.example.technihongo.services.interfaces.AuthTokenService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 
@@ -47,7 +48,7 @@ public class AuthTokenServiceImpl implements AuthTokenService {
     public void updateLoginTokenStatus(Integer userId) {
         List<AuthToken> authTokenList = authTokenRepository.findAll().stream()
                 .filter(authToken -> authToken.getUser().getUserId().equals(userId) &&
-                        authToken.getTokenType().equalsIgnoreCase("LOGIN") &&
+                        authToken.getTokenType().toLowerCase().contains("LOGIN".toLowerCase()) &&
                         authToken.getIsActive())
                 .toList();
 
@@ -93,5 +94,12 @@ public class AuthTokenServiceImpl implements AuthTokenService {
 
         deactivateAllTokensByUserId(user.getUserId(), "EMAIL_VERIFICATION");
         return createEmailVerifyToken(user.getUserId());
+    }
+
+    @Scheduled(cron = "0 0 2 * * ?")
+    @Transactional
+    public void removeExpiredTokens() {
+        LocalDateTime expiryTime = LocalDateTime.now().minusDays(1);
+        authTokenRepository.deleteExpiredTokens(expiryTime);
     }
 }

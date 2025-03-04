@@ -22,6 +22,7 @@ public class CourseController {
     private CourseService courseService;
     @Autowired
     private JwtUtil jwtUtil;
+
     @GetMapping("/all")
     public ResponseEntity<ApiResponse> getAllCourses(@RequestHeader("Authorization") String authorizationHeader) throws Exception {
         try{
@@ -69,30 +70,6 @@ public class CourseController {
         }
     }
 
-//    @GetMapping("/public/all")
-//    public ResponseEntity<ApiResponse> getPublicCourses() throws Exception {
-//        try{
-//            List<CoursePublicDTO> courseList = courseService.getPublicCourses();
-//            if(courseList.isEmpty()){
-//                return ResponseEntity.ok(ApiResponse.builder()
-//                        .success(false)
-//                        .message("List courses is empty!")
-//                        .build());
-//            }else{
-//                return ResponseEntity.ok(ApiResponse.builder()
-//                        .success(true)
-//                        .message("Get All Public Courses")
-//                        .data(courseList)
-//                        .build());
-//            }
-//        } catch (Exception e) {
-//            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-//                    .body(ApiResponse.builder()
-//                            .success(false)
-//                            .message("Internal Server Error: " + e.getMessage())
-//                            .build());
-//        }
-//    }
 
     @GetMapping("/{id}")
     public ResponseEntity<ApiResponse> viewCourse(@PathVariable Integer id,
@@ -142,31 +119,6 @@ public class CourseController {
                             .build());
         }
     }
-
-//    @GetMapping("/public/{id}")
-//    public ResponseEntity<ApiResponse> viewPublicCourse(@PathVariable Integer id) throws Exception {
-//        try{
-//            Optional<CoursePublicDTO> course = courseService.getPublicCourseById(id);
-//            if(course.isEmpty()){
-//                return ResponseEntity.ok(ApiResponse.builder()
-//                        .success(false)
-//                        .message("Course not found!")
-//                        .build());
-//            }else{
-//                return ResponseEntity.ok(ApiResponse.builder()
-//                        .success(true)
-//                        .message("Get Course")
-//                        .data(course)
-//                        .build());
-//            }
-//        } catch (Exception e) {
-//            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-//                    .body(ApiResponse.builder()
-//                            .success(false)
-//                            .message("Internal Server Error: " + e.getMessage())
-//                            .build());
-//        }
-//    }
 
     @PostMapping("/create")
     public ResponseEntity<ApiResponse> createCourse(@RequestBody CreateCourseDTO createCourseDTO,
@@ -267,6 +219,142 @@ public class CourseController {
                             .success(true)
                             .message("Get Courses List By Creator")
                             .data(course)
+                            .build());
+                }
+            }
+            else throw new Exception("Authorization failed!");
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(ApiResponse.builder()
+                            .success(false)
+                            .message("Failed to get courses: " + e.getMessage())
+                            .build());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponse.builder()
+                            .success(false)
+                            .message("Internal Server Error: " + e.getMessage())
+                            .build());
+        }
+    }
+
+    @GetMapping("/all/paginated")
+    public ResponseEntity<ApiResponse> getAllCoursesPaginated(
+            @RequestHeader("Authorization") String authorizationHeader,
+            @RequestParam(defaultValue = "0") int pageNo,
+            @RequestParam(defaultValue = "10") int pageSize,
+            @RequestParam(defaultValue = "courseId") String sortBy,
+            @RequestParam(defaultValue = "asc") String sortDir) throws Exception {
+        try{
+            if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
+                String token = authorizationHeader.substring(7);
+                int roleId = jwtUtil.extractUserRoleId(token);
+
+                if (roleId == 1 || roleId == 2) {
+                    PageResponseDTO<Course> courseList = courseService.courseListPaginated(pageNo, pageSize, sortBy, sortDir);
+                    if (courseList.getContent().isEmpty()) {
+                        return ResponseEntity.ok(ApiResponse.builder()
+                                .success(false)
+                                .message("List courses is empty!")
+                                .build());
+                    } else {
+                        return ResponseEntity.ok(ApiResponse.builder()
+                                .success(true)
+                                .message("Get All Courses")
+                                .data(courseList)
+                                .build());
+                    }
+                } else {
+                    PageResponseDTO<Course> courseList = courseService.getPublicCoursesPaginated(pageNo, pageSize, sortBy, sortDir);
+                    if (courseList.getContent().isEmpty()) {
+                        return ResponseEntity.ok(ApiResponse.builder()
+                                .success(false)
+                                .message("List courses is empty!")
+                                .build());
+                    } else {
+                        return ResponseEntity.ok(ApiResponse.builder()
+                                .success(true)
+                                .message("Get All Public Courses")
+                                .data(courseList)
+                                .build());
+                    }
+                }
+            }
+            else throw new Exception("Authorization failed!");
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(ApiResponse.builder()
+                            .success(false)
+                            .message("Failed to get courses: " + e.getMessage())
+                            .build());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponse.builder()
+                            .success(false)
+                            .message("Internal Server Error: " + e.getMessage())
+                            .build());
+        }
+    }
+
+    @GetMapping("/search/paginated/{keyword}")
+    public ResponseEntity<ApiResponse> searchCourseByTitlePaginated(
+            @PathVariable String keyword,
+            @RequestParam(defaultValue = "0") int pageNo,
+            @RequestParam(defaultValue = "10") int pageSize,
+            @RequestParam(defaultValue = "courseId") String sortBy,
+            @RequestParam(defaultValue = "asc") String sortDir) throws Exception {
+        try{
+            PageResponseDTO<Course> courseList = courseService.searchCourseByTitlePaginated(keyword, pageNo, pageSize, sortBy, sortDir);
+            if(courseList.getContent().isEmpty()){
+                return ResponseEntity.ok(ApiResponse.builder()
+                        .success(false)
+                        .message("List courses is empty!")
+                        .build());
+            }else{
+                return ResponseEntity.ok(ApiResponse.builder()
+                        .success(true)
+                        .message("Get Courses List By Keyword")
+                        .data(courseList)
+                        .build());
+            }
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(ApiResponse.builder()
+                            .success(false)
+                            .message("Failed to get courses: " + e.getMessage())
+                            .build());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponse.builder()
+                            .success(false)
+                            .message("Internal Server Error: " + e.getMessage())
+                            .build());
+        }
+    }
+
+    @GetMapping("/creator/paginated")
+    public ResponseEntity<ApiResponse> getCourseListByCreatorPaginated(
+            @RequestHeader("Authorization") String authorizationHeader,
+            @RequestParam(defaultValue = "0") int pageNo,
+            @RequestParam(defaultValue = "10") int pageSize,
+            @RequestParam(defaultValue = "courseId") String sortBy,
+            @RequestParam(defaultValue = "asc") String sortDir) throws Exception {
+        try{
+            if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
+                String token = authorizationHeader.substring(7);
+                Integer userId = jwtUtil.extractUserId(token);
+
+                PageResponseDTO<Course> courseList = courseService.getListCoursesByCreatorIdPaginated(userId, pageNo, pageSize, sortBy, sortDir);
+                if (courseList.getContent().isEmpty()) {
+                    return ResponseEntity.ok(ApiResponse.builder()
+                            .success(false)
+                            .message("List courses is empty!")
+                            .build());
+                } else {
+                    return ResponseEntity.ok(ApiResponse.builder()
+                            .success(true)
+                            .message("Get Courses List By Creator")
+                            .data(courseList)
                             .build());
                 }
             }
