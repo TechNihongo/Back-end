@@ -3,11 +3,17 @@ package org.example.technihongo.services.serviceimplements;
 import lombok.RequiredArgsConstructor;
 import org.example.technihongo.dto.CoursePublicDTO;
 import org.example.technihongo.dto.CreateCourseDTO;
+import org.example.technihongo.dto.PageResponseDTO;
 import org.example.technihongo.dto.UpdateCourseDTO;
 import org.example.technihongo.entities.Course;
+import org.example.technihongo.entities.User;
 import org.example.technihongo.repositories.*;
 import org.example.technihongo.services.interfaces.CourseService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 
@@ -143,5 +149,67 @@ public class CourseServiceImpl implements CourseService {
         userRepository.findById(creatorId)
                 .orElseThrow(() -> new RuntimeException("User ID not found."));
         return courseRepository.findByCreator_UserId(creatorId);
+    }
+
+    @Override
+    public PageResponseDTO<Course> courseListPaginated(int pageNo, int pageSize, String sortBy, String sortDir) {
+        Sort sort = sortDir.equalsIgnoreCase(Sort.Direction.ASC.name())
+                ? Sort.by(sortBy).ascending()
+                : Sort.by(sortBy).descending();
+
+        Pageable pageable = PageRequest.of(pageNo, pageSize, sort);
+        Page<Course> courses = courseRepository.findAll(pageable);
+
+        return getPageResponseDTO(courses);
+    }
+
+    @Override
+    public PageResponseDTO<Course> getPublicCoursesPaginated(int pageNo, int pageSize, String sortBy, String sortDir) {
+        Sort sort = sortDir.equalsIgnoreCase(Sort.Direction.ASC.name())
+                ? Sort.by(sortBy).ascending()
+                : Sort.by(sortBy).descending();
+
+        Pageable pageable = PageRequest.of(pageNo, pageSize, sort);
+        Page<Course> courses = courseRepository.findCoursesByPublicIs(true, pageable);
+
+        return getPageResponseDTO(courses);
+    }
+
+    @Override
+    public PageResponseDTO<Course> getListCoursesByCreatorIdPaginated(Integer creatorId, int pageNo, int pageSize, String sortBy, String sortDir) {
+        userRepository.findById(creatorId)
+                .orElseThrow(() -> new RuntimeException("User ID not found."));
+
+        Sort sort = sortDir.equalsIgnoreCase(Sort.Direction.ASC.name())
+                ? Sort.by(sortBy).ascending()
+                : Sort.by(sortBy).descending();
+
+        Pageable pageable = PageRequest.of(pageNo, pageSize, sort);
+        Page<Course> courses = courseRepository.findByCreator_UserId(creatorId, pageable);
+
+        return getPageResponseDTO(courses);
+    }
+
+    @Override
+    public PageResponseDTO<Course> searchCourseByTitlePaginated(String keyword, int pageNo, int pageSize, String sortBy, String sortDir) {
+        Sort sort = sortDir.equalsIgnoreCase(Sort.Direction.ASC.name())
+                ? Sort.by(sortBy).ascending()
+                : Sort.by(sortBy).descending();
+
+        Pageable pageable = PageRequest.of(pageNo, pageSize, sort);
+        Page<Course> courses = courseRepository.findByTitleContainingIgnoreCaseAndPublic(keyword, true, pageable);
+
+        return getPageResponseDTO(courses);
+    }
+
+    private PageResponseDTO<Course> getPageResponseDTO(Page<Course> page) {
+        return PageResponseDTO.<Course>builder()
+                .content(page.getContent())
+                .pageNo(page.getNumber())
+                .pageSize(page.getSize())
+                .totalElements(page.getTotalElements())
+                .totalPages(page.getTotalPages())
+                .last(page.isLast())
+                .build();
     }
 }

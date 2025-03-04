@@ -67,7 +67,7 @@ public class StudentStudyPlanServiceImpl implements StudentStudyPlanService {
 
         if(activePlan.isPresent()) {
             StudentStudyPlan previousPlan = activePlan.get();
-            previousPlan.setStatus("Inactive");
+            previousPlan.setStatus("Switched");
             previousPlan.setSwitchDate(LocalDateTime.now());
             studentStudyPlanRepository.save(previousPlan);
         }
@@ -103,7 +103,7 @@ public class StudentStudyPlanServiceImpl implements StudentStudyPlanService {
                 .status("Active")
                 .build();
 
-        currentPlan.setStatus("Inactive");
+        currentPlan.setStatus("Switched");
         currentPlan.setSwitchDate(LocalDateTime.now());
         studentStudyPlanRepository.save(currentPlan);
 
