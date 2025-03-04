@@ -43,9 +43,8 @@ public class StudyPlan {
     @Column(name = "is_default")
     private boolean isDefault;
 
-    @Builder.Default
     @Column(name = "is_active")
-    private boolean isActive = false;
+    private boolean active;
 
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
