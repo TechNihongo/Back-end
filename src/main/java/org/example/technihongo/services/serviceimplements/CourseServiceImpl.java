@@ -6,6 +6,7 @@ import org.example.technihongo.dto.CreateCourseDTO;
 import org.example.technihongo.dto.PageResponseDTO;
 import org.example.technihongo.dto.UpdateCourseDTO;
 import org.example.technihongo.entities.Course;
+import org.example.technihongo.entities.StudyPlan;
 import org.example.technihongo.entities.User;
 import org.example.technihongo.repositories.*;
 import org.example.technihongo.services.interfaces.CourseService;
@@ -36,6 +37,8 @@ public class CourseServiceImpl implements CourseService {
     private DifficultyLevelRepository difficultyLevelRepository;
     @Autowired
     private StudentStudyPlanRepository studentStudyPlanRepository;
+    @Autowired
+    private StudyPlanRepository studyPlanRepository;
 
     @Override
     public List<Course> courseList() {
@@ -85,7 +88,6 @@ public class CourseServiceImpl implements CourseService {
             throw new RuntimeException("DifficultyLevel ID not found!");
         }
 
-
         Course course = courseRepository.save(Course.builder()
                 .title(createCourseDTO.getTitle())
                 .description(createCourseDTO.getDescription())
@@ -113,6 +115,10 @@ public class CourseServiceImpl implements CourseService {
 
         if(difficultyLevelRepository.findByLevelId(updateCourseDTO.getDifficultyLevelId()) == null){
             throw new RuntimeException("DifficultyLevel ID not found!");
+        }
+
+        if(studyPlanRepository.findByCourse_CourseId(courseId).stream().noneMatch(StudyPlan::isDefault)){
+            throw new RuntimeException("No default StudyPlan found!");
         }
 
         boolean hasStudents = studentStudyPlanRepository.findAll().stream()
