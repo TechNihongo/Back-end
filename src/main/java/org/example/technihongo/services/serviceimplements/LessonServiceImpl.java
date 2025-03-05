@@ -2,14 +2,20 @@ package org.example.technihongo.services.serviceimplements;
 
 import lombok.RequiredArgsConstructor;
 import org.example.technihongo.dto.CreateLessonDTO;
+import org.example.technihongo.dto.PageResponseDTO;
 import org.example.technihongo.dto.UpdateLessonDTO;
 import org.example.technihongo.dto.UpdateLessonOrderDTO;
+import org.example.technihongo.entities.Course;
 import org.example.technihongo.entities.StudyPlan;
 import org.example.technihongo.entities.Lesson;
 import org.example.technihongo.repositories.StudyPlanRepository;
 import org.example.technihongo.repositories.LessonRepository;
 import org.example.technihongo.services.interfaces.LessonService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -34,6 +40,8 @@ public class LessonServiceImpl implements LessonService {
 
     @Override
     public List<Lesson> getLessonListByStudyPlanId(Integer studyPlanId) {
+        studyPlanRepository.findById(studyPlanId)
+                .orElseThrow(() -> new RuntimeException("StudyPlan ID not found!"));
         return lessonRepository.findByStudyPlan_StudyPlanIdOrderByLessonOrderAsc(studyPlanId);
     }
 
@@ -85,5 +93,31 @@ public class LessonServiceImpl implements LessonService {
         }
 
         lessonRepository.saveAll(lessons);
+    }
+
+    @Override
+    public PageResponseDTO<Lesson> getLessonListByStudyPlanIdPaginated(Integer studyPlanId, int pageNo, int pageSize, String sortBy, String sortDir) {
+        studyPlanRepository.findById(studyPlanId)
+                .orElseThrow(() -> new RuntimeException("StudyPlan ID not found!"));
+
+        Sort sort = sortDir.equalsIgnoreCase(Sort.Direction.ASC.name())
+                ? Sort.by(sortBy).ascending()
+                : Sort.by(sortBy).descending();
+
+        Pageable pageable = PageRequest.of(pageNo, pageSize, sort);
+        Page<Lesson> lessons = lessonRepository.findByStudyPlan_StudyPlanId(studyPlanId, pageable);
+
+        return getPageResponseDTO(lessons);
+    }
+
+    private PageResponseDTO<Lesson> getPageResponseDTO(Page<Lesson> page) {
+        return PageResponseDTO.<Lesson>builder()
+                .content(page.getContent())
+                .pageNo(page.getNumber())
+                .pageSize(page.getSize())
+                .totalElements(page.getTotalElements())
+                .totalPages(page.getTotalPages())
+                .last(page.isLast())
+                .build();
     }
 }

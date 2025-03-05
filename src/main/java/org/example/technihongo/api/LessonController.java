@@ -45,8 +45,8 @@ public class LessonController {
         }
     }
 
-    @GetMapping("/csp/{id}")
-    public ResponseEntity<ApiResponse> getLessonListByCourseStudyPlanId(@PathVariable Integer id) throws Exception {
+    @GetMapping("/study-plan/{id}")
+    public ResponseEntity<ApiResponse> getLessonListByStudyPlanId(@PathVariable Integer id) throws Exception {
         try{
             List<Lesson> lessonList = lessonService.getLessonListByStudyPlanId(id);
             if(lessonList.isEmpty()){
@@ -61,6 +61,42 @@ public class LessonController {
                         .data(lessonList)
                         .build());
             }
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponse.builder()
+                            .success(false)
+                            .message("Internal Server Error: " + e.getMessage())
+                            .build());
+        }
+    }
+
+    @GetMapping("/study-plan/paginated/{id}")
+    public ResponseEntity<ApiResponse> getLessonListByStudyPlanIdPaginated(
+            @PathVariable Integer id,
+            @RequestParam(defaultValue = "0") int pageNo,
+            @RequestParam(defaultValue = "10") int pageSize,
+            @RequestParam(defaultValue = "lessonId") String sortBy,
+            @RequestParam(defaultValue = "asc") String sortDir) throws Exception {
+        try{
+            PageResponseDTO<Lesson> lessonList = lessonService.getLessonListByStudyPlanIdPaginated(id, pageNo, pageSize, sortBy, sortDir);
+            if(lessonList.getContent().isEmpty()){
+                return ResponseEntity.ok(ApiResponse.builder()
+                        .success(false)
+                        .message("List lessons is empty!")
+                        .build());
+            }else{
+                return ResponseEntity.ok(ApiResponse.builder()
+                        .success(true)
+                        .message("Get Lesson List")
+                        .data(lessonList)
+                        .build());
+            }
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(ApiResponse.builder()
+                            .success(false)
+                            .message("Failed to get lessons: " + e.getMessage())
+                            .build());
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(ApiResponse.builder()
@@ -119,11 +155,11 @@ public class LessonController {
         }
     }
 
-    @PatchMapping("/update-order/{coursePlanId}")
-    public ResponseEntity<ApiResponse> updateLessonOrder(@PathVariable Integer coursePlanId,
+    @PatchMapping("/update-order/{studyPlanId}")
+    public ResponseEntity<ApiResponse> updateLessonOrder(@PathVariable Integer studyPlanId,
                                                     @RequestBody UpdateLessonOrderDTO updateLessonOrderDTO) {
         try{
-            lessonService.updateLessonOrder(coursePlanId, updateLessonOrderDTO);
+            lessonService.updateLessonOrder(studyPlanId, updateLessonOrderDTO);
             return ResponseEntity.ok(ApiResponse.builder()
                     .success(true)
                     .message("Lesson updated successfully")
