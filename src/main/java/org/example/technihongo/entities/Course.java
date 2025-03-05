@@ -58,12 +58,10 @@ public class Course {
     private Integer enrollmentCount = 0;
 
     @Column(name = "is_public")
-    @Builder.Default
-    private boolean publicStatus = false;
+    private boolean publicStatus;
 
     @Column(name = "is_premium")
-    @Builder.Default
-    private boolean isPremium = true;
+    private boolean isPremium;
 
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
