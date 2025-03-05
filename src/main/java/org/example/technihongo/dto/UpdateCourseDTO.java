@@ -15,6 +15,6 @@ public class UpdateCourseDTO {
     private String attachmentUrl;
     private String thumbnailUrl;
     private String estimatedDuration;
-    private boolean isPublic;
-    private boolean isPremium;
+    private Boolean isPublic;
+    private Boolean isPremium;
 }

@@ -119,7 +119,7 @@ public class CourseServiceImpl implements CourseService {
                 .anyMatch(s -> s.getStudyPlan().getCourse().getCourseId().equals(courseId)
                             && s.getStatus().equalsIgnoreCase("Active"));
 
-        if (Boolean.FALSE.equals(updateCourseDTO.isPublic()) && hasStudents) {
+        if (Boolean.FALSE.equals(updateCourseDTO.getIsPublic()) && hasStudents) {
             throw new RuntimeException("Cannot deactivate Course because students are currently enrolled.");
         }
 
@@ -131,8 +131,8 @@ public class CourseServiceImpl implements CourseService {
         course.setAttachmentUrl(updateCourseDTO.getAttachmentUrl());
         course.setThumbnailUrl(updateCourseDTO.getThumbnailUrl());
         course.setEstimatedDuration(updateCourseDTO.getEstimatedDuration());
-        course.setPublicStatus(updateCourseDTO.isPublic());
-        course.setPremium(updateCourseDTO.isPremium());
+        course.setPublicStatus(updateCourseDTO.getIsPublic());
+        course.setPremium(updateCourseDTO.getIsPremium());
         course.setUpdateAt(LocalDateTime.now());
 
         courseRepository.save(course);
