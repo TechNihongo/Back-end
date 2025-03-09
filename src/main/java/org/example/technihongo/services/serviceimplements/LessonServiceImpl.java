@@ -96,7 +96,7 @@ public class LessonServiceImpl implements LessonService {
     }
 
     @Override
-    public PageResponseDTO<Lesson> getLessonListByStudyPlanIdPaginated(Integer studyPlanId, int pageNo, int pageSize, String sortBy, String sortDir) {
+    public PageResponseDTO<Lesson> getLessonListByStudyPlanIdPaginated(Integer studyPlanId, int pageNo, int pageSize, String sortBy, String sortDir, String keyword) {
         studyPlanRepository.findById(studyPlanId)
                 .orElseThrow(() -> new RuntimeException("StudyPlan ID not found!"));
 
@@ -105,7 +105,13 @@ public class LessonServiceImpl implements LessonService {
                 : Sort.by(sortBy).descending();
 
         Pageable pageable = PageRequest.of(pageNo, pageSize, sort);
-        Page<Lesson> lessons = lessonRepository.findByStudyPlan_StudyPlanId(studyPlanId, pageable);
+        Page<Lesson> lessons;
+        if(keyword != null) {
+            lessons = lessonRepository.findByStudyPlan_StudyPlanIdAndTitleContainingIgnoreCase(studyPlanId, keyword, pageable);
+        }
+        else {
+            lessons = lessonRepository.findByStudyPlan_StudyPlanId(studyPlanId, pageable);
+        }
 
         return getPageResponseDTO(lessons);
     }
