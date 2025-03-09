@@ -19,4 +19,5 @@ public interface LessonRepository extends JpaRepository<Lesson, Integer> {
     List<Lesson> findByStudyPlan_StudyPlanIdOrderByLessonOrderAsc(Integer studyPlanId);
 
     Page<Lesson> findByStudyPlan_StudyPlanId(Integer studyPlanId, Pageable pageable);
+    Page<Lesson> findByStudyPlan_StudyPlanIdAndTitleContainingIgnoreCase(Integer studyPlanId, String keyword, Pageable pageable);
 }

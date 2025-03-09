@@ -76,9 +76,10 @@ public class LessonController {
             @RequestParam(defaultValue = "0") int pageNo,
             @RequestParam(defaultValue = "10") int pageSize,
             @RequestParam(defaultValue = "lessonId") String sortBy,
-            @RequestParam(defaultValue = "asc") String sortDir) throws Exception {
+            @RequestParam(defaultValue = "asc") String sortDir,
+            @RequestParam(defaultValue = "") String keyword) throws Exception {
         try{
-            PageResponseDTO<Lesson> lessonList = lessonService.getLessonListByStudyPlanIdPaginated(id, pageNo, pageSize, sortBy, sortDir);
+            PageResponseDTO<Lesson> lessonList = lessonService.getLessonListByStudyPlanIdPaginated(id, pageNo, pageSize, sortBy, sortDir, keyword);
             if(lessonList.getContent().isEmpty()){
                 return ResponseEntity.ok(ApiResponse.builder()
                         .success(false)
