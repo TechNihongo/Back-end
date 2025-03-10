@@ -9,6 +9,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/flashcard")
 public class FlashCardController {
@@ -16,23 +18,50 @@ public class FlashCardController {
     @Autowired
     private FlashcardService flashcardService;
 
-    @PostMapping("/{studentId}/{setId}/create")
-    public ResponseEntity<ApiResponse> createFlashcard(
+    @PostMapping("/{studentId}/{setId}/studentCreate")
+    public ResponseEntity<ApiResponse> createStudentFlashcards(
             @PathVariable Integer studentId,
             @PathVariable("setId") Integer flashcardSetId,
-            @RequestBody FlashcardRequestDTO request) {
+            @RequestBody List<FlashcardRequestDTO> requests) {
         try {
-            FlashcardResponseDTO response = flashcardService.createFlashcard(studentId, flashcardSetId, request);
+            List<FlashcardResponseDTO> responses = flashcardService.createStudentFlashcards(studentId, flashcardSetId, requests);
             return ResponseEntity.ok(ApiResponse.builder()
                     .success(true)
-                    .message("Flashcard created successfully")
-                    .data(response)
+                    .message("Flashcards created successfully")
+                    .data(responses)
                     .build());
         } catch (RuntimeException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(ApiResponse.builder()
                             .success(false)
-                            .message("Failed to create flashcard: " + e.getMessage())
+                            .message("Failed to create flashcards: " + e.getMessage())
+                            .build());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponse.builder()
+                            .success(false)
+                            .message("Internal Server Error: " + e.getMessage())
+                            .build());
+        }
+    }
+
+    @PostMapping("/{userId}/{setId}/systemCreate")
+    public ResponseEntity<ApiResponse> createSystemFlashcards(
+            @PathVariable Integer userId,
+            @PathVariable("setId") Integer flashcardSetId,
+            @RequestBody List<FlashcardRequestDTO> requests) {
+        try {
+            List<FlashcardResponseDTO> responses = flashcardService.createStudentFlashcards(userId, flashcardSetId, requests);
+            return ResponseEntity.ok(ApiResponse.builder()
+                    .success(true)
+                    .message("Flashcards created successfully")
+                    .data(responses)
+                    .build());
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(ApiResponse.builder()
+                            .success(false)
+                            .message("Failed to create flashcards: " + e.getMessage())
                             .build());
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
