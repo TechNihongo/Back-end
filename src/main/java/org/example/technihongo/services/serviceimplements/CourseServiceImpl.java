@@ -117,7 +117,8 @@ public class CourseServiceImpl implements CourseService {
             throw new RuntimeException("DifficultyLevel ID not found!");
         }
 
-        if(studyPlanRepository.findByCourse_CourseId(courseId).stream().noneMatch(StudyPlan::isDefault)){
+        if(studyPlanRepository.findByCourse_CourseId(courseId).stream()
+                .noneMatch(s -> s.isDefault() && s.isActive())){
             throw new RuntimeException("No default StudyPlan found!");
         }
 
