@@ -19,9 +19,9 @@ public interface CourseService {
     List<Course> searchCourseByTitle(String keyword);
     List<Course> getListCoursesByCreatorId(Integer creatorId);
 
-    PageResponseDTO<Course> courseListPaginated(int pageNo, int pageSize, String sortBy, String sortDir);
-    PageResponseDTO<Course> getPublicCoursesPaginated(int pageNo, int pageSize, String sortBy, String sortDir);
-    PageResponseDTO<Course> getListCoursesByCreatorIdPaginated(Integer creatorId, int pageNo, int pageSize, String sortBy, String sortDir);
+    PageResponseDTO<Course> courseListPaginated(String keyword, Integer domainId, int pageNo, int pageSize, String sortBy, String sortDir);
+    PageResponseDTO<Course> getPublicCoursesPaginated(String keyword, Integer domainId, int pageNo, int pageSize, String sortBy, String sortDir);
+    PageResponseDTO<Course> getListCoursesByCreatorIdPaginated(String keyword, Integer creatorId, Integer domainId, int pageNo, int pageSize, String sortBy, String sortDir);
     PageResponseDTO<Course> searchCourseByTitlePaginated(String keyword, int pageNo, int pageSize, String sortBy, String sortDir);
 }
 

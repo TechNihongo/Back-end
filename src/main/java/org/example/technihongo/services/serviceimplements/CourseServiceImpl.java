@@ -159,31 +159,55 @@ public class CourseServiceImpl implements CourseService {
     }
 
     @Override
-    public PageResponseDTO<Course> courseListPaginated(int pageNo, int pageSize, String sortBy, String sortDir) {
+    public PageResponseDTO<Course> courseListPaginated(String keyword, Integer domainId, int pageNo, int pageSize, String sortBy, String sortDir) {
         Sort sort = sortDir.equalsIgnoreCase(Sort.Direction.ASC.name())
                 ? Sort.by(sortBy).ascending()
                 : Sort.by(sortBy).descending();
 
         Pageable pageable = PageRequest.of(pageNo, pageSize, sort);
-        Page<Course> courses = courseRepository.findAll(pageable);
+        Page<Course> courses;
+        if(keyword != null && domainId == null) {
+            courses = courseRepository.findByTitleContainingIgnoreCase(keyword, pageable);
+        }
+        else if(domainId != null && keyword == null){
+            courses = courseRepository.findByDomain_DomainId(domainId, pageable);
+        }
+        else if(domainId != null){
+            courses = courseRepository.findByTitleContainingIgnoreCaseAndDomain_DomainId(keyword, domainId, pageable);
+        }
+        else {
+            courses = courseRepository.findAll(pageable);
+        }
 
         return getPageResponseDTO(courses);
     }
 
     @Override
-    public PageResponseDTO<Course> getPublicCoursesPaginated(int pageNo, int pageSize, String sortBy, String sortDir) {
+    public PageResponseDTO<Course> getPublicCoursesPaginated(String keyword, Integer domainId, int pageNo, int pageSize, String sortBy, String sortDir) {
         Sort sort = sortDir.equalsIgnoreCase(Sort.Direction.ASC.name())
                 ? Sort.by(sortBy).ascending()
                 : Sort.by(sortBy).descending();
 
         Pageable pageable = PageRequest.of(pageNo, pageSize, sort);
-        Page<Course> courses = courseRepository.findCoursesByPublicStatus(true, pageable);
+        Page<Course> courses;
+        if(keyword != null && domainId == null) {
+            courses = courseRepository.findByTitleContainingIgnoreCaseAndPublicStatus(keyword, true, pageable);
+        }
+        else if(domainId != null && keyword == null){
+            courses = courseRepository.findByDomain_DomainIdAndPublicStatus(domainId, true, pageable);
+        }
+        else if(domainId != null){
+            courses = courseRepository.findByTitleContainingIgnoreCaseAndPublicStatusAndDomain_DomainId(keyword, true, domainId, pageable);
+        }
+        else {
+            courses = courseRepository.findCoursesByPublicStatus(true, pageable);
+        }
 
         return getPageResponseDTO(courses);
     }
 
     @Override
-    public PageResponseDTO<Course> getListCoursesByCreatorIdPaginated(Integer creatorId, int pageNo, int pageSize, String sortBy, String sortDir) {
+    public PageResponseDTO<Course> getListCoursesByCreatorIdPaginated(String keyword, Integer domainId, Integer creatorId, int pageNo, int pageSize, String sortBy, String sortDir) {
         userRepository.findById(creatorId)
                 .orElseThrow(() -> new RuntimeException("User ID not found."));
 
@@ -192,7 +216,19 @@ public class CourseServiceImpl implements CourseService {
                 : Sort.by(sortBy).descending();
 
         Pageable pageable = PageRequest.of(pageNo, pageSize, sort);
-        Page<Course> courses = courseRepository.findByCreator_UserId(creatorId, pageable);
+        Page<Course> courses;
+        if(keyword != null && domainId == null) {
+            courses = courseRepository.findByTitleContainingIgnoreCaseAndCreator_UserId(keyword, creatorId, pageable);
+        }
+        else if(domainId != null && keyword == null){
+            courses = courseRepository.findByDomain_DomainIdAndCreator_UserId(domainId, creatorId, pageable);
+        }
+        else if(domainId != null){
+            courses = courseRepository.findByDomain_DomainIdAndCreator_UserIdAndTitleContainingIgnoreCase(domainId, creatorId, keyword, pageable);
+        }
+        else {
+            courses = courseRepository.findByCreator_UserId(creatorId, pageable);
+        }
 
         return getPageResponseDTO(courses);
     }

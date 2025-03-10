@@ -244,14 +244,16 @@ public class CourseController {
             @RequestParam(defaultValue = "0") int pageNo,
             @RequestParam(defaultValue = "10") int pageSize,
             @RequestParam(defaultValue = "courseId") String sortBy,
-            @RequestParam(defaultValue = "asc") String sortDir) throws Exception {
+            @RequestParam(defaultValue = "asc") String sortDir,
+            @RequestParam(defaultValue = "") String keyword,
+            @RequestParam(defaultValue = "") Integer domainId) throws Exception {
         try{
             if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
                 String token = authorizationHeader.substring(7);
                 int roleId = jwtUtil.extractUserRoleId(token);
 
                 if (roleId == 1 || roleId == 2) {
-                    PageResponseDTO<Course> courseList = courseService.courseListPaginated(pageNo, pageSize, sortBy, sortDir);
+                    PageResponseDTO<Course> courseList = courseService.courseListPaginated(keyword, domainId, pageNo, pageSize, sortBy, sortDir);
                     if (courseList.getContent().isEmpty()) {
                         return ResponseEntity.ok(ApiResponse.builder()
                                 .success(false)
@@ -265,7 +267,7 @@ public class CourseController {
                                 .build());
                     }
                 } else {
-                    PageResponseDTO<Course> courseList = courseService.getPublicCoursesPaginated(pageNo, pageSize, sortBy, sortDir);
+                    PageResponseDTO<Course> courseList = courseService.getPublicCoursesPaginated(keyword, domainId, pageNo, pageSize, sortBy, sortDir);
                     if (courseList.getContent().isEmpty()) {
                         return ResponseEntity.ok(ApiResponse.builder()
                                 .success(false)
@@ -338,13 +340,15 @@ public class CourseController {
             @RequestParam(defaultValue = "0") int pageNo,
             @RequestParam(defaultValue = "10") int pageSize,
             @RequestParam(defaultValue = "courseId") String sortBy,
-            @RequestParam(defaultValue = "asc") String sortDir) throws Exception {
+            @RequestParam(defaultValue = "asc") String sortDir,
+            @RequestParam(defaultValue = "") String keyword,
+            @RequestParam(defaultValue = "") Integer domainId) throws Exception {
         try{
             if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
                 String token = authorizationHeader.substring(7);
                 Integer userId = jwtUtil.extractUserId(token);
 
-                PageResponseDTO<Course> courseList = courseService.getListCoursesByCreatorIdPaginated(userId, pageNo, pageSize, sortBy, sortDir);
+                PageResponseDTO<Course> courseList = courseService.getListCoursesByCreatorIdPaginated(keyword, domainId, userId, pageNo, pageSize, sortBy, sortDir);
                 if (courseList.getContent().isEmpty()) {
                     return ResponseEntity.ok(ApiResponse.builder()
                             .success(false)
