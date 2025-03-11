@@ -331,13 +331,19 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public PageResponseDTO<User> userListPaginated(int pageNo, int pageSize, String sortBy, String sortDir) {
+    public PageResponseDTO<User> userListPaginated(Integer roleId, int pageNo, int pageSize, String sortBy, String sortDir) {
         Sort sort = sortDir.equalsIgnoreCase(Sort.Direction.ASC.name())
                 ? Sort.by(sortBy).ascending()
                 : Sort.by(sortBy).descending();
 
         Pageable pageable = PageRequest.of(pageNo, pageSize, sort);
-        Page<User> users = userRepository.findAll(pageable);
+        Page<User> users;
+        if(roleId != null) {
+            users = userRepository.findByRole_RoleId(roleId, pageable);
+        }
+        else {
+            users = userRepository.findAll(pageable);
+        }
 
         return getPageResponseDTO(users);
     }
