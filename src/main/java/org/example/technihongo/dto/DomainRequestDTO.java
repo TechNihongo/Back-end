@@ -14,5 +14,4 @@ public class DomainRequestDTO {
     private String name;
     private String description;
     private Integer parentDomainId;
-    private Boolean isActive;
 }

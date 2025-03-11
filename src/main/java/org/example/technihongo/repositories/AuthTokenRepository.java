@@ -21,7 +21,7 @@ public interface AuthTokenRepository extends JpaRepository<AuthToken, Integer> {
     @Transactional
     @Modifying
     @Query("DELETE FROM AuthToken t WHERE t.expiresAt <= :expiryTime")
-    int deleteExpiredTokens(@Param("expiryTime") LocalDateTime expiryTime);
+    void deleteExpiredTokens(@Param("expiryTime") LocalDateTime expiryTime);
 }
 
 

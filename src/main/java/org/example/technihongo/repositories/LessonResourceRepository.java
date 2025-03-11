@@ -1,6 +1,8 @@
 package org.example.technihongo.repositories;
 
 import org.example.technihongo.entities.LessonResource;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -16,4 +18,11 @@ public interface LessonResourceRepository extends JpaRepository<LessonResource, 
     Boolean existsByLesson_LessonIdAndSystemFlashCardSet_SystemSetId(Integer lessonId, Integer setId);
     Boolean existsByLesson_LessonIdAndQuiz_QuizId(Integer lessonId, Integer quizId);
     Boolean existsByLearningResource_ResourceId(Integer resourceId);
+
+    Page<LessonResource> findByLesson_StudyPlan_StudyPlanId(Integer studyPlanId, Pageable pageable);
+    Page<LessonResource> findByLesson_StudyPlan_StudyPlanIdAndType(Integer studyPlanId, String type, Pageable pageable);
+    Page<LessonResource> findByLesson_StudyPlan_StudyPlanIdAndLearningResource_TitleContainsIgnoreCase(Integer studyPlanId, String keyword, Pageable pageable);
+    Page<LessonResource> findByLesson_StudyPlan_StudyPlanIdAndSystemFlashCardSet_TitleContainsIgnoreCase(Integer studyPlanId, String keyword, Pageable pageable);
+    Page<LessonResource> findByLesson_StudyPlan_StudyPlanIdAndQuiz_TitleContainsIgnoreCase(Integer studyPlanId, String keyword, Pageable pageable);
+    Page<LessonResource> findByLesson_StudyPlan_StudyPlanIdAndLearningResource_TitleContainsIgnoreCaseOrSystemFlashCardSet_TitleContainsIgnoreCaseOrQuiz_TitleContainsIgnoreCase(Integer studyPlanId, String keyword1, String keyword2, String keyword3, Pageable pageable);
 }

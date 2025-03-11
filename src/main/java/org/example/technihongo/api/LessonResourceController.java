@@ -198,4 +198,43 @@ public class LessonResourceController {
                             .build());
         }
     }
+
+    @GetMapping("/study-plan")
+    public ResponseEntity<ApiResponse> getLessonResourcesByDefaultStudyPlan(
+            @RequestParam(defaultValue = "") Integer studyPlanId,
+            @RequestParam(defaultValue = "") String keyword,
+            @RequestParam(defaultValue = "") String type,
+            @RequestParam(defaultValue = "0") int pageNo,
+            @RequestParam(defaultValue = "10") int pageSize,
+            @RequestParam(defaultValue = "lessonResourceId") String sortBy,
+            @RequestParam(defaultValue = "asc") String sortDir) {
+        try{
+            PageResponseDTO<LessonResource> lessonResourceList = lessonResourceService
+                    .getLessonResourcesByDefaultStudyPlanPaginated(studyPlanId, keyword, type, pageNo, pageSize, sortBy, sortDir);
+            if (lessonResourceList.getContent().isEmpty()) {
+                return ResponseEntity.ok(ApiResponse.builder()
+                        .success(false)
+                        .message("List LessonResources is empty!")
+                        .build());
+            } else {
+                return ResponseEntity.ok(ApiResponse.builder()
+                        .success(true)
+                        .data(lessonResourceList)
+                        .message("LessonResources retrieve successfully!")
+                        .build());
+            }
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(ApiResponse.builder()
+                            .success(false)
+                            .message("Failed to get LessonResources: " + e.getMessage())
+                            .build());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponse.builder()
+                            .success(false)
+                            .message("Internal Server Error: " + e.getMessage())
+                            .build());
+        }
+    }
 }
