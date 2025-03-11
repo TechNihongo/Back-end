@@ -230,10 +230,11 @@ public class UserController {
             @RequestParam(defaultValue = "0") int pageNo,
             @RequestParam(defaultValue = "10") int pageSize,
             @RequestParam(defaultValue = "userId") String sortBy,
-            @RequestParam(defaultValue = "asc") String sortDir) {
+            @RequestParam(defaultValue = "asc") String sortDir,
+            @RequestParam(defaultValue = "") Integer roleId) {
 
         try {
-            PageResponseDTO<User> pageResponse = userService.userListPaginated(pageNo, pageSize, sortBy, sortDir);
+            PageResponseDTO<User> pageResponse = userService.userListPaginated(roleId, pageNo, pageSize, sortBy, sortDir);
 
             if(pageResponse.getContent().isEmpty()){
                 return ResponseEntity.ok(ApiResponse.builder()
