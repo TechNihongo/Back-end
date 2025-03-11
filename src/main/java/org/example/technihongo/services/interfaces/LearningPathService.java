@@ -10,6 +10,7 @@ public interface LearningPathService {
     List<LearningPath> getAllLearningPaths();
     List<LearningPath> getPublicLearningPaths();
     List<LearningPath> getLearningPathsByTitle(String keyword);
+    List<LearningPath> getPublicLearningPathsByTitle(String keyword);
     LearningPath getLearningPathById(Integer pathId);
     LearningPath getPublicLearningPathById(Integer pathId);
     LearningPath createLearningPath(Integer creatorId, CreateLearningPathDTO createLearningPathDTO);

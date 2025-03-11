@@ -9,8 +9,8 @@ import java.util.List;
 @Repository
 public interface LearningPathRepository extends JpaRepository<LearningPath, Integer> {
     LearningPath findByPathId(Integer pathId);
-    List<LearningPath> findByTitleContainsIgnoreCase(String keyword);
-    List<LearningPath> findByCreator_UserId(Integer creatorId);
+    List<LearningPath> findByTitleContainsIgnoreCaseOrderByCreatedAtDesc(String keyword);
+    List<LearningPath> findByCreator_UserIdOrderByCreatedAtDesc(Integer creatorId);
 
     boolean existsByDomainDomainId(Integer domainId);
 

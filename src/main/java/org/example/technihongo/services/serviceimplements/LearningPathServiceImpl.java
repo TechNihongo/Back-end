@@ -11,6 +11,7 @@ import org.example.technihongo.repositories.PathCourseRepository;
 import org.example.technihongo.repositories.UserRepository;
 import org.example.technihongo.services.interfaces.LearningPathService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -32,17 +33,22 @@ public class LearningPathServiceImpl implements LearningPathService {
 
     @Override
     public List<LearningPath> getAllLearningPaths() {
-        return learningPathRepository.findAll();
+        return learningPathRepository.findAll(Sort.by(Sort.Direction.DESC, "createdAt"));
     }
 
     @Override
     public List<LearningPath> getPublicLearningPaths() {
-        return learningPathRepository.findAll().stream().filter(LearningPath::isPublic).toList();
+        return learningPathRepository.findAll(Sort.by(Sort.Direction.DESC, "createdAt")).stream().filter(LearningPath::isPublic).toList();
     }
 
     @Override
     public List<LearningPath> getLearningPathsByTitle(String keyword) {
-        return learningPathRepository.findByTitleContainsIgnoreCase(keyword)
+        return learningPathRepository.findByTitleContainsIgnoreCaseOrderByCreatedAtDesc(keyword).stream().toList();
+    }
+
+    @Override
+    public List<LearningPath> getPublicLearningPathsByTitle(String keyword) {
+        return learningPathRepository.findByTitleContainsIgnoreCaseOrderByCreatedAtDesc(keyword)
                 .stream().filter(LearningPath::isPublic).toList();
     }
 
@@ -132,6 +138,6 @@ public class LearningPathServiceImpl implements LearningPathService {
     public List<LearningPath> getListLearningPathsByCreatorId(Integer creatorId) {
         userRepository.findById(creatorId)
                 .orElseThrow(() -> new RuntimeException("User ID not found."));
-        return learningPathRepository.findByCreator_UserId(creatorId);
+        return learningPathRepository.findByCreator_UserIdOrderByCreatedAtDesc(creatorId);
     }
 }

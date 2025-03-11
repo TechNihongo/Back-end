@@ -176,21 +176,45 @@ public class LearningPathController {
     }
 
     @GetMapping("/search/{keyword}")
-    public ResponseEntity<ApiResponse> searchLearningPathByTitle(@PathVariable String keyword) throws Exception {
+    public ResponseEntity<ApiResponse> searchLearningPathByTitle(
+            @PathVariable String keyword,
+            @RequestHeader("Authorization") String authorizationHeader) throws Exception {
         try{
-            List<LearningPath> learningPaths = learningPathService.getLearningPathsByTitle(keyword);
-            if(learningPaths.isEmpty()){
-                return ResponseEntity.ok(ApiResponse.builder()
-                        .success(false)
-                        .message("List LearningPaths is empty!")
-                        .build());
-            }else{
-                return ResponseEntity.ok(ApiResponse.builder()
-                        .success(true)
-                        .message("Get LearningPaths List By Keyword")
-                        .data(learningPaths)
-                        .build());
+            if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
+                String token = authorizationHeader.substring(7);
+                int roleId = jwtUtil.extractUserRoleId(token);
+
+                if (roleId == 1 || roleId == 2) {
+                    List<LearningPath> learningPaths = learningPathService.getLearningPathsByTitle(keyword);
+                    if (learningPaths.isEmpty()) {
+                        return ResponseEntity.ok(ApiResponse.builder()
+                                .success(false)
+                                .message("List LearningPath is empty!")
+                                .build());
+                    } else {
+                        return ResponseEntity.ok(ApiResponse.builder()
+                                .success(true)
+                                .message("Get LearningPaths By Keyword")
+                                .data(learningPaths)
+                                .build());
+                    }
+                } else {
+                    List<LearningPath> learningPaths = learningPathService.getPublicLearningPathsByTitle(keyword);
+                    if (learningPaths.isEmpty()) {
+                        return ResponseEntity.ok(ApiResponse.builder()
+                                .success(false)
+                                .message("List LearningPaths is empty!")
+                                .build());
+                    } else {
+                        return ResponseEntity.ok(ApiResponse.builder()
+                                .success(true)
+                                .message("Get Public LearningPaths By Keyword")
+                                .data(learningPaths)
+                                .build());
+                    }
+                }
             }
+            else throw new Exception("Authorization failed!");
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(ApiResponse.builder()
