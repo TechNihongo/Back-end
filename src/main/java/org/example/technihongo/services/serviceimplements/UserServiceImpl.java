@@ -208,6 +208,7 @@ public class UserServiceImpl implements UserService {
                     .uid(googleUser.getSub())
                     .createdAt(LocalDateTime.now())
                     .lastLogin(LocalDateTime.now())
+                    .isVerified(true)
                     .build();
 
             Student student = Student.builder()

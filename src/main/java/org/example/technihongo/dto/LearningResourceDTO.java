@@ -15,4 +15,5 @@ public class LearningResourceDTO {
     private String videoFilename;
     private String pdfUrl;
     private String pdfFilename;
+    private Boolean isPremium;
 }

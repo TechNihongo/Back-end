@@ -41,7 +41,6 @@ public class DomainServiceImpl implements DomainService {
         domain.setTag(request.getTag());
         domain.setName(request.getName());
         domain.setDescription(request.getDescription());
-        domain.setActive(request.getIsActive());
 
         if (request.getParentDomainId() != null) {
             Domain parentDomain = domainRepository.findById(request.getParentDomainId())
@@ -66,9 +65,6 @@ public class DomainServiceImpl implements DomainService {
         }
         if (request.getDescription() != null) {
             domain.setDescription(request.getDescription());
-        }
-        if (request.getIsActive() != null) {
-            domain.setActive(request.getIsActive());
         }
         if (request.getParentDomainId() != null) {
             Domain parentDomain = domainRepository.findById(request.getParentDomainId())
@@ -189,7 +185,6 @@ public class DomainServiceImpl implements DomainService {
         response.setName(domain.getName());
         response.setDescription(domain.getDescription());
         response.setParentDomainId(domain.getParentDomain() != null ? domain.getParentDomain().getDomainId() : null);
-        response.setIsActive(domain.isActive());
         return response;
     }
 }

@@ -41,9 +41,8 @@ public class LearningResource {
     @Column(name = "is_public")
     private boolean isPublic = false;
 
-    @Builder.Default
     @Column(name = "is_premium")
-    private boolean isPremium = false;
+    private boolean isPremium;
 
     @Column(name = "video_url")
     private String videoUrl;

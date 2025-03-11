@@ -35,10 +35,6 @@ public class DifficultyLevel {
     @Column(name = "order_sequence")
     private Integer orderSequence;
 
-    @Column(name = "is_active")
-    @Builder.Default
-    private boolean isActive = true;
-
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;

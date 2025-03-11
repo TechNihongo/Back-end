@@ -39,9 +39,6 @@ public class Domain {
     @Column(name = "description", length = 255)
     private String description;
 
-    @Column(name = "is_active")
-    private boolean isActive = true;
-
     @CreationTimestamp
     @Column(name = "created_at")
     private LocalDateTime createdAt;

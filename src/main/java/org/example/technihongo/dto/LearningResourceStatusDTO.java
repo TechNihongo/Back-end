@@ -9,5 +9,4 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class LearningResourceStatusDTO {
     private Boolean isPublic;
-    private Boolean isPremium;
 }

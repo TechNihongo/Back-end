@@ -2,16 +2,17 @@ package org.example.technihongo.services.serviceimplements;
 
 import lombok.RequiredArgsConstructor;
 import org.example.technihongo.dto.CreateLessonResourceDTO;
+import org.example.technihongo.dto.PageResponseDTO;
 import org.example.technihongo.dto.UpdateLessonResourceDTO;
 import org.example.technihongo.dto.UpdateLessonResourceOrderDTO;
 import org.example.technihongo.entities.*;
-import org.example.technihongo.repositories.LessonRepository;
-import org.example.technihongo.repositories.LessonResourceRepository;
-import org.example.technihongo.repositories.QuizRepository;
-import org.example.technihongo.repositories.SystemFlashcardSetRepository;
-import org.example.technihongo.repositories.LearningResourceRepository;
+import org.example.technihongo.repositories.*;
 import org.example.technihongo.services.interfaces.LessonResourceService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 
@@ -31,6 +32,8 @@ public class LessonResourceServiceImpl implements LessonResourceService {
     private SystemFlashcardSetRepository systemFlashcardSetRepository;
     @Autowired
     private QuizRepository quizRepository;
+    @Autowired
+    private StudyPlanRepository studyPlanRepository;
 
     @Override
     public List<LessonResource> getLessonResourceListByLessonId(Integer lessonId) {
@@ -114,7 +117,7 @@ public class LessonResourceServiceImpl implements LessonResourceService {
         if(learningResource != null){
             lessonResource = lessonResourceRepository.save(LessonResource.builder()
                     .lesson(lesson)
-                    .type("Resource")
+                    .type("LearningResource")
                     .typeOrder(lessonResourceRepository.countByLesson_LessonId(lesson.getLessonId()) + 1)
                     .learningResource(learningResource)
                     .build());
@@ -191,5 +194,50 @@ public class LessonResourceServiceImpl implements LessonResourceService {
         }
 
         lessonResourceRepository.saveAll(lessonResources);
+    }
+
+    @Override
+    public PageResponseDTO<LessonResource> getLessonResourcesByDefaultStudyPlanPaginated(Integer studyPlanId, String keyword, String type, int pageNo, int pageSize, String sortBy, String sortDir) {
+        studyPlanRepository.findById(studyPlanId).filter(StudyPlan::isDefault)
+                .orElseThrow(() -> new RuntimeException("StudyPlan ID not found or is not default"));
+
+        Sort sort = sortDir.equalsIgnoreCase(Sort.Direction.ASC.name())
+                ? Sort.by(sortBy).ascending()
+                : Sort.by(sortBy).descending();
+
+        Pageable pageable = PageRequest.of(pageNo, pageSize, sort);
+        Page<LessonResource> lessonResources;
+
+        if(keyword == null && type != null) {
+            lessonResources = lessonResourceRepository.findByLesson_StudyPlan_StudyPlanIdAndType(studyPlanId, type, pageable);
+        }
+        else if(keyword != null && type.isEmpty()) {
+            lessonResources = lessonResourceRepository.findByLesson_StudyPlan_StudyPlanIdAndLearningResource_TitleContainsIgnoreCaseOrSystemFlashCardSet_TitleContainsIgnoreCaseOrQuiz_TitleContainsIgnoreCase(studyPlanId, keyword, keyword, keyword, pageable);
+        }
+        else if(keyword != null && type.equalsIgnoreCase("LearningResource")){
+            lessonResources = lessonResourceRepository.findByLesson_StudyPlan_StudyPlanIdAndLearningResource_TitleContainsIgnoreCase(studyPlanId, keyword, pageable);
+        }
+        else if(keyword != null && type.equalsIgnoreCase("FlashcardSet")){
+            lessonResources = lessonResourceRepository.findByLesson_StudyPlan_StudyPlanIdAndSystemFlashCardSet_TitleContainsIgnoreCase(studyPlanId, keyword, pageable);
+        }
+        else if(keyword != null && type.equalsIgnoreCase("Quiz")){
+            lessonResources = lessonResourceRepository.findByLesson_StudyPlan_StudyPlanIdAndQuiz_TitleContainsIgnoreCase(studyPlanId, keyword, pageable);
+        }
+        else{
+            lessonResources = lessonResourceRepository.findByLesson_StudyPlan_StudyPlanId(studyPlanId, pageable);
+        }
+
+        return getPageResponseDTO(lessonResources);
+    }
+
+    private PageResponseDTO<LessonResource> getPageResponseDTO(Page<LessonResource> page) {
+        return PageResponseDTO.<LessonResource>builder()
+                .content(page.getContent())
+                .pageNo(page.getNumber())
+                .pageSize(page.getSize())
+                .totalElements(page.getTotalElements())
+                .totalPages(page.getTotalPages())
+                .last(page.isLast())
+                .build();
     }
 }

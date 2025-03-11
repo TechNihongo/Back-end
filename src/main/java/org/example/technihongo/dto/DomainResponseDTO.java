@@ -15,6 +15,4 @@ public class DomainResponseDTO {
     private String name;
     private String description;
     private Integer parentDomainId;
-    private Boolean isActive;
-
 }

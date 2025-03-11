@@ -100,6 +100,7 @@ public class LearningResourceServiceImpl implements LearningResourceService {
                 .videoFilename(learningResourceDTO.getVideoFilename())
                 .pdfUrl(learningResourceDTO.getPdfUrl())
                 .pdfFilename(learningResourceDTO.getPdfFilename())
+                .isPremium(learningResourceDTO.getIsPremium())
                 .build());
 
         return resource;
@@ -141,7 +142,7 @@ public class LearningResourceServiceImpl implements LearningResourceService {
             throw new RuntimeException("Learning resource ID not found!");
         }
 
-        resource.setPremium(learningResourceStatusDTO.getIsPremium());
+        //resource.setPremium(learningResourceStatusDTO.getIsPremium());
         resource.setPublic(learningResourceStatusDTO.getIsPublic());
         learningResourceRepository.save(resource);
     }
