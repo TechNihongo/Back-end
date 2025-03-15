@@ -6,6 +6,7 @@ import org.example.technihongo.dto.UpdateStudyPlanDTO;
 import org.example.technihongo.entities.Course;
 import org.example.technihongo.entities.Lesson;
 import org.example.technihongo.entities.StudyPlan;
+import org.example.technihongo.enums.StudyPlanStatus;
 import org.example.technihongo.repositories.*;
 import org.example.technihongo.services.interfaces.StudyPlanService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -91,7 +92,7 @@ public class StudyPlanServiceImpl implements StudyPlanService {
 
         boolean hasStudents = studentStudyPlanRepository.findAll().stream()
                 .anyMatch(s -> s.getStudyPlan().getStudyPlanId().equals(studyPlanId)
-                && s.getStatus().equalsIgnoreCase("Active"));
+                && s.getStatus().equals(StudyPlanStatus.ACTIVE));
 
         if (Boolean.FALSE.equals(updateStudyPlanDTO.getIsActive()) && hasStudents) {
             throw new RuntimeException("Cannot deactivate StudyPlan because students are currently enrolled.");

@@ -7,6 +7,7 @@ import org.example.technihongo.entities.AuthToken;
 import org.example.technihongo.entities.Role;
 import org.example.technihongo.entities.Student;
 import org.example.technihongo.entities.User;
+import org.example.technihongo.enums.TokenType;
 import org.example.technihongo.exception.ResourceNotFoundException;
 import org.example.technihongo.repositories.AuthTokenRepository;
 import org.example.technihongo.repositories.RoleRepository;
@@ -389,7 +390,7 @@ public class UserServiceImpl implements UserService {
         AuthToken authToken = AuthToken.builder()
                 .user(user)
                 .token(generateToken())
-                .tokenType("RESET_PASSWORD")
+                .tokenType(TokenType.RESET_PASSWORD)
                 .expiresAt(LocalDateTime.now().plusMinutes(EXPIRE_TOKEN))
                 .build();
 
@@ -437,7 +438,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public void verifyEmailToken(String token) {
-        AuthToken authToken = authTokenRepository.findByTokenAndTokenTypeAndIsActive(token, "EMAIL_VERIFICATION", true)
+        AuthToken authToken = authTokenRepository.findByTokenAndTokenTypeAndIsActive(token, TokenType.EMAIL_VERIFICATION, true)
                 .orElseThrow(() -> new RuntimeException("Invalid or expired token."));
 
         if (authToken.getExpiresAt().isBefore(LocalDateTime.now())) {
