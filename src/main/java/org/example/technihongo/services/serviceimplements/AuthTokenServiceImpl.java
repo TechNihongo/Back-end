@@ -6,6 +6,7 @@ import org.example.technihongo.dto.CreateLoginTokenDTO;
 import org.example.technihongo.dto.TokenStatusDTO;
 import org.example.technihongo.entities.AuthToken;
 import org.example.technihongo.entities.User;
+import org.example.technihongo.enums.TokenType;
 import org.example.technihongo.repositories.AuthTokenRepository;
 import org.example.technihongo.repositories.UserRepository;
 import org.example.technihongo.services.interfaces.AuthTokenService;
@@ -32,7 +33,7 @@ public class AuthTokenServiceImpl implements AuthTokenService {
         authTokenRepository.save(AuthToken.builder()
                 .user(userRepository.findByUserId(createLoginTokenDTO.getUserId()))
                 .token(createLoginTokenDTO.getToken())
-                .tokenType(createLoginTokenDTO.getTokenType())
+                .tokenType(TokenType.valueOf(createLoginTokenDTO.getTokenType()))
                 .expiresAt(createLoginTokenDTO.getExpiresAt())
                 .build());
     }
@@ -48,7 +49,8 @@ public class AuthTokenServiceImpl implements AuthTokenService {
     public void updateLoginTokenStatus(Integer userId) {
         List<AuthToken> authTokenList = authTokenRepository.findAll().stream()
                 .filter(authToken -> authToken.getUser().getUserId().equals(userId) &&
-                        authToken.getTokenType().toLowerCase().contains("LOGIN".toLowerCase()) &&
+                        (authToken.getTokenType().equals(TokenType.LOGIN)
+                        || authToken.getTokenType().equals(TokenType.LOGIN_GOOGLE)) &&
                         authToken.getIsActive())
                 .toList();
 
@@ -67,7 +69,7 @@ public class AuthTokenServiceImpl implements AuthTokenService {
         AuthToken authToken = new AuthToken();
         authToken.setUser(userRepository.findById(userId).get());
         authToken.setToken(token);
-        authToken.setTokenType("EMAIL_VERIFICATION");
+        authToken.setTokenType(TokenType.EMAIL_VERIFICATION);
         authToken.setExpiresAt(LocalDateTime.now().plusHours(24));
         authToken.setIsActive(true);
         authTokenRepository.save(authToken);
@@ -76,7 +78,7 @@ public class AuthTokenServiceImpl implements AuthTokenService {
 
     @Override
     public void deactivateAllTokensByUserId(Integer userId, String tokenType) {
-        List<AuthToken> tokens = authTokenRepository.findAllByUser_UserIdAndTokenType(userId, tokenType);
+        List<AuthToken> tokens = authTokenRepository.findAllByUser_UserIdAndTokenType(userId, TokenType.valueOf(tokenType));
         for (AuthToken token : tokens) {
             token.setIsActive(false);
         }
@@ -92,7 +94,7 @@ public class AuthTokenServiceImpl implements AuthTokenService {
             throw new RuntimeException("Email is already verified.");
         }
 
-        deactivateAllTokensByUserId(user.getUserId(), "EMAIL_VERIFICATION");
+        deactivateAllTokensByUserId(user.getUserId(), String.valueOf(TokenType.EMAIL_VERIFICATION));
         return createEmailVerifyToken(user.getUserId());
     }
 

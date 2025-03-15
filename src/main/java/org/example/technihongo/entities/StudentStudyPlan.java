@@ -2,6 +2,7 @@ package org.example.technihongo.entities;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.example.technihongo.enums.StudyPlanStatus;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
@@ -36,8 +37,9 @@ public class StudentStudyPlan {
     @Column(name = "start_date")
     private LocalDateTime startDate;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "status", length = 20)
-    private String status;
+    private StudyPlanStatus status;
 
     @Column(name = "switch_date")
     private LocalDateTime switchDate;
