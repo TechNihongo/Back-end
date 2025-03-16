@@ -88,17 +88,6 @@ public class UserController {
         }
     }
 
-//    @PostMapping("/google-auth")
-//    public ResponseEntity<LoginResponseDTO> authenticateWithGoogle(@RequestBody GoogleTokenDTO googleTokenDTO) {
-//        try {
-//            LoginResponseDTO response = userService.authenticateWithGoogle(googleTokenDTO);
-//            return ResponseEntity.ok(response);
-//        } catch (Exception e) {
-//            String errorMessage = "Google authentication failed: " + e.getMessage();
-//            LoginResponseDTO errorResponse = new LoginResponseDTO(null, null, null, null, false, errorMessage);
-//            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorResponse);
-//        }
-//    }
 
     @PostMapping("/google-auth")
     public ResponseEntity<LoginResponseTokenDTO> authenticateWithGoogle(@RequestBody GoogleTokenDTO googleTokenDTO) {

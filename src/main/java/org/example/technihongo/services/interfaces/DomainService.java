@@ -2,6 +2,7 @@ package org.example.technihongo.services.interfaces;
 
 import org.example.technihongo.dto.DomainRequestDTO;
 import org.example.technihongo.dto.DomainResponseDTO;
+import org.example.technihongo.dto.PageResponseDTO;
 
 import java.util.List;
 
@@ -9,14 +10,14 @@ public interface DomainService {
     DomainResponseDTO createDomain(DomainRequestDTO request);
     DomainResponseDTO updateDomain(Integer domainId, DomainRequestDTO request);
     void deleteDomain(Integer domainId);
-    List<DomainResponseDTO> getAllDomains();
+    PageResponseDTO<DomainResponseDTO> getAllDomains(int pageNo, int pageSize);
+
+    PageResponseDTO<DomainResponseDTO> getAllParentDomains(int pageNo, int pageSize);
     DomainResponseDTO getDomainById(Integer domainId);
 
-    List<DomainResponseDTO> searchName(String keyword);
+    PageResponseDTO<DomainResponseDTO> searchName(String keyword, int pageNo, int pageSize);
 
-//    boolean hasCourses(Integer domainId);
-    List<DomainResponseDTO> getDomainsByTags(List<String> tags);
+    PageResponseDTO<DomainResponseDTO> getDomainsByTags(List<String> tags, int pageNo, int pageSize);
 
-    List<DomainResponseDTO> getChildDomains(Integer parentDomainId);
-
+    PageResponseDTO<DomainResponseDTO> getChildDomains(Integer parentDomainId, int pageNo, int pageSize);
 }
