@@ -2,6 +2,7 @@ package org.example.technihongo.entities;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.example.technihongo.enums.CompletionStatus;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.math.BigDecimal;
@@ -32,8 +33,9 @@ public class StudentLessonProgress {
     @Column(name = "completion_percentage", precision = 5, scale = 2, nullable = false)
     private BigDecimal completionPercentage = BigDecimal.ZERO;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "completion_status", length = 30, nullable = false)
-    private String completionStatus;
+    private CompletionStatus completionStatus;
 
     @Column(name = "completed_items", nullable = false)
     private Integer completedItems = 0;

@@ -8,6 +8,7 @@ import org.example.technihongo.dto.UpdateCourseDTO;
 import org.example.technihongo.entities.Course;
 import org.example.technihongo.entities.StudyPlan;
 import org.example.technihongo.entities.User;
+import org.example.technihongo.enums.StudyPlanStatus;
 import org.example.technihongo.repositories.*;
 import org.example.technihongo.services.interfaces.CourseService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -124,7 +125,7 @@ public class CourseServiceImpl implements CourseService {
 
         boolean hasStudents = studentStudyPlanRepository.findAll().stream()
                 .anyMatch(s -> s.getStudyPlan().getCourse().getCourseId().equals(courseId)
-                            && s.getStatus().equalsIgnoreCase("Active"));
+                            && s.getStatus().equals(StudyPlanStatus.ACTIVE));
 
         if (Boolean.FALSE.equals(updateCourseDTO.getIsPublic()) && hasStudents) {
             throw new RuntimeException("Cannot deactivate Course because students are currently enrolled.");

@@ -3,6 +3,7 @@ package org.example.technihongo.entities;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.example.technihongo.enums.CompletionStatus;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDateTime;
@@ -29,8 +30,9 @@ public class StudentResourceProgress {
     @JoinColumn(name = "resource_id", nullable = false, referencedColumnName = "resource_id")
     private LearningResource learningResource;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "completion_status", length = 20)
-    private String completionStatus;
+    private CompletionStatus completionStatus;
 
     @Column(name = "last_studied")
     private LocalDateTime lastStudied;

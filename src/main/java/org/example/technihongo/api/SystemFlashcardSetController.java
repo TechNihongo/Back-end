@@ -1,5 +1,6 @@
 package org.example.technihongo.api;
 
+import org.example.technihongo.core.security.JwtUtil;
 import org.example.technihongo.dto.SystemFlashcardSetRequestDTO;
 import org.example.technihongo.dto.SystemFlashcardSetResponseDTO;
 import org.example.technihongo.exception.ResourceNotFoundException;
@@ -18,18 +19,26 @@ import java.util.List;
 public class SystemFlashcardSetController {
     @Autowired
     private SystemFlashcardSetService systemFlashcardSetService;
+    @Autowired
+    private JwtUtil jwtUtil;
 
-    @PostMapping("/create/{userId}")
+    @PostMapping("/create")
     public ResponseEntity<ApiResponse> create(
-            @PathVariable Integer userId,
+            @RequestHeader("Authorization") String authorizationHeader,
             @RequestBody SystemFlashcardSetRequestDTO requestDTO) {
         try {
-            SystemFlashcardSetResponseDTO response = systemFlashcardSetService.create(userId, requestDTO);
-            return ResponseEntity.ok(ApiResponse.builder()
-                    .success(true)
-                    .message("System Flashcard Set created successfully")
-                    .data(response)
-                    .build());
+            if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
+                String token = authorizationHeader.substring(7);
+                Integer userId = jwtUtil.extractUserId(token);
+
+                SystemFlashcardSetResponseDTO response = systemFlashcardSetService.create(userId, requestDTO);
+                return ResponseEntity.ok(ApiResponse.builder()
+                        .success(true)
+                        .message("System Flashcard Set created successfully")
+                        .data(response)
+                        .build());
+            }
+            else throw new Exception("Authorization failed!");
         } catch (ResourceNotFoundException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(ApiResponse.builder()
@@ -45,18 +54,24 @@ public class SystemFlashcardSetController {
         }
     }
 
-    @PatchMapping("/update/{userId}/{flashcardSetId}")
+    @PatchMapping("/update/{flashcardSetId}")
     public ResponseEntity<ApiResponse> update(
-            @PathVariable Integer userId,
+            @RequestHeader("Authorization") String authorizationHeader,
             @PathVariable Integer flashcardSetId,
             @RequestBody SystemFlashcardSetRequestDTO requestDTO) {
         try {
-            SystemFlashcardSetResponseDTO response = systemFlashcardSetService.update(userId, flashcardSetId, requestDTO);
-            return ResponseEntity.ok(ApiResponse.builder()
-                    .success(true)
-                    .message("System Flashcard Set updated successfully")
-                    .data(response)
-                    .build());
+            if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
+                String token = authorizationHeader.substring(7);
+                Integer userId = jwtUtil.extractUserId(token);
+
+                SystemFlashcardSetResponseDTO response = systemFlashcardSetService.update(userId, flashcardSetId, requestDTO);
+                return ResponseEntity.ok(ApiResponse.builder()
+                        .success(true)
+                        .message("System Flashcard Set updated successfully")
+                        .data(response)
+                        .build());
+            }
+            else throw new Exception("Authorization failed!");
         } catch (ResourceNotFoundException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(ApiResponse.builder()
@@ -78,16 +93,22 @@ public class SystemFlashcardSetController {
         }
     }
 
-    @DeleteMapping("/delete/{userId}/{flashcardSetId}")
+    @DeleteMapping("/delete/{flashcardSetId}")
     public ResponseEntity<ApiResponse> delete(
-            @PathVariable Integer userId,
+            @RequestHeader("Authorization") String authorizationHeader,
             @PathVariable Integer flashcardSetId) {
         try {
-            systemFlashcardSetService.deleteSystemFlashcardSet(userId, flashcardSetId);
-            return ResponseEntity.ok(ApiResponse.builder()
-                    .success(true)
-                    .message("System Flashcard Set deleted successfully")
-                    .build());
+            if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
+                String token = authorizationHeader.substring(7);
+                Integer userId = jwtUtil.extractUserId(token);
+
+                systemFlashcardSetService.deleteSystemFlashcardSet(userId, flashcardSetId);
+                return ResponseEntity.ok(ApiResponse.builder()
+                        .success(true)
+                        .message("System Flashcard Set deleted successfully")
+                        .build());
+            }
+            else throw new Exception("Authorization failed!");
         } catch (ResourceNotFoundException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(ApiResponse.builder()
@@ -127,18 +148,24 @@ public class SystemFlashcardSetController {
         }
     }
 
-    @PatchMapping("/update-visibility/{userId}/{setId}")
+    @PatchMapping("/update-visibility/{setId}")
     public ResponseEntity<ApiResponse> updateVisibility(
-            @PathVariable Integer userId,
+            @RequestHeader("Authorization") String authorizationHeader,
             @PathVariable Integer setId,
             @RequestParam Boolean isPublic) {
         try {
-            SystemFlashcardSetResponseDTO response = systemFlashcardSetService.updateSystemFlashcardSetVisibility(userId, setId, isPublic);
-            return ResponseEntity.ok(ApiResponse.builder()
-                    .success(true)
-                    .message("System Flashcard Set visibility updated successfully")
-                    .data(response)
-                    .build());
+            if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
+                String token = authorizationHeader.substring(7);
+                Integer userId = jwtUtil.extractUserId(token);
+
+                SystemFlashcardSetResponseDTO response = systemFlashcardSetService.updateSystemFlashcardSetVisibility(userId, setId, isPublic);
+                return ResponseEntity.ok(ApiResponse.builder()
+                        .success(true)
+                        .message("System Flashcard Set visibility updated successfully")
+                        .data(response)
+                        .build());
+            }
+            else throw new Exception("Authorization failed!");
         } catch (ResourceNotFoundException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(ApiResponse.builder()
@@ -154,17 +181,23 @@ public class SystemFlashcardSetController {
         }
     }
 
-    @GetMapping("getAllFlashcardOfSet/{userId}/{setId}")
+    @GetMapping("getAllFlashcardOfSet/{setId}")
     public ResponseEntity<ApiResponse> getAllFlashcardsInSet(
-            @PathVariable Integer userId,
+            @RequestHeader("Authorization") String authorizationHeader,
             @PathVariable Integer setId) {
         try {
-            SystemFlashcardSetResponseDTO response = systemFlashcardSetService.getAllFlashcardsInSet(userId, setId);
-            return ResponseEntity.ok(ApiResponse.builder()
-                    .success(true)
-                    .message("Flashcards retrieved successfully")
-                    .data(response)
-                    .build());
+            if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
+                String token = authorizationHeader.substring(7);
+                Integer userId = jwtUtil.extractUserId(token);
+
+                SystemFlashcardSetResponseDTO response = systemFlashcardSetService.getAllFlashcardsInSet(userId, setId);
+                return ResponseEntity.ok(ApiResponse.builder()
+                        .success(true)
+                        .message("Flashcards retrieved successfully")
+                        .data(response)
+                        .build());
+            }
+            else throw new UnauthorizedAccessException("Authorization failed!");
         } catch (ResourceNotFoundException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(ApiResponse.builder()
@@ -187,15 +220,21 @@ public class SystemFlashcardSetController {
     }
 
 
-    @GetMapping("/{userId}/all")
-    public ResponseEntity<ApiResponse> getAllByContentManagerId(@PathVariable Integer userId) {
+    @GetMapping("/all")
+    public ResponseEntity<ApiResponse> getAllByContentManagerId(@RequestHeader("Authorization") String authorizationHeader) {
         try {
-            List<SystemFlashcardSetResponseDTO> response = systemFlashcardSetService.systemFlashcardList(userId);
-            return ResponseEntity.ok(ApiResponse.builder()
-                    .success(true)
-                    .message("System Flashcard Sets retrieved successfully")
-                    .data(response)
-                    .build());
+            if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
+                String token = authorizationHeader.substring(7);
+                Integer userId = jwtUtil.extractUserId(token);
+
+                List<SystemFlashcardSetResponseDTO> response = systemFlashcardSetService.systemFlashcardList(userId);
+                return ResponseEntity.ok(ApiResponse.builder()
+                        .success(true)
+                        .message("System Flashcard Sets retrieved successfully")
+                        .data(response)
+                        .build());
+            }
+            else throw new Exception("Authorization failed!");
         } catch (ResourceNotFoundException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(ApiResponse.builder()

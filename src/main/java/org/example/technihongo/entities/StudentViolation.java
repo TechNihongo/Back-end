@@ -2,6 +2,7 @@ package org.example.technihongo.entities;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.example.technihongo.enums.ViolationStatus;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDateTime;
@@ -42,8 +43,9 @@ public class StudentViolation {
     @JoinColumn(name = "handled_by", referencedColumnName = "user_id")
     private User handledBy;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "status", length = 50)
-    private String status;
+    private ViolationStatus status;
 
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
