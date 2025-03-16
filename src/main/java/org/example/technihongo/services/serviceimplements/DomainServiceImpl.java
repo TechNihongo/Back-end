@@ -11,16 +11,17 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
 @Transactional
 public class DomainServiceImpl implements DomainService {
+
     @Autowired
     private DomainRepository domainRepository;
 
@@ -121,39 +122,33 @@ public class DomainServiceImpl implements DomainService {
     }
 
     @Override
-    public PageResponseDTO<DomainResponseDTO> getAllDomains(int pageNo, int pageSize) {
-        Pageable pageable = PageRequest.of(pageNo, pageSize);
+    public PageResponseDTO<DomainResponseDTO> getAllDomains(int pageNo, int pageSize, String sortBy, String sortDir) {
+        Sort sort = sortDir.equalsIgnoreCase(Sort.Direction.ASC.name())
+                ? Sort.by(sortBy).ascending()
+                : Sort.by(sortBy).descending();
+
+        Pageable pageable = PageRequest.of(pageNo, pageSize, sort);
         Page<Domain> domainPage = domainRepository.findAll(pageable);
         List<DomainResponseDTO> content = domainPage.getContent().stream()
                 .map(this::convertToDomainResponseDTO)
                 .collect(Collectors.toList());
 
-        return PageResponseDTO.<DomainResponseDTO>builder()
-                .content(content)
-                .pageNo(pageNo)
-                .pageSize(pageSize)
-                .totalElements(domainPage.getTotalElements())
-                .totalPages(domainPage.getTotalPages())
-                .last(domainPage.isLast())
-                .build();
+        return buildPageResponseDTO(domainPage, content, pageNo, pageSize);
     }
 
     @Override
-    public PageResponseDTO<DomainResponseDTO> getAllParentDomains(int pageNo, int pageSize) {
-        Pageable pageable = PageRequest.of(pageNo, pageSize);
+    public PageResponseDTO<DomainResponseDTO> getAllParentDomains(int pageNo, int pageSize, String sortBy, String sortDir) {
+        Sort sort = sortDir.equalsIgnoreCase(Sort.Direction.ASC.name())
+                ? Sort.by(sortBy).ascending()
+                : Sort.by(sortBy).descending();
+
+        Pageable pageable = PageRequest.of(pageNo, pageSize, sort);
         Page<Domain> parentDomainPage = domainRepository.findByParentDomainIsNull(pageable);
         List<DomainResponseDTO> content = parentDomainPage.getContent().stream()
                 .map(this::convertToDomainResponseDTO)
                 .collect(Collectors.toList());
 
-        return PageResponseDTO.<DomainResponseDTO>builder()
-                .content(content)
-                .pageNo(pageNo)
-                .pageSize(pageSize)
-                .totalElements(parentDomainPage.getTotalElements())
-                .totalPages(parentDomainPage.getTotalPages())
-                .last(parentDomainPage.isLast())
-                .build();
+        return buildPageResponseDTO(parentDomainPage, content, pageNo, pageSize);
     }
 
     @Override
@@ -164,82 +159,63 @@ public class DomainServiceImpl implements DomainService {
     }
 
     @Override
-    public PageResponseDTO<DomainResponseDTO> searchName(String keyword, int pageNo, int pageSize) {
+    public PageResponseDTO<DomainResponseDTO> searchName(String keyword, int pageNo, int pageSize, String sortBy, String sortDir) {
+        Sort sort = sortDir.equalsIgnoreCase(Sort.Direction.ASC.name())
+                ? Sort.by(sortBy).ascending()
+                : Sort.by(sortBy).descending();
+
+        Pageable pageable = PageRequest.of(pageNo, pageSize, sort);
+        Page<Domain> domainPage;
         if (keyword == null || keyword.trim().isEmpty()) {
-            return PageResponseDTO.<DomainResponseDTO>builder()
-                    .content(new ArrayList<>())
-                    .pageNo(pageNo)
-                    .pageSize(pageSize)
-                    .totalElements(0)
-                    .totalPages(0)
-                    .last(true)
-                    .build();
+            domainPage = Page.empty(pageable);
+        } else {
+            domainPage = domainRepository.findByNameContainingIgnoreCase(keyword.trim(), pageable);
         }
 
-        Pageable pageable = PageRequest.of(pageNo, pageSize);
-        Page<Domain> domainPage = domainRepository.findByNameContainingIgnoreCase(keyword.trim(), pageable);
         List<DomainResponseDTO> content = domainPage.getContent().stream()
                 .map(this::convertToDomainResponseDTO)
                 .collect(Collectors.toList());
 
-        return PageResponseDTO.<DomainResponseDTO>builder()
-                .content(content)
-                .pageNo(pageNo)
-                .pageSize(pageSize)
-                .totalElements(domainPage.getTotalElements())
-                .totalPages(domainPage.getTotalPages())
-                .last(domainPage.isLast())
-                .build();
+        return buildPageResponseDTO(domainPage, content, pageNo, pageSize);
     }
 
     @Override
-    public PageResponseDTO<DomainResponseDTO> getDomainsByTags(List<String> tags, int pageNo, int pageSize) {
+    public PageResponseDTO<DomainResponseDTO> getDomainsByTags(List<String> tags, int pageNo, int pageSize, String sortBy, String sortDir) {
+        Sort sort = sortDir.equalsIgnoreCase(Sort.Direction.ASC.name())
+                ? Sort.by(sortBy).ascending()
+                : Sort.by(sortBy).descending();
+
+        Pageable pageable = PageRequest.of(pageNo, pageSize, sort);
+        Page<Domain> domainPage;
         if (tags == null || tags.isEmpty()) {
-            return PageResponseDTO.<DomainResponseDTO>builder()
-                    .content(new ArrayList<>())
-                    .pageNo(pageNo)
-                    .pageSize(pageSize)
-                    .totalElements(0)
-                    .totalPages(0)
-                    .last(true)
-                    .build();
+            domainPage = Page.empty(pageable);
+        } else {
+            domainPage = domainRepository.findByTagIn(tags, pageable);
         }
 
-        Pageable pageable = PageRequest.of(pageNo, pageSize);
-        Page<Domain> domainPage = domainRepository.findByTagIn(tags, pageable);
         List<DomainResponseDTO> content = domainPage.getContent().stream()
                 .map(this::convertToDomainResponseDTO)
                 .collect(Collectors.toList());
 
-        return PageResponseDTO.<DomainResponseDTO>builder()
-                .content(content)
-                .pageNo(pageNo)
-                .pageSize(pageSize)
-                .totalElements(domainPage.getTotalElements())
-                .totalPages(domainPage.getTotalPages())
-                .last(domainPage.isLast())
-                .build();
+        return buildPageResponseDTO(domainPage, content, pageNo, pageSize);
     }
 
     @Override
-    public PageResponseDTO<DomainResponseDTO> getChildDomains(Integer parentDomainId, int pageNo, int pageSize) {
-        Domain parentDomain = domainRepository.findById(parentDomainId)
-                .orElseThrow(() -> new RuntimeException("Parent Domain not found with ID: " + parentDomainId));
+    public PageResponseDTO<DomainResponseDTO> getChildDomains(Integer parentDomainId, int pageNo, int pageSize, String sortBy, String sortDir) {
+        Sort sort = sortDir.equalsIgnoreCase(Sort.Direction.ASC.name())
+                ? Sort.by(sortBy).ascending()
+                : Sort.by(sortBy).descending();
 
-        Pageable pageable = PageRequest.of(pageNo, pageSize);
+        Pageable pageable = PageRequest.of(pageNo, pageSize, sort);
+        Domain parentDomain = domainRepository.findById(parentDomainId)
+                .orElseThrow(() -> new ResourceNotFoundException("Parent Domain not found with ID: " + parentDomainId));
+
         Page<Domain> childDomainPage = domainRepository.findByParentDomain(parentDomain, pageable);
         List<DomainResponseDTO> content = childDomainPage.getContent().stream()
                 .map(this::convertToDomainResponseDTO)
                 .collect(Collectors.toList());
 
-        return PageResponseDTO.<DomainResponseDTO>builder()
-                .content(content)
-                .pageNo(pageNo)
-                .pageSize(pageSize)
-                .totalElements(childDomainPage.getTotalElements())
-                .totalPages(childDomainPage.getTotalPages())
-                .last(childDomainPage.isLast())
-                .build();
+        return buildPageResponseDTO(childDomainPage, content, pageNo, pageSize);
     }
 
     private DomainResponseDTO convertToDomainResponseDTO(Domain domain) {
@@ -250,5 +226,16 @@ public class DomainServiceImpl implements DomainService {
         response.setDescription(domain.getDescription());
         response.setParentDomainId(domain.getParentDomain() != null ? domain.getParentDomain().getDomainId() : null);
         return response;
+    }
+
+    private PageResponseDTO<DomainResponseDTO> buildPageResponseDTO(Page<Domain> page, List<DomainResponseDTO> content, int pageNo, int pageSize) {
+        return PageResponseDTO.<DomainResponseDTO>builder()
+                .content(content)
+                .pageNo(pageNo)
+                .pageSize(pageSize)
+                .totalElements(page.getTotalElements())
+                .totalPages(page.getTotalPages())
+                .last(page.isLast())
+                .build();
     }
 }
