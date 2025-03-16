@@ -3,6 +3,7 @@ package org.example.technihongo.services.serviceimplements;
 import lombok.RequiredArgsConstructor;
 import org.example.technihongo.dto.CreateLearningPathDTO;
 import org.example.technihongo.dto.UpdateLearningPathDTO;
+import org.example.technihongo.entities.Domain;
 import org.example.technihongo.entities.LearningPath;
 import org.example.technihongo.entities.PathCourse;
 import org.example.technihongo.repositories.DomainRepository;
@@ -72,8 +73,12 @@ public class LearningPathServiceImpl implements LearningPathService {
             throw new RuntimeException("Creator ID not found!");
         }
 
-        if(domainRepository.findByDomainId(createLearningPathDTO.getDomainId()) == null){
+        Domain domain = domainRepository.findByDomainId(createLearningPathDTO.getDomainId());
+        if(domain == null){
             throw new RuntimeException("Domain ID not found!");
+        }
+        if(domain.getParentDomain() != null){
+            throw new RuntimeException("Cannot assign sub domains!");
         }
 
         LearningPath learningPath = learningPathRepository.save(LearningPath.builder()

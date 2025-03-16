@@ -25,7 +25,7 @@ public class LessonResourceController {
     @GetMapping("/lesson/{lessonId}")
     public ResponseEntity<ApiResponse> getLessonResourcesByLessonId(
             @PathVariable Integer lessonId,
-            @RequestHeader("Authorization") String authorizationHeader) throws Exception {
+            @RequestHeader("Authorization") String authorizationHeader) {
         try{
             if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
                 String token = authorizationHeader.substring(7);
@@ -68,7 +68,7 @@ public class LessonResourceController {
 
     @GetMapping("/{id}")
     public ResponseEntity<ApiResponse> viewLessonResource(@PathVariable Integer id,
-                                                          @RequestHeader("Authorization") String authorizationHeader) throws Exception {
+                                                          @RequestHeader("Authorization") String authorizationHeader) {
         try{
             if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
                 String token = authorizationHeader.substring(7);
@@ -228,6 +228,31 @@ public class LessonResourceController {
                     .body(ApiResponse.builder()
                             .success(false)
                             .message("Failed to get LessonResources: " + e.getMessage())
+                            .build());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponse.builder()
+                            .success(false)
+                            .message("Internal Server Error: " + e.getMessage())
+                            .build());
+        }
+    }
+
+    @PatchMapping("/set-order/{lessonId}")
+    public ResponseEntity<ApiResponse> setLessonResourceOrder(@PathVariable Integer lessonId,
+                                                              @RequestParam Integer lessonResourceId,
+                                                              @RequestParam Integer newOrder) {
+        try{
+            lessonResourceService.setLessonResourceOrder(lessonId, lessonResourceId, newOrder);
+            return ResponseEntity.ok(ApiResponse.builder()
+                    .success(true)
+                    .message("LessonResources updated successfully")
+                    .build());
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(ApiResponse.builder()
+                            .success(false)
+                            .message("Failed to update LessonResources: " + e.getMessage())
                             .build());
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)

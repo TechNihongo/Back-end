@@ -160,4 +160,29 @@ public class QuizQuestionController {
                             .build());
         }
     }
+
+    @PatchMapping("/set-order/{quizId}")
+    public ResponseEntity<ApiResponse> setQuizQuestionOrder(@PathVariable Integer quizId,
+                                                            @RequestParam Integer quizQuestionId,
+                                                            @RequestParam Integer newOrder) {
+        try{
+            quizQuestionService.setQuizQuestionOrder(quizId, quizQuestionId, newOrder);
+            return ResponseEntity.ok(ApiResponse.builder()
+                    .success(true)
+                    .message("QuizQuestion updated successfully")
+                    .build());
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(ApiResponse.builder()
+                            .success(false)
+                            .message("Failed to update QuizQuestion: " + e.getMessage())
+                            .build());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponse.builder()
+                            .success(false)
+                            .message("Internal Server Error: " + e.getMessage())
+                            .build());
+        }
+    }
 }

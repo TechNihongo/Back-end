@@ -14,4 +14,5 @@ public interface QuizQuestionService {
     QuizQuestion createQuizQuestion(CreateQuizQuestionDTO createQuizQuestionDTO);
     void updateQuizQuestionOrder(Integer quizId, UpdateQuizQuestionOrderDTO updateQuizQuestionOrderDTO);
     void deleteQuizQuestion(Integer quizQuestionId);
+    void setQuizQuestionOrder(Integer quizId, Integer quizQuestionId, Integer newOrder);
 }

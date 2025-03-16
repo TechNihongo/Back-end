@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.example.technihongo.dto.CreatePathCourseDTO;
 import org.example.technihongo.dto.UpdatePathCourseOrderDTO;
 import org.example.technihongo.entities.PathCourse;
+import org.example.technihongo.entities.QuizQuestion;
 import org.example.technihongo.repositories.CourseRepository;
 import org.example.technihongo.repositories.LearningPathRepository;
 import org.example.technihongo.repositories.PathCourseRepository;
@@ -96,6 +97,39 @@ public class PathCourseServiceImpl implements PathCourseService {
                 pathCourse.setCourseOrder(pathCourse.getCourseOrder() - 1);
             }
         }
+
+        pathCourseRepository.saveAll(pathCourses);
+    }
+
+    @Override
+    public void setPathCourseOrder(Integer pathId, Integer pathCourseId, Integer newOrder) {
+        learningPathRepository.findById(pathId)
+                .orElseThrow(() -> new RuntimeException("LearningPath ID not found"));
+
+        pathCourseRepository.findById(pathCourseId)
+                .orElseThrow(() -> new RuntimeException("PathCourse ID not found"));
+
+        List<PathCourse> pathCourses = pathCourseRepository.findByLearningPath_PathIdOrderByCourseOrderAsc(pathId);
+        PathCourse target = pathCourses.stream()
+                .filter(pc -> pc.getPathCourseId().equals(pathCourseId))
+                .findFirst()
+                .orElseThrow(() -> new RuntimeException("PathCourse not found!"));
+
+        int currentOrder = target.getCourseOrder();
+        if (newOrder < 1 || newOrder > pathCourses.size()) {
+            throw new RuntimeException("Invalid order!");
+        }
+
+        if (newOrder < currentOrder) {
+            pathCourses.stream()
+                    .filter(pc -> pc.getCourseOrder() >= newOrder && pc.getCourseOrder() < currentOrder)
+                    .forEach(pc -> pc.setCourseOrder(pc.getCourseOrder() + 1));
+        } else if (newOrder > currentOrder) {
+            pathCourses.stream()
+                    .filter(pc -> pc.getCourseOrder() <= newOrder && pc.getCourseOrder() > currentOrder)
+                    .forEach(pc -> pc.setCourseOrder(pc.getCourseOrder() - 1));
+        }
+        target.setCourseOrder(newOrder);
 
         pathCourseRepository.saveAll(pathCourses);
     }
