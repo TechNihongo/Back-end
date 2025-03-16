@@ -6,6 +6,7 @@ import org.example.technihongo.dto.CreateCourseDTO;
 import org.example.technihongo.dto.PageResponseDTO;
 import org.example.technihongo.dto.UpdateCourseDTO;
 import org.example.technihongo.entities.Course;
+import org.example.technihongo.entities.Domain;
 import org.example.technihongo.entities.StudyPlan;
 import org.example.technihongo.entities.User;
 import org.example.technihongo.enums.StudyPlanStatus;
@@ -110,9 +111,13 @@ public class CourseServiceImpl implements CourseService {
             throw new RuntimeException("Course ID not found!");
         }
 
-        if(domainRepository.findByDomainId(updateCourseDTO.getDomainId()) == null){
+        Domain domain = domainRepository.findByDomainId(updateCourseDTO.getDomainId());
+        if(domain == null){
             throw new RuntimeException("Domain ID not found!");
         }
+//        if(domain.getParentDomain() == null){
+//            throw new RuntimeException("Cannot assign parent domains!");
+//        }
 
         if(difficultyLevelRepository.findByLevelId(updateCourseDTO.getDifficultyLevelId()) == null){
             throw new RuntimeException("DifficultyLevel ID not found!");

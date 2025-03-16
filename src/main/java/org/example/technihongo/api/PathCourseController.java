@@ -160,4 +160,29 @@ public class PathCourseController {
                             .build());
         }
     }
+
+    @PatchMapping("/set-order/{pathId}")
+    public ResponseEntity<ApiResponse> setPathCourseOrder(@PathVariable Integer pathId,
+                                                          @RequestParam Integer pathCourseId,
+                                                          @RequestParam Integer newOrder) {
+        try{
+            pathCourseService.setPathCourseOrder(pathId, pathCourseId, newOrder);
+            return ResponseEntity.ok(ApiResponse.builder()
+                    .success(true)
+                    .message("PathCourse updated successfully")
+                    .build());
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(ApiResponse.builder()
+                            .success(false)
+                            .message("Failed to update PathCourse: " + e.getMessage())
+                            .build());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponse.builder()
+                            .success(false)
+                            .message("Internal Server Error: " + e.getMessage())
+                            .build());
+        }
+    }
 }

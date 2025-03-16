@@ -3,6 +3,7 @@ package org.example.technihongo.services.serviceimplements;
 import lombok.RequiredArgsConstructor;
 import org.example.technihongo.dto.CreateQuizQuestionDTO;
 import org.example.technihongo.dto.UpdateQuizQuestionOrderDTO;
+import org.example.technihongo.entities.LessonResource;
 import org.example.technihongo.entities.QuizQuestion;
 import org.example.technihongo.repositories.QuestionRepository;
 import org.example.technihongo.repositories.QuizQuestionRepository;
@@ -94,6 +95,39 @@ public class QuizQuestionServiceImpl implements QuizQuestionService {
                 quizQuestion.setQuestionOrder(quizQuestion.getQuestionOrder() - 1);
             }
         }
+
+        quizQuestionRepository.saveAll(quizQuestions);
+    }
+
+    @Override
+    public void setQuizQuestionOrder(Integer quizId, Integer quizQuestionId, Integer newOrder) {
+        quizRepository.findById(quizId)
+                .orElseThrow(() -> new RuntimeException("Quiz ID not found"));
+
+        quizQuestionRepository.findById(quizQuestionId)
+                .orElseThrow(() -> new RuntimeException("QuizQuestion ID not found"));
+
+        List<QuizQuestion> quizQuestions = quizQuestionRepository.findByQuiz_QuizIdOrderByQuestionOrderAsc(quizId);
+        QuizQuestion target = quizQuestions.stream()
+                .filter(qq -> qq.getQuizQuestionId().equals(quizQuestionId))
+                .findFirst()
+                .orElseThrow(() -> new RuntimeException("QuizQuestion not found!"));
+
+        int currentOrder = target.getQuestionOrder();
+        if (newOrder < 1 || newOrder > quizQuestions.size()) {
+            throw new RuntimeException("Invalid order!");
+        }
+
+        if (newOrder < currentOrder) {
+            quizQuestions.stream()
+                    .filter(qq -> qq.getQuestionOrder() >= newOrder && qq.getQuestionOrder() < currentOrder)
+                    .forEach(qq -> qq.setQuestionOrder(qq.getQuestionOrder() + 1));
+        } else if (newOrder > currentOrder) {
+            quizQuestions.stream()
+                    .filter(qq -> qq.getQuestionOrder() <= newOrder && qq.getQuestionOrder() > currentOrder)
+                    .forEach(qq -> qq.setQuestionOrder(qq.getQuestionOrder() - 1));
+        }
+        target.setQuestionOrder(newOrder);
 
         quizQuestionRepository.saveAll(quizQuestions);
     }
