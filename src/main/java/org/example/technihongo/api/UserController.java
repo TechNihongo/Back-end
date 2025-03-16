@@ -7,6 +7,7 @@ import org.example.technihongo.core.security.MyUserDetailsService;
 import org.example.technihongo.core.security.TokenBlacklist;
 import org.example.technihongo.dto.*;
 import org.example.technihongo.entities.User;
+import org.example.technihongo.enums.TokenType;
 import org.example.technihongo.response.ApiResponse;
 import org.example.technihongo.services.interfaces.AuthTokenService;
 import org.example.technihongo.services.interfaces.UserService;
@@ -45,7 +46,7 @@ public class UserController {
             LoginResponseDTO response = userService.login(userLogin.getEmail(), userLogin.getPassword());
             String token = myUserDetailsService.loginToken(userLogin);
             LocalDateTime expired = jwtHelper.getExpirationDateFromToken(token).toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime();
-            authTokenService.saveLoginToken(new CreateLoginTokenDTO(response.getUserId(), token, "LOGIN", expired));
+            authTokenService.saveLoginToken(new CreateLoginTokenDTO(response.getUserId(), token, String.valueOf(TokenType.LOGIN), expired));
             authTokenService.updateLoginTokenStatus(response.getUserId());
 
             if (response.isSuccess()) {
@@ -69,7 +70,7 @@ public class UserController {
             LoginResponseDTO response = userService.register(registrationDTO);
 
             if (response.isSuccess()) {
-                authTokenService.deactivateAllTokensByUserId(response.getUserId(), "EMAIL_VERIFICATION");
+                authTokenService.deactivateAllTokensByUserId(response.getUserId(), String.valueOf(TokenType.EMAIL_VERIFICATION));
                 String token = authTokenService.createEmailVerifyToken(response.getUserId());
                 emailService.sendVerificationEmail(response.getEmail(), token);
                 return ResponseEntity.ok(response);
@@ -106,7 +107,7 @@ public class UserController {
             UserLogin userLogin = new UserLogin(response.getEmail(), "");
             String token = myUserDetailsService.loginToken(userLogin);
             LocalDateTime expired = jwtHelper.getExpirationDateFromToken(token).toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime();
-            authTokenService.saveLoginToken(new CreateLoginTokenDTO(response.getUserId(), token, "LOGIN_GOOGLE", expired));
+            authTokenService.saveLoginToken(new CreateLoginTokenDTO(response.getUserId(), token, String.valueOf(TokenType.LOGIN_GOOGLE), expired));
             authTokenService.updateLoginTokenStatus(response.getUserId());
 
             if (response.isSuccess()) {

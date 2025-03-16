@@ -2,6 +2,7 @@ package org.example.technihongo.entities;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.example.technihongo.enums.TokenType;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDateTime;
@@ -26,8 +27,9 @@ public class AuthToken {
     @Column(name = "token")
     private String token;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "token_type", length = 50)
-    private String tokenType;
+    private TokenType tokenType;
 
     @Column(name = "expires_at")
     private LocalDateTime expiresAt;

@@ -1,6 +1,7 @@
 package org.example.technihongo.repositories;
 
 import org.example.technihongo.entities.AuthToken;
+import org.example.technihongo.enums.TokenType;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -15,8 +16,8 @@ import java.util.Optional;
 @Repository
 public interface AuthTokenRepository extends JpaRepository<AuthToken, Integer> {
     AuthToken findByToken(String token);
-    List<AuthToken> findAllByUser_UserIdAndTokenType(Integer userId, String tokenType);
-    Optional<AuthToken> findByTokenAndTokenTypeAndIsActive(String token, String tokenType, boolean isActive);
+    List<AuthToken> findAllByUser_UserIdAndTokenType(Integer user_userId, TokenType tokenType);
+    Optional<AuthToken> findByTokenAndTokenTypeAndIsActive(String token, TokenType tokenType, Boolean isActive);
 
     @Transactional
     @Modifying

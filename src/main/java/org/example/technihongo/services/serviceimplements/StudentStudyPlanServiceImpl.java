@@ -8,6 +8,7 @@ import org.example.technihongo.dto.SwitchStudyPlanRequestDTO;
 import org.example.technihongo.entities.Student;
 import org.example.technihongo.entities.StudentStudyPlan;
 import org.example.technihongo.entities.StudyPlan;
+import org.example.technihongo.enums.StudyPlanStatus;
 import org.example.technihongo.exception.ResourceNotFoundException;
 import org.example.technihongo.repositories.StudentRepository;
 import org.example.technihongo.repositories.StudentStudyPlanRepository;
@@ -51,7 +52,7 @@ public class StudentStudyPlanServiceImpl implements StudentStudyPlanService {
         Optional<StudentStudyPlan> existingPlan = studentStudyPlanRepository.findByStudentIdAndStudyPlanId(
                 request.getStudentId(), request.getStudyPlanId());
 
-        if(existingPlan.isPresent() && "Active".equals(existingPlan.get().getStatus())) {
+        if(existingPlan.isPresent() && existingPlan.get().getStatus().equals(StudyPlanStatus.ACTIVE)) {
             throw new ResourceNotFoundException("You are already enrolled in this study plan!!");
         }
 
@@ -62,12 +63,12 @@ public class StudentStudyPlanServiceImpl implements StudentStudyPlanService {
                 .studyPlan(studyPlan)
                 .previousPlan(activePlan.orElse(null) != null ? activePlan.get().getStudyPlan() : null)
                 .startDate(LocalDateTime.now())
-                .status("Active")
+                .status(StudyPlanStatus.ACTIVE)
                 .build();
 
         if(activePlan.isPresent()) {
             StudentStudyPlan previousPlan = activePlan.get();
-            previousPlan.setStatus("Switched");
+            previousPlan.setStatus(StudyPlanStatus.SWITCHED);
             previousPlan.setSwitchDate(LocalDateTime.now());
             studentStudyPlanRepository.save(previousPlan);
         }
@@ -100,10 +101,10 @@ public class StudentStudyPlanServiceImpl implements StudentStudyPlanService {
                 .studyPlan(newStudyPlan)
                 .previousPlan(currentPlan.getStudyPlan())
                 .startDate(LocalDateTime.now())
-                .status("Active")
+                .status(StudyPlanStatus.ACTIVE)
                 .build();
 
-        currentPlan.setStatus("Switched");
+        currentPlan.setStatus(StudyPlanStatus.SWITCHED);
         currentPlan.setSwitchDate(LocalDateTime.now());
         studentStudyPlanRepository.save(currentPlan);
 
@@ -147,7 +148,7 @@ public class StudentStudyPlanServiceImpl implements StudentStudyPlanService {
                 .previousPlanId(studentStudyPlan.getPreviousPlan() != null ?
                         studentStudyPlan.getPreviousPlan().getStudyPlanId() : null)
                 .startDate(studentStudyPlan.getStartDate())
-                .status(studentStudyPlan.getStatus())
+                .status(String.valueOf(studentStudyPlan.getStatus()))
                 .switchDate(studentStudyPlan.getSwitchDate())
                 .build();
     }
