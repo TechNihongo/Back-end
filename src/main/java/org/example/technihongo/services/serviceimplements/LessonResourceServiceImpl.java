@@ -230,6 +230,39 @@ public class LessonResourceServiceImpl implements LessonResourceService {
         return getPageResponseDTO(lessonResources);
     }
 
+    @Override
+    public void setLessonResourceOrder(Integer lessonId, Integer lessonResourceId, Integer newOrder) {
+        lessonRepository.findById(lessonId)
+                .orElseThrow(() -> new RuntimeException("Lesson ID not found"));
+
+        lessonResourceRepository.findById(lessonResourceId)
+                .orElseThrow(() -> new RuntimeException("LessonResource ID not found"));
+
+        List<LessonResource> lessonResources = lessonResourceRepository.findByLesson_LessonIdOrderByTypeOrderAsc(lessonId);
+        LessonResource target = lessonResources.stream()
+                .filter(lr -> lr.getLessonResourceId().equals(lessonResourceId))
+                .findFirst()
+                .orElseThrow(() -> new RuntimeException("LessonResource not found!"));
+
+        int currentOrder = target.getTypeOrder();
+        if (newOrder < 1 || newOrder > lessonResources.size()) {
+            throw new RuntimeException("Invalid order!");
+        }
+
+        if (newOrder < currentOrder) {
+            lessonResources.stream()
+                    .filter(lr -> lr.getTypeOrder() >= newOrder && lr.getTypeOrder() < currentOrder)
+                    .forEach(lr -> lr.setTypeOrder(lr.getTypeOrder() + 1));
+        } else if (newOrder > currentOrder) {
+            lessonResources.stream()
+                    .filter(lr -> lr.getTypeOrder() <= newOrder && lr.getTypeOrder() > currentOrder)
+                    .forEach(lr -> lr.setTypeOrder(lr.getTypeOrder() - 1));
+        }
+        target.setTypeOrder(newOrder);
+
+        lessonResourceRepository.saveAll(lessonResources);
+    }
+
     private PageResponseDTO<LessonResource> getPageResponseDTO(Page<LessonResource> page) {
         return PageResponseDTO.<LessonResource>builder()
                 .content(page.getContent())

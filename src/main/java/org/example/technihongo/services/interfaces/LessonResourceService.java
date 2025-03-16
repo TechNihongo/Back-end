@@ -19,4 +19,5 @@ public interface LessonResourceService {
     void deleteLessonResource(Integer lessonResourceId);
 
     PageResponseDTO<LessonResource> getLessonResourcesByDefaultStudyPlanPaginated(Integer studyPlanId, String keyword, String type, int pageNo, int pageSize, String sortBy, String sortDir);
+    void setLessonResourceOrder(Integer lessonId, Integer lessonResourceId, Integer newOrder);
 }

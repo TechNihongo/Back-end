@@ -12,4 +12,5 @@ public interface PathCourseService {
     PathCourse createPathCourse(CreatePathCourseDTO createPathCourseDTO);
     void updatePathCourseOrder(Integer pathId, UpdatePathCourseOrderDTO updatePathCourseOrderDTO);
     void deletePathCourse(Integer pathCourseId);
+    void setPathCourseOrder(Integer pathId, Integer pathCourseId, Integer newOrder);
 }
