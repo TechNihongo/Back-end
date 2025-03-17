@@ -11,7 +11,7 @@ import java.util.List;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class QuestionWithOptionsRespondDTO {
+public class QuestionWithOptionsResponseDTO {
     private Question question;
     private List<QuestionAnswerOption> options;
 }

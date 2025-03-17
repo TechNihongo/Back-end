@@ -3,7 +3,7 @@ package org.example.technihongo.services.serviceimplements;
 import lombok.RequiredArgsConstructor;
 import org.example.technihongo.dto.QuestionAnswerOptionDTO;
 import org.example.technihongo.dto.QuestionAnswerOptionListDTO;
-import org.example.technihongo.dto.QuestionWithOptionsRespondDTO;
+import org.example.technihongo.dto.QuestionWithOptionsResponseDTO;
 import org.example.technihongo.entities.Question;
 import org.example.technihongo.entities.QuestionAnswerOption;
 import org.example.technihongo.repositories.QuestionAnswerOptionRepository;
@@ -43,7 +43,7 @@ public class QuestionAnswerOptionServiceImpl implements QuestionAnswerOptionServ
     }
 
     @Override
-    public QuestionWithOptionsRespondDTO createAnswerOptionList(QuestionAnswerOptionListDTO dto) {
+    public QuestionWithOptionsResponseDTO createAnswerOptionList(QuestionAnswerOptionListDTO dto) {
         Question question = questionRepository.findById(dto.getQuestionId())
                 .orElseThrow(() -> new RuntimeException("Question ID not found!"));
 
@@ -67,12 +67,12 @@ public class QuestionAnswerOptionServiceImpl implements QuestionAnswerOptionServ
                 .collect(Collectors.toList());
 
         questionAnswerOptionRepository.saveAll(optionEntities);
-        return new QuestionWithOptionsRespondDTO(question, optionEntities);
+        return new QuestionWithOptionsResponseDTO(question, optionEntities);
     }
 
     @Transactional
     @Override
-    public QuestionWithOptionsRespondDTO updateAnswerOptionList(QuestionAnswerOptionListDTO dto) {
+    public QuestionWithOptionsResponseDTO updateAnswerOptionList(QuestionAnswerOptionListDTO dto) {
         Question question = questionRepository.findById(dto.getQuestionId())
                 .orElseThrow(() -> new IllegalArgumentException("Question ID not found."));
 
@@ -97,6 +97,6 @@ public class QuestionAnswerOptionServiceImpl implements QuestionAnswerOptionServ
                 .collect(Collectors.toList());
 
         questionAnswerOptionRepository.saveAll(updatedOptions);
-        return new QuestionWithOptionsRespondDTO(question, updatedOptions);
+        return new QuestionWithOptionsResponseDTO(question, updatedOptions);
     }
 }

@@ -40,10 +40,10 @@ public class StudentFlashcardSet {
     private LearningResource learningResource;
 
     @Column(name = "total_cards")
-    private Integer totalCard;
+    private Integer totalCards;
 
     @Column(name = "total_views")
-    private Integer totalView;
+    private Integer totalViews;
 
     @Column(name = "is_public")
     private boolean isPublic = true;
