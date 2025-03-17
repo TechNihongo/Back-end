@@ -15,4 +15,5 @@ public interface DomainRepository extends JpaRepository<Domain, Integer> {
     Page<Domain> findByTagIn(List<String> tags, Pageable pageable);
     Domain findByDomainId(Integer domainId);
     Page<Domain> findByParentDomainIsNull(Pageable pageable);
+    Page<Domain> findByParentDomainIsNotNull(Pageable pageable);
 }

@@ -316,6 +316,64 @@ public class UserController {
         }
     }
 
+    @GetMapping("/searchStudentName")
+    public ResponseEntity<ApiResponse> searchStudent(
+            @RequestParam String keyword,
+            @RequestParam(defaultValue = "0") int pageNo,
+            @RequestParam(defaultValue = "10") int pageSize,
+            @RequestParam(defaultValue = "createAt") String sortBy,
+            @RequestParam(defaultValue = "desc") String sortDir) {
+        try {
+            PageResponseDTO<User> response = userService.searchStudent(keyword, pageNo, pageSize, sortBy, sortDir);
+            if (response.getContent().isEmpty()) {
+                return ResponseEntity.ok(ApiResponse.builder()
+                        .success(false)
+                        .message("No User found matching the keyword: " + keyword)
+                        .build());
+            }
+            return ResponseEntity.ok(ApiResponse.builder()
+                    .success(true)
+                    .message("User matching the keyword")
+                    .data(response)
+                    .build());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponse.builder()
+                            .success(false)
+                            .message("Failed to search Student: " + e.getMessage())
+                            .build());
+        }
+    }
+
+    @GetMapping("/searchContentManagerName")
+    public ResponseEntity<ApiResponse> searchContentManager(
+            @RequestParam String keyword,
+            @RequestParam(defaultValue = "0") int pageNo,
+            @RequestParam(defaultValue = "10") int pageSize,
+            @RequestParam(defaultValue = "createAt") String sortBy,
+            @RequestParam(defaultValue = "desc") String sortDir) {
+        try {
+            PageResponseDTO<User> response = userService.searchContentManager(keyword, pageNo, pageSize, sortBy, sortDir);
+            if (response.getContent().isEmpty()) {
+                return ResponseEntity.ok(ApiResponse.builder()
+                        .success(false)
+                        .message("No ContentManager found matching the keyword: " + keyword)
+                        .build());
+            }
+            return ResponseEntity.ok(ApiResponse.builder()
+                    .success(true)
+                    .message("ContentManager matching the keyword")
+                    .data(response)
+                    .build());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponse.builder()
+                            .success(false)
+                            .message("Failed to search ContentManager: " + e.getMessage())
+                            .build());
+        }
+    }
+
     @PatchMapping("/{userId}/password")
     public ResponseEntity<ApiResponse> updatePassword(
             @PathVariable Integer userId,

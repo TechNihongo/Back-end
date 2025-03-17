@@ -379,6 +379,43 @@ public class UserServiceImpl implements UserService {
         return userRepository.findByUserId(userId);
     }
 
+
+    @Override
+    public PageResponseDTO<User> searchStudent(String keyword, int pageNo, int pageSize, String sortBy, String sortDir) {
+        Sort sort = sortDir.equalsIgnoreCase(Sort.Direction.ASC.name())
+                ? Sort.by(sortBy).ascending()
+                : Sort.by(sortBy).descending();
+
+        Pageable pageable = PageRequest.of(pageNo, pageSize, sort);
+        Page<User> users;
+
+        if (keyword == null || keyword.trim().isEmpty()) {
+            users = userRepository.findByRole_RoleId(3, pageable);
+        } else {
+            users = userRepository.findStudentsByKeyword(keyword.trim(), pageable);
+        }
+
+        return getPageResponseDTO(users);
+    }
+
+    @Override
+    public PageResponseDTO<User> searchContentManager(String keyword, int pageNo, int pageSize, String sortBy, String sortDir) {
+        Sort sort = sortDir.equalsIgnoreCase(Sort.Direction.ASC.name())
+                ? Sort.by(sortBy).ascending()
+                : Sort.by(sortBy).descending();
+
+        Pageable pageable = PageRequest.of(pageNo, pageSize, sort);
+        Page<User> users;
+
+        if (keyword == null || keyword.trim().isEmpty()) {
+            users = userRepository.findByRole_RoleId(2, pageable);
+        } else {
+            users = userRepository.findContentManagersByKeyword(keyword.trim(), pageable);
+        }
+
+        return getPageResponseDTO(users);
+    }
+
     @Override
     public String forgotPass(String email) {
         User user = userRepository.findUserByEmail(email);
@@ -452,6 +489,8 @@ public class UserServiceImpl implements UserService {
         authToken.setIsActive(false);
         authTokenRepository.save(authToken);
     }
+
+
 
     private PageResponseDTO<User> getPageResponseDTO(Page<User> page) {
         return PageResponseDTO.<User>builder()
