@@ -32,12 +32,7 @@ public class DifficultyLevel {
     @Column(name = "description", length = 255)
     private String description;
 
-    @Column(name = "order_sequence")
-    private Integer orderSequence;
-
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
-
-
 }
