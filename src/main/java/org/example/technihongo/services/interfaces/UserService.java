@@ -31,5 +31,8 @@ public interface UserService {
     String forgotPass(String email);
     String resetPass(String token, PasswordResetDTO passwordResetDTO);
 
+    PageResponseDTO<User> searchStudent(String keyword, int pageNo, int pageSize, String sortBy, String sortDir);
+    PageResponseDTO<User> searchContentManager(String keyword, int pageNo, int pageSize, String sortBy, String sortDir);
+
     void verifyEmailToken(String token);
 }
