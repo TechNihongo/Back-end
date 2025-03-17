@@ -121,7 +121,7 @@ public class QuestionController {
     @PostMapping("/options/create")
     public ResponseEntity<ApiResponse> createQuestionWithOptions(@RequestBody QuestionWithOptionsDTO questionWithOptionsDTO){
         try {
-            QuestionWithOptionsRespondDTO question = questionService.createQuestionWithOptions(questionWithOptionsDTO);
+            QuestionWithOptionsResponseDTO question = questionService.createQuestionWithOptions(questionWithOptionsDTO);
             return ResponseEntity.ok(ApiResponse.builder()
                     .success(true)
                     .message("Question created successfully!")
@@ -147,7 +147,7 @@ public class QuestionController {
     public ResponseEntity<ApiResponse> updateQuestionWithOptions(@PathVariable Integer id,
                                                       @RequestBody QuestionWithOptionsDTO questionWithOptionsDTO) {
         try{
-            QuestionWithOptionsRespondDTO question =  questionService.updateQuestionWithOptions(id, questionWithOptionsDTO);
+            QuestionWithOptionsResponseDTO question =  questionService.updateQuestionWithOptions(id, questionWithOptionsDTO);
             return ResponseEntity.ok(ApiResponse.builder()
                     .success(true)
                     .message("Question updated successfully")
