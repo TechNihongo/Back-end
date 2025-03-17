@@ -147,7 +147,7 @@ public class DomainController {
     public ResponseEntity<ApiResponse> getAllChildrenDomain(
             @RequestParam(defaultValue = "0") int pageNo,
             @RequestParam(defaultValue = "10") int pageSize,
-            @RequestParam(defaultValue = "createDate") String sortBy,
+            @RequestParam(defaultValue = "createdAt") String sortBy,
             @RequestParam(defaultValue = "desc") String sortDir) {
         try {
             PageResponseDTO<DomainResponseDTO> response = domainService.getAllChildrenDomains(pageNo, pageSize, sortBy, sortDir);
