@@ -152,6 +152,21 @@ public class DomainServiceImpl implements DomainService {
     }
 
     @Override
+    public PageResponseDTO<DomainResponseDTO> getAllChildrenDomains(int pageNo, int pageSize, String sortBy, String sortDir) {
+        Sort sort = sortDir.equalsIgnoreCase(Sort.Direction.ASC.name())
+                ? Sort.by(sortBy).ascending()
+                : Sort.by(sortBy).descending();
+
+        Pageable pageable = PageRequest.of(pageNo, pageSize, sort);
+        Page<Domain> childrenDomainPage = domainRepository.findByParentDomainIsNotNull(pageable);
+        List<DomainResponseDTO> content = childrenDomainPage.getContent().stream()
+                .map(this::convertToDomainResponseDTO)
+                .collect(Collectors.toList());
+
+        return buildPageResponseDTO(childrenDomainPage, content, pageNo, pageSize);
+    }
+
+    @Override
     public DomainResponseDTO getDomainById(Integer domainId) {
         Domain domain = domainRepository.findById(domainId)
                 .orElseThrow(() -> new ResourceNotFoundException("Domain not found with ID: " + domainId));

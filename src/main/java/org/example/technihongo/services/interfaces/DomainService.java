@@ -13,6 +13,7 @@ public interface DomainService {
     PageResponseDTO<DomainResponseDTO> getAllDomains(int pageNo, int pageSize, String sortBy, String sortDir);
 
     PageResponseDTO<DomainResponseDTO> getAllParentDomains(int pageNo, int pageSize, String sortBy, String sortDir);
+    PageResponseDTO<DomainResponseDTO> getAllChildrenDomains(int pageNo, int pageSize, String sortBy, String sortDir);
     DomainResponseDTO getDomainById(Integer domainId);
 
     PageResponseDTO<DomainResponseDTO> searchName(String keyword, int pageNo, int pageSize, String sortBy, String sortDir);

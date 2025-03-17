@@ -143,6 +143,34 @@ public class DomainController {
         }
     }
 
+    @GetMapping("/childrenDomain")
+    public ResponseEntity<ApiResponse> getAllChildrenDomain(
+            @RequestParam(defaultValue = "0") int pageNo,
+            @RequestParam(defaultValue = "10") int pageSize,
+            @RequestParam(defaultValue = "createDate") String sortBy,
+            @RequestParam(defaultValue = "desc") String sortDir) {
+        try {
+            PageResponseDTO<DomainResponseDTO> response = domainService.getAllChildrenDomains(pageNo, pageSize, sortBy, sortDir);
+            if (response.getContent().isEmpty()) {
+                return ResponseEntity.ok(ApiResponse.builder()
+                        .success(false)
+                        .message("No child domains found!")
+                        .build());
+            }
+            return ResponseEntity.ok(ApiResponse.builder()
+                    .success(true)
+                    .message("Retrieved all child domains successfully")
+                    .data(response)
+                    .build());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponse.builder()
+                            .success(false)
+                            .message("Failed to retrieve child domains: " + e.getMessage())
+                            .build());
+        }
+    }
+
     @GetMapping("getDomain/{domainId}")
     public ResponseEntity<ApiResponse> getDomainById(@PathVariable Integer domainId) {
         try {

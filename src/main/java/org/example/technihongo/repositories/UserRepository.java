@@ -1,9 +1,11 @@
 package org.example.technihongo.repositories;
+
 import lombok.NonNull;
+import org.example.technihongo.entities.User;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.example.technihongo.entities.User;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -23,5 +25,11 @@ public interface UserRepository extends JpaRepository<User, Integer> {
     Page<User> findAll(@NonNull Pageable pageable);
     @NonNull
     Page<User> findByRole_RoleId(Integer roleId, Pageable pageable);
+
+    @Query("SELECT u FROM User u WHERE u.role.roleId = 3 AND (u.userName LIKE %:keyword% OR u.email LIKE %:keyword%)")
+    Page<User> findStudentsByKeyword(String keyword, Pageable pageable);
+
+    @Query("SELECT u FROM User u WHERE u.role.roleId = 2 AND (u.userName LIKE %:keyword% OR u.email LIKE %:keyword%)")
+    Page<User> findContentManagersByKeyword(String keyword, Pageable pageable);
 
 }
