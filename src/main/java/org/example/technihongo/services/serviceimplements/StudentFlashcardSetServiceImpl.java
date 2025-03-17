@@ -49,8 +49,8 @@ public class StudentFlashcardSetServiceImpl implements StudentFlashcardSetServic
         flashcardSet.setPublic(request.getIsPublic());
         flashcardSet.setCreator(student);
 
-        flashcardSet.setTotalCard(0);
-        flashcardSet.setTotalView(0);
+        flashcardSet.setTotalCards(0);
+        flashcardSet.setTotalViews(0);
 
         flashcardSet = flashcardSetRepository.save(flashcardSet);
         return convertToFlashcardSetResponseDTO(flashcardSet);
@@ -159,8 +159,8 @@ public class StudentFlashcardSetServiceImpl implements StudentFlashcardSetServic
                 .title(StringUtils.hasText(request.getTitle()) ? request.getTitle() : resource.getTitle())
                 .description(request.getDescription())
                 .isPublic(request.getIsPublic() != null ? request.getIsPublic() : true)
-                .totalCard(request.getFlashcards().size())
-                .totalView(0)
+                .totalCards(request.getFlashcards().size())
+                .totalViews(0)
                 .flashcards(new HashSet<>())
                 .build();
 
@@ -169,7 +169,7 @@ public class StudentFlashcardSetServiceImpl implements StudentFlashcardSetServic
         List<Flashcard> flashcards = createFlashcards(savedFlashcardSet, request.getFlashcards());
         savedFlashcardSet.setFlashcards(new HashSet<>(flashcards));
 
-        savedFlashcardSet.setTotalCard(flashcards.size());
+        savedFlashcardSet.setTotalCards(flashcards.size());
 
         studentFlashcardSetRepository.save(savedFlashcardSet);
 

@@ -4,7 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.example.technihongo.dto.QuestionWithOptionsDTO;
 import org.example.technihongo.dto.CreateUpdateQuestionDTO;
 import org.example.technihongo.dto.QuestionAnswerOptionDTO;
-import org.example.technihongo.dto.QuestionWithOptionsRespondDTO;
+import org.example.technihongo.dto.QuestionWithOptionsResponseDTO;
 import org.example.technihongo.entities.Question;
 import org.example.technihongo.entities.QuestionAnswerOption;
 import org.example.technihongo.repositories.QuestionAnswerOptionRepository;
@@ -62,7 +62,7 @@ public class QuestionServiceImpl implements QuestionService {
     }
 
     @Override
-    public QuestionWithOptionsRespondDTO createQuestionWithOptions(QuestionWithOptionsDTO dto) {
+    public QuestionWithOptionsResponseDTO createQuestionWithOptions(QuestionWithOptionsDTO dto) {
         List<QuestionAnswerOptionDTO> options = dto.getOptions();
 
         if (options.size() < 2 || options.size() > 4) {
@@ -90,12 +90,12 @@ public class QuestionServiceImpl implements QuestionService {
                 .collect(Collectors.toList());
 
         questionAnswerOptionRepository.saveAll(optionEntities);
-        return new QuestionWithOptionsRespondDTO(savedQuestion, optionEntities);
+        return new QuestionWithOptionsResponseDTO(savedQuestion, optionEntities);
     }
 
     @Transactional
     @Override
-    public QuestionWithOptionsRespondDTO updateQuestionWithOptions(Integer questionId, QuestionWithOptionsDTO dto) {
+    public QuestionWithOptionsResponseDTO updateQuestionWithOptions(Integer questionId, QuestionWithOptionsDTO dto) {
         Question question = questionRepository.findById(questionId)
                 .orElseThrow(() -> new IllegalArgumentException("Question ID not found."));
 
@@ -105,7 +105,7 @@ public class QuestionServiceImpl implements QuestionService {
 
         List<QuestionAnswerOption> options = updateOptions(questionId, dto.getOptions());
         Question savedQuestion = questionRepository.save(question);
-        return new QuestionWithOptionsRespondDTO(savedQuestion, options);
+        return new QuestionWithOptionsResponseDTO(savedQuestion, options);
     }
 
     @Transactional

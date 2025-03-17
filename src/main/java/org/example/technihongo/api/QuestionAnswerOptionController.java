@@ -1,7 +1,7 @@
 package org.example.technihongo.api;
 
 import org.example.technihongo.dto.QuestionAnswerOptionListDTO;
-import org.example.technihongo.dto.QuestionWithOptionsRespondDTO;
+import org.example.technihongo.dto.QuestionWithOptionsResponseDTO;
 import org.example.technihongo.entities.QuestionAnswerOption;
 import org.example.technihongo.response.ApiResponse;
 import org.example.technihongo.services.interfaces.QuestionAnswerOptionService;
@@ -78,7 +78,7 @@ public class QuestionAnswerOptionController {
     @PostMapping("/create")
     public ResponseEntity<ApiResponse> createQuestionAnswerOptions(@RequestBody QuestionAnswerOptionListDTO questionAnswerOptionListDTO){
         try {
-            QuestionWithOptionsRespondDTO question = questionAnswerOptionService.createAnswerOptionList(questionAnswerOptionListDTO);
+            QuestionWithOptionsResponseDTO question = questionAnswerOptionService.createAnswerOptionList(questionAnswerOptionListDTO);
             return ResponseEntity.ok(ApiResponse.builder()
                     .success(true)
                     .message("QuestionAnswerOptions created successfully!")
@@ -103,7 +103,7 @@ public class QuestionAnswerOptionController {
     @PatchMapping("/update")
     public ResponseEntity<ApiResponse> updateQuestionAnswerOptions(@RequestBody QuestionAnswerOptionListDTO questionAnswerOptionListDTO) {
         try{
-            QuestionWithOptionsRespondDTO question =  questionAnswerOptionService.updateAnswerOptionList(questionAnswerOptionListDTO);
+            QuestionWithOptionsResponseDTO question =  questionAnswerOptionService.updateAnswerOptionList(questionAnswerOptionListDTO);
             return ResponseEntity.ok(ApiResponse.builder()
                     .success(true)
                     .message("QuestionAnswerOptions updated successfully")
