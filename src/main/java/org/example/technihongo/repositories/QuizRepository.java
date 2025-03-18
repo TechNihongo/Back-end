@@ -11,6 +11,6 @@ public interface QuizRepository extends JpaRepository<Quiz, Integer> {
     Quiz findByQuizId(Integer quizId);
     List<Quiz> findByCreator_UserId(Integer creatorId);
 
-    boolean existsByDomainDomainId(Integer domainId);
+    //boolean existsByDomainDomainId(Integer domainId);
 
 }

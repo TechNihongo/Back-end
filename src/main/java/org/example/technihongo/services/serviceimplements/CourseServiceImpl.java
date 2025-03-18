@@ -115,9 +115,9 @@ public class CourseServiceImpl implements CourseService {
         if(domain == null){
             throw new RuntimeException("Domain ID not found!");
         }
-//        if(domain.getParentDomain() == null){
-//            throw new RuntimeException("Cannot assign parent domains!");
-//        }
+        if(domain.getParentDomain() == null){
+            throw new RuntimeException("Cannot assign parent domains!");
+        }
 
         if(difficultyLevelRepository.findByLevelId(updateCourseDTO.getDifficultyLevelId()) == null){
             throw new RuntimeException("DifficultyLevel ID not found!");

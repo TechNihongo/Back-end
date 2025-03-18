@@ -26,8 +26,6 @@ public class SystemFlashcardSetServiceImpl implements SystemFlashcardSetService 
     @Autowired
     private UserRepository userRepository;
     @Autowired
-    private DomainRepository domainRepository;
-    @Autowired
     private DifficultyLevelRepository difficultyLevelRepository;
 
     @Override
@@ -48,11 +46,11 @@ public class SystemFlashcardSetServiceImpl implements SystemFlashcardSetService 
         flashcardSet.setPremium(requestDTO.getIsPremium());
         flashcardSet.setCreator(user);
 
-        if(requestDTO.getDomainId() != null) {
-            Domain domain = domainRepository.findById(requestDTO.getDomainId())
-                    .orElseThrow(() -> new ResourceNotFoundException("Domain not found with Id: " + requestDTO.getDomainId()));
-            flashcardSet.setDomain(domain);
-        }
+//        if(requestDTO.getDomainId() != null) {
+//            Domain domain = domainRepository.findById(requestDTO.getDomainId())
+//                    .orElseThrow(() -> new ResourceNotFoundException("Domain not found with Id: " + requestDTO.getDomainId()));
+//            flashcardSet.setDomain(domain);
+//        }
 
         if (requestDTO.getDifficultyLevel() != null) {
             DifficultyLevel difficultyLevel = difficultyLevelRepository.findByTag(requestDTO.getDifficultyLevel());
@@ -86,11 +84,11 @@ public class SystemFlashcardSetServiceImpl implements SystemFlashcardSetService 
             flashcardSet.setPremium(requestDTO.getIsPremium());
         }
 
-        if (requestDTO.getDomainId() != null) {
-            Domain domain = domainRepository.findById(requestDTO.getDomainId())
-                    .orElseThrow(() -> new ResourceNotFoundException("Domain not found with Id: " + requestDTO.getDomainId()));
-            flashcardSet.setDomain(domain);
-        }
+//        if (requestDTO.getDomainId() != null) {
+//            Domain domain = domainRepository.findById(requestDTO.getDomainId())
+//                    .orElseThrow(() -> new ResourceNotFoundException("Domain not found with Id: " + requestDTO.getDomainId()));
+//            flashcardSet.setDomain(domain);
+//        }
 
         if (requestDTO.getDifficultyLevel() != null) {
             DifficultyLevel difficultyLevel = difficultyLevelRepository.findByTag(DifficultyLevelEnum.valueOf(requestDTO.getDifficultyLevel().name()));
@@ -151,7 +149,7 @@ public class SystemFlashcardSetServiceImpl implements SystemFlashcardSetService 
         responseDTO.setDescription(flashcardSet.getDescription());
         responseDTO.setIsPublic(flashcardSet.isPublic());
         responseDTO.setIsPremium(flashcardSet.isPremium());
-        responseDTO.setDomainId(flashcardSet.getDomain().getDomainId());
+        //responseDTO.setDomainId(flashcardSet.getDomain().getDomainId());
         responseDTO.setDifficultyLevel(flashcardSet.getDifficultyLevel().getTag());
         responseDTO.setFlashcards(flashcardDTOs);
 
@@ -175,7 +173,7 @@ public class SystemFlashcardSetServiceImpl implements SystemFlashcardSetService 
         response.setDescription(flashcardSet.getDescription());
         response.setIsPublic(flashcardSet.isPublic());
         response.setIsPremium(flashcardSet.isPremium());
-        response.setDomainId(flashcardSet.getDomain() != null ? flashcardSet.getDomain().getDomainId() : null);
+        //response.setDomainId(flashcardSet.getDomain() != null ? flashcardSet.getDomain().getDomainId() : null);
         response.setDifficultyLevel(flashcardSet.getDifficultyLevel() != null ? flashcardSet.getDifficultyLevel().getTag() : null);
 
         List<Flashcard> flashcards = flashcardRepository.findBySystemFlashCardSetSystemSetId(flashcardSet.getSystemSetId());
