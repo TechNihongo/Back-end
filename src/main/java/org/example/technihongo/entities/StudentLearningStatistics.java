@@ -38,10 +38,10 @@ public class StudentLearningStatistics {
     private Integer totalCompletedQuizzes = 0;
 
     @Column(name = "active_days_count")
-    private Integer maxDaysCount = 0;
+    private Integer activeDaysCount = 0;
 
     @Column(name = "max_days_streak")
-    private Integer activeDaysStreak = 0;
+    private Integer maxDaysStreak = 0;
 
     @Column(name = "total_achievements_unlocked")
     private Integer totalAchievementsUnlocked = 0;

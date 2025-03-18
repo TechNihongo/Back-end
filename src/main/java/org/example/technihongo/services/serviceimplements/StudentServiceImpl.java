@@ -166,5 +166,8 @@ public class StudentServiceImpl implements StudentService {
         return profileDTO;
     }
 
-
+    @Override
+    public Integer getStudentIdByUserId(Integer userId) {
+        return studentRepository.findByUser_UserId(userId).getStudentId();
+    }
 }
