@@ -13,4 +13,5 @@ public interface StudentService {
     void updateStudentProfile(Integer userId, UpdateProfileDTO dto);
 
     ProfileDTO getStudentProfile(Integer studentId);
+    Integer getStudentIdByUserId(Integer userId);
 }
