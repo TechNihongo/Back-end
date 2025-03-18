@@ -10,7 +10,6 @@ import lombok.NoArgsConstructor;
 public class LearningResourceDTO {
     private String title;
     private String description;
-    private Integer domainId;
     private String videoUrl;
     private String videoFilename;
     private String pdfUrl;

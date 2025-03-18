@@ -29,16 +29,8 @@ public class DomainServiceImpl implements DomainService {
     private LearningPathRepository learningPathRepository;
 
     @Autowired
-    private LearningResourceRepository learningResourceRepository;
-
-    @Autowired
     private CourseRepository courseRepository;
 
-    @Autowired
-    private SystemFlashcardSetRepository systemFlashcardSetRepository;
-
-    @Autowired
-    private QuizRepository quizRepository;
 
     @Override
     public DomainResponseDTO createDomain(DomainRequestDTO request) {
@@ -98,25 +90,25 @@ public class DomainServiceImpl implements DomainService {
                     " because it is referenced by one or more learning paths.");
         }
 
-        if (learningResourceRepository.existsByDomainDomainId(domainId)) {
-            throw new RuntimeException("Cannot delete domain with ID: " + domainId +
-                    " because it is referenced by one or more learning resources.");
-        }
+//        if (learningResourceRepository.existsByDomainDomainId(domainId)) {
+//            throw new RuntimeException("Cannot delete domain with ID: " + domainId +
+//                    " because it is referenced by one or more learning resources.");
+//        }
 
         if (courseRepository.existsByDomainDomainId(domainId)) {
             throw new RuntimeException("Cannot delete domain with ID: " + domainId +
                     " because it is referenced by one or more courses.");
         }
 
-        if (systemFlashcardSetRepository.existsByDomainDomainId(domainId)) {
-            throw new RuntimeException("Cannot delete domain with ID: " + domainId +
-                    " because it is referenced by one or more flashcard sets.");
-        }
-
-        if (quizRepository.existsByDomainDomainId(domainId)) {
-            throw new RuntimeException("Cannot delete domain with ID: " + domainId +
-                    " because it is referenced by one or more quizzes.");
-        }
+//        if (systemFlashcardSetRepository.existsByDomainDomainId(domainId)) {
+//            throw new RuntimeException("Cannot delete domain with ID: " + domainId +
+//                    " because it is referenced by one or more flashcard sets.");
+//        }
+//
+//        if (quizRepository.existsByDomainDomainId(domainId)) {
+//            throw new RuntimeException("Cannot delete domain with ID: " + domainId +
+//                    " because it is referenced by one or more quizzes.");
+//        }
 
         domainRepository.delete(domain);
     }

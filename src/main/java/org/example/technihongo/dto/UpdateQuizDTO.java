@@ -12,7 +12,6 @@ import java.math.BigDecimal;
 public class UpdateQuizDTO {
     private String title;
     private String description;
-    private Integer domainId;
     private Integer difficultyLevelId;
     private BigDecimal passingScore;
 }

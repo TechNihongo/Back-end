@@ -15,7 +15,6 @@ public class SystemFlashcardSetResponseDTO {
     private String description;
     private Boolean isPublic;
     private Boolean isPremium;
-    private Integer domainId;
     private DifficultyLevelEnum difficultyLevel;
     private List<FlashcardResponseDTO> flashcards;
 }
