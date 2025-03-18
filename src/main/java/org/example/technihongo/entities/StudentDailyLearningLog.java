@@ -47,7 +47,7 @@ public class StudentDailyLearningLog {
     private Integer completedFlashcardSets;
 
     @Column(name = "daily_goal_achieved")
-    private Integer dailyGoalAchieved;
+    private boolean dailyGoalAchieved;
 
     @Column(name = "study_streak")
     private Integer streak;
@@ -55,5 +55,4 @@ public class StudentDailyLearningLog {
     @CreationTimestamp
     @Column(name = "created_at")
     private LocalDateTime createdAt;
-
 }

@@ -9,6 +9,7 @@ import org.example.technihongo.exception.ResourceNotFoundException;
 import org.example.technihongo.exception.UnauthorizedAccessException;
 import org.example.technihongo.response.ApiResponse;
 import org.example.technihongo.services.interfaces.StudentFlashcardSetService;
+import org.example.technihongo.services.interfaces.StudentService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -24,6 +25,8 @@ public class StudentFlashcardSetController {
     private StudentFlashcardSetService studentFlashcardSetService;
     @Autowired
     private JwtUtil jwtUtil;
+    @Autowired
+    private StudentService studentService;
 
     @PostMapping("/create")
     public ResponseEntity<ApiResponse> createFlashcardSet(
@@ -32,7 +35,8 @@ public class StudentFlashcardSetController {
         try {
             if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
                 String token = authorizationHeader.substring(7);
-                Integer studentId = jwtUtil.extractUserId(token);
+                Integer userId = jwtUtil.extractUserId(token);
+                Integer studentId = studentService.getStudentIdByUserId(userId);
 
                 FlashcardSetResponseDTO response = studentFlashcardSetService.createFlashcardSet(studentId, request);
                 return ResponseEntity.ok(ApiResponse.builder()
@@ -65,7 +69,8 @@ public class StudentFlashcardSetController {
         try {
             if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
                 String token = authorizationHeader.substring(7);
-                Integer studentId = jwtUtil.extractUserId(token);
+                Integer userId = jwtUtil.extractUserId(token);
+                Integer studentId = studentService.getStudentIdByUserId(userId);
 
                 FlashcardSetResponseDTO response = studentFlashcardSetService.updateFlashcardSet(studentId, flashcardSetId, request);
                 return ResponseEntity.ok(ApiResponse.builder()
@@ -97,7 +102,8 @@ public class StudentFlashcardSetController {
         try {
             if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
                 String token = authorizationHeader.substring(7);
-                Integer studentId = jwtUtil.extractUserId(token);
+                Integer userId = jwtUtil.extractUserId(token);
+                Integer studentId = studentService.getStudentIdByUserId(userId);
 
                 studentFlashcardSetService.deleteFlashcardSet(studentId, flashcardSetId);
                 return ResponseEntity.ok(ApiResponse.builder()
@@ -162,7 +168,8 @@ public class StudentFlashcardSetController {
         try {
             if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
                 String token = authorizationHeader.substring(7);
-                Integer studentId = jwtUtil.extractUserId(token);
+                Integer userId = jwtUtil.extractUserId(token);
+                Integer studentId = studentService.getStudentIdByUserId(userId);
 
                 FlashcardSetResponseDTO response = studentFlashcardSetService.updateFlashcardSetVisibility(studentId, flashcardSetId, isPublic);
                 return ResponseEntity.ok(ApiResponse.builder()
@@ -194,8 +201,9 @@ public class StudentFlashcardSetController {
             if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
                 String token = authorizationHeader.substring(7);
                 Integer userId = jwtUtil.extractUserId(token);
+                Integer studentId = studentService.getStudentIdByUserId(userId);
 
-                FlashcardSetResponseDTO response = studentFlashcardSetService.getAllFlashcardsInSet(userId, flashcardSetId);
+                FlashcardSetResponseDTO response = studentFlashcardSetService.getAllFlashcardsInSet(studentId, flashcardSetId);
                 return ResponseEntity.ok(ApiResponse.builder()
                         .success(true)
                         .message("Flashcards retrieved successfully")
@@ -236,7 +244,8 @@ public class StudentFlashcardSetController {
         try {
             if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
                 String token = authorizationHeader.substring(7);
-                Integer studentId = jwtUtil.extractUserId(token);
+                Integer userId = jwtUtil.extractUserId(token);
+                Integer studentId = studentService.getStudentIdByUserId(userId);
 
                 List<FlashcardSetResponseDTO> studentFlashcardList = studentFlashcardSetService.studentFlashcardList(studentId);
 
@@ -303,7 +312,8 @@ public class StudentFlashcardSetController {
         try {
             if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
                 String token = authorizationHeader.substring(7);
-                Integer studentId = jwtUtil.extractUserId(token);
+                Integer userId = jwtUtil.extractUserId(token);
+                Integer studentId = studentService.getStudentIdByUserId(userId);
 
                 FlashcardSetResponseDTO responseDTO = studentFlashcardSetService
                         .createFlashcardSetFromResource(studentId, request);
