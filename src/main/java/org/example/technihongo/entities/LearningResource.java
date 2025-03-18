@@ -27,10 +27,10 @@ public class LearningResource {
     @Column(name = "description")
     private String description;
 
-    @ManyToOne
-    @NotNull
-    @JoinColumn(name = "domain_id", referencedColumnName = "domain_id", nullable = false)
-    private Domain domain;
+//    @ManyToOne
+//    @NotNull
+//    @JoinColumn(name = "domain_id", referencedColumnName = "domain_id", nullable = false)
+//    private Domain domain;
 
     @ManyToOne
     @NotNull

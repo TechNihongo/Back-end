@@ -11,6 +11,6 @@ public interface LearningResourceRepository extends JpaRepository<LearningResour
     LearningResource findByResourceId(Integer resourceId);
     List<LearningResource> findByCreator_UserId(Integer creatorId);
 
-    boolean existsByDomainDomainId(Integer domainId);
+    //boolean existsByDomainDomainId(Integer domainId);
 
 }
