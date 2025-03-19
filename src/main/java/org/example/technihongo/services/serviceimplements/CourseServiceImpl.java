@@ -165,23 +165,29 @@ public class CourseServiceImpl implements CourseService {
     }
 
     @Override
-    public PageResponseDTO<Course> courseListPaginated(String keyword, Integer domainId, int pageNo, int pageSize, String sortBy, String sortDir) {
+    public PageResponseDTO<Course> courseListPaginated(String keyword, Integer domainId, Integer difficultyLevelId, int pageNo, int pageSize, String sortBy, String sortDir) {
         Sort sort = sortDir.equalsIgnoreCase(Sort.Direction.ASC.name())
                 ? Sort.by(sortBy).ascending()
                 : Sort.by(sortBy).descending();
 
         Pageable pageable = PageRequest.of(pageNo, pageSize, sort);
         Page<Course> courses;
-        if(keyword != null && domainId == null) {
+
+        if (keyword != null && domainId == null && difficultyLevelId == null) {
             courses = courseRepository.findByTitleContainingIgnoreCase(keyword, pageable);
-        }
-        else if(domainId != null && keyword == null){
+        } else if (domainId != null && keyword == null && difficultyLevelId == null) {
             courses = courseRepository.findByDomain_DomainId(domainId, pageable);
-        }
-        else if(domainId != null){
+        } else if (difficultyLevelId != null && keyword == null && domainId == null) {
+            courses = courseRepository.findByDifficultyLevel_LevelId(difficultyLevelId, pageable);
+        } else if (keyword != null && domainId != null && difficultyLevelId == null) {
             courses = courseRepository.findByTitleContainingIgnoreCaseAndDomain_DomainId(keyword, domainId, pageable);
-        }
-        else {
+        } else if (keyword != null && domainId == null) {
+            courses = courseRepository.findByTitleContainingIgnoreCaseAndDifficultyLevel_LevelId(keyword, difficultyLevelId, pageable);
+        } else if (domainId != null && keyword == null) {
+            courses = courseRepository.findByDomain_DomainIdAndDifficultyLevel_LevelId(domainId, difficultyLevelId, pageable);
+        } else if (keyword != null) {
+            courses = courseRepository.findByTitleContainingIgnoreCaseAndDomain_DomainIdAndDifficultyLevel_LevelId(keyword, domainId, difficultyLevelId, pageable);
+        } else {
             courses = courseRepository.findAll(pageable);
         }
 
@@ -189,23 +195,29 @@ public class CourseServiceImpl implements CourseService {
     }
 
     @Override
-    public PageResponseDTO<Course> getPublicCoursesPaginated(String keyword, Integer domainId, int pageNo, int pageSize, String sortBy, String sortDir) {
+    public PageResponseDTO<Course> getPublicCoursesPaginated(String keyword, Integer domainId, Integer difficultyLevelId, int pageNo, int pageSize, String sortBy, String sortDir) {
         Sort sort = sortDir.equalsIgnoreCase(Sort.Direction.ASC.name())
                 ? Sort.by(sortBy).ascending()
                 : Sort.by(sortBy).descending();
 
         Pageable pageable = PageRequest.of(pageNo, pageSize, sort);
         Page<Course> courses;
-        if(keyword != null && domainId == null) {
+
+        if (keyword != null && domainId == null && difficultyLevelId == null) {
             courses = courseRepository.findByTitleContainingIgnoreCaseAndPublicStatus(keyword, true, pageable);
-        }
-        else if(domainId != null && keyword == null){
+        } else if (domainId != null && keyword == null && difficultyLevelId == null) {
             courses = courseRepository.findByDomain_DomainIdAndPublicStatus(domainId, true, pageable);
-        }
-        else if(domainId != null){
+        } else if (difficultyLevelId != null && keyword == null && domainId == null) {
+            courses = courseRepository.findByPublicStatusAndDifficultyLevel_LevelId(true, difficultyLevelId, pageable);
+        } else if (keyword != null && domainId != null && difficultyLevelId == null) {
             courses = courseRepository.findByTitleContainingIgnoreCaseAndPublicStatusAndDomain_DomainId(keyword, true, domainId, pageable);
-        }
-        else {
+        } else if (keyword != null && domainId == null) {
+            courses = courseRepository.findByTitleContainingIgnoreCaseAndPublicStatusAndDifficultyLevel_LevelId(keyword, true, difficultyLevelId, pageable);
+        } else if (domainId != null && keyword == null) {
+            courses = courseRepository.findByDomain_DomainIdAndPublicStatusAndDifficultyLevel_LevelId(domainId, true, difficultyLevelId, pageable);
+        } else if (keyword != null) {
+            courses = courseRepository.findByTitleContainingIgnoreCaseAndPublicStatusAndDomain_DomainIdAndDifficultyLevel_LevelId(keyword, true, domainId, difficultyLevelId, pageable);
+        } else {
             courses = courseRepository.findCoursesByPublicStatus(true, pageable);
         }
 
@@ -213,7 +225,7 @@ public class CourseServiceImpl implements CourseService {
     }
 
     @Override
-    public PageResponseDTO<Course> getListCoursesByCreatorIdPaginated(String keyword, Integer domainId, Integer creatorId, int pageNo, int pageSize, String sortBy, String sortDir) {
+    public PageResponseDTO<Course> getListCoursesByCreatorIdPaginated(String keyword, Integer creatorId, Integer domainId, Integer difficultyLevelId, int pageNo, int pageSize, String sortBy, String sortDir) {
         userRepository.findById(creatorId)
                 .orElseThrow(() -> new RuntimeException("User ID not found."));
 
@@ -223,16 +235,22 @@ public class CourseServiceImpl implements CourseService {
 
         Pageable pageable = PageRequest.of(pageNo, pageSize, sort);
         Page<Course> courses;
-        if(keyword != null && domainId == null) {
+
+        if (keyword != null && domainId == null && difficultyLevelId == null) {
             courses = courseRepository.findByTitleContainingIgnoreCaseAndCreator_UserId(keyword, creatorId, pageable);
-        }
-        else if(domainId != null && keyword == null){
+        } else if (domainId != null && keyword == null && difficultyLevelId == null) {
             courses = courseRepository.findByDomain_DomainIdAndCreator_UserId(domainId, creatorId, pageable);
-        }
-        else if(domainId != null){
+        } else if (difficultyLevelId != null && keyword == null && domainId == null) {
+            courses = courseRepository.findByCreator_UserIdAndDifficultyLevel_LevelId(creatorId, difficultyLevelId, pageable);
+        } else if (keyword != null && domainId != null && difficultyLevelId == null) {
             courses = courseRepository.findByDomain_DomainIdAndCreator_UserIdAndTitleContainingIgnoreCase(domainId, creatorId, keyword, pageable);
-        }
-        else {
+        } else if (keyword != null && domainId == null) {
+            courses = courseRepository.findByTitleContainingIgnoreCaseAndCreator_UserIdAndDifficultyLevel_LevelId(keyword, creatorId, difficultyLevelId, pageable);
+        } else if (domainId != null && keyword == null) {
+            courses = courseRepository.findByDomain_DomainIdAndCreator_UserIdAndDifficultyLevel_LevelId(domainId, creatorId, difficultyLevelId, pageable);
+        } else if (keyword != null) {
+            courses = courseRepository.findByDomain_DomainIdAndCreator_UserIdAndTitleContainingIgnoreCaseAndDifficultyLevel_LevelId(domainId, creatorId, keyword, difficultyLevelId, pageable);
+        } else {
             courses = courseRepository.findByCreator_UserId(creatorId, pageable);
         }
 
