@@ -10,6 +10,8 @@ import org.example.technihongo.entities.User;
 import org.example.technihongo.enums.TokenType;
 import org.example.technihongo.response.ApiResponse;
 import org.example.technihongo.services.interfaces.AuthTokenService;
+import org.example.technihongo.services.interfaces.StudentDailyLearningLogService;
+import org.example.technihongo.services.interfaces.StudentService;
 import org.example.technihongo.services.interfaces.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -29,8 +31,6 @@ public class UserController {
     private UserService userService;
     @Autowired
     private MyUserDetailsService myUserDetailsService;
-    
-
     @Autowired
     private JWTHelper jwtHelper;
     @Autowired
@@ -39,19 +39,29 @@ public class UserController {
     private AuthTokenService authTokenService;
     @Autowired
     private EmailService emailService;
+    @Autowired
+    private StudentDailyLearningLogService studentDailyLearningLogService;
+    @Autowired
+    private StudentService studentService;
 
     @PostMapping("/login")
     public ResponseEntity<LoginResponseTokenDTO> login(@RequestBody UserLogin userLogin) {
         try {
             LoginResponseDTO response = userService.login(userLogin.getEmail(), userLogin.getPassword());
             String token = myUserDetailsService.loginToken(userLogin);
-            LocalDateTime expired = jwtHelper.getExpirationDateFromToken(token).toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime();
-            authTokenService.saveLoginToken(new CreateLoginTokenDTO(response.getUserId(), token, String.valueOf(TokenType.LOGIN), expired));
-            authTokenService.updateLoginTokenStatus(response.getUserId());
 
             if (response.isSuccess()) {
+                LocalDateTime expired = jwtHelper.getExpirationDateFromToken(token).toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime();
+                authTokenService.saveLoginToken(new CreateLoginTokenDTO(response.getUserId(), token, String.valueOf(TokenType.LOGIN), expired));
+                authTokenService.updateLoginTokenStatus(response.getUserId());
+
+                Integer studentId = studentService.getStudentIdByUserId(response.getUserId());
+                if(studentId != null){
+                    studentDailyLearningLogService.trackStudentDailyLearningLog(studentId, 0);
+                }
                 return ResponseEntity.ok(new LoginResponseTokenDTO(response.getUserId(), response.getUserName(),
                         response.getEmail(), response.getRole(), true, response.getMessage(), token));
+
             } else {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new LoginResponseTokenDTO(response.getUserId(), response.getUserName(),
                         response.getEmail(), response.getRole(), false, response.getMessage(), token));
@@ -95,13 +105,20 @@ public class UserController {
             LoginResponseDTO response = userService.authenticateWithGoogle(googleTokenDTO);
             UserLogin userLogin = new UserLogin(response.getEmail(), "");
             String token = myUserDetailsService.loginToken(userLogin);
-            LocalDateTime expired = jwtHelper.getExpirationDateFromToken(token).toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime();
-            authTokenService.saveLoginToken(new CreateLoginTokenDTO(response.getUserId(), token, String.valueOf(TokenType.LOGIN_GOOGLE), expired));
-            authTokenService.updateLoginTokenStatus(response.getUserId());
 
             if (response.isSuccess()) {
+                LocalDateTime expired = jwtHelper.getExpirationDateFromToken(token).toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime();
+                authTokenService.saveLoginToken(new CreateLoginTokenDTO(response.getUserId(), token, String.valueOf(TokenType.LOGIN_GOOGLE), expired));
+                authTokenService.updateLoginTokenStatus(response.getUserId());
+
+                Integer studentId = studentService.getStudentIdByUserId(response.getUserId());
+                if(studentId != null){
+                    studentDailyLearningLogService.trackStudentDailyLearningLog(studentId, 0);
+                }
+
                 return ResponseEntity.ok(new LoginResponseTokenDTO(response.getUserId(), response.getUserName(),
                         response.getEmail(), response.getRole(), true, response.getMessage(), token));
+
             } else {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new LoginResponseTokenDTO(response.getUserId(), response.getUserName(),
                         response.getEmail(), response.getRole(), false, response.getMessage(), token));

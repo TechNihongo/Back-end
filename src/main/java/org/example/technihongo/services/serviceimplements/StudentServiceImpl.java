@@ -168,6 +168,9 @@ public class StudentServiceImpl implements StudentService {
 
     @Override
     public Integer getStudentIdByUserId(Integer userId) {
-        return studentRepository.findByUser_UserId(userId).getStudentId();
+        if(studentRepository.findByUser_UserId(userId) == null) {
+            return null;
+        }
+        else return studentRepository.findByUser_UserId(userId).getStudentId();
     }
 }

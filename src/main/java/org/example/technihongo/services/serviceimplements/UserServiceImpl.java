@@ -127,6 +127,7 @@ public class UserServiceImpl implements UserService {
                     .build();
             Student student = Student.builder()
                     .user(user)
+                    .dailyGoal(60)
                     .occupation(registrationDTO.getOccupation())
                     .reminderEnabled(false)
                     .build();
@@ -214,6 +215,7 @@ public class UserServiceImpl implements UserService {
 
             Student student = Student.builder()
                     .user(user)
+                    .dailyGoal(60)
                     .reminderEnabled(true)
                     .build();
 

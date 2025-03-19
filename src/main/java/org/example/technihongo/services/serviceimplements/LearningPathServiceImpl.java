@@ -33,13 +33,28 @@ public class LearningPathServiceImpl implements LearningPathService {
     private PathCourseRepository pathCourseRepository;
 
     @Override
-    public List<LearningPath> getAllLearningPaths() {
-        return learningPathRepository.findAll(Sort.by(Sort.Direction.DESC, "createdAt"));
-    }
+    public List<LearningPath> getAllLearningPaths(String keyword, Integer domainId) {
+        if (keyword != null && domainId == null) {
+            return learningPathRepository.findByTitleContainingIgnoreCaseOrderByCreatedAtDesc(keyword);
+        } else if (domainId != null && keyword == null) {
+            return learningPathRepository.findByDomain_DomainIdOrderByCreatedAtDesc(domainId);
+        } else if (keyword != null) {
+            return learningPathRepository.findByTitleContainingIgnoreCaseAndDomain_DomainIdOrderByCreatedAtDesc(keyword, domainId);
+        } else {
+            return learningPathRepository.findAll(Sort.by(Sort.Direction.DESC, "createdAt"));
+        }    }
 
     @Override
-    public List<LearningPath> getPublicLearningPaths() {
-        return learningPathRepository.findAll(Sort.by(Sort.Direction.DESC, "createdAt")).stream().filter(LearningPath::isPublic).toList();
+    public List<LearningPath> getPublicLearningPaths(String keyword, Integer domainId) {
+        if (keyword != null && domainId == null) {
+            return learningPathRepository.findByTitleContainingIgnoreCaseOrderByCreatedAtDesc(keyword).stream().filter(LearningPath::isPublic).toList();
+        } else if (domainId != null && keyword == null) {
+            return learningPathRepository.findByDomain_DomainIdOrderByCreatedAtDesc(domainId).stream().filter(LearningPath::isPublic).toList();
+        } else if (keyword != null) {
+            return learningPathRepository.findByTitleContainingIgnoreCaseAndDomain_DomainIdOrderByCreatedAtDesc(keyword, domainId).stream().filter(LearningPath::isPublic).toList();
+        } else {
+            return learningPathRepository.findAll(Sort.by(Sort.Direction.DESC, "createdAt")).stream().filter(LearningPath::isPublic).toList();
+        }
     }
 
     @Override
@@ -140,9 +155,18 @@ public class LearningPathServiceImpl implements LearningPathService {
     }
 
     @Override
-    public List<LearningPath> getListLearningPathsByCreatorId(Integer creatorId) {
+    public List<LearningPath> getListLearningPathsByCreatorId(Integer creatorId, String keyword, Integer domainId) {
         userRepository.findById(creatorId)
                 .orElseThrow(() -> new RuntimeException("User ID not found."));
-        return learningPathRepository.findByCreator_UserIdOrderByCreatedAtDesc(creatorId);
+
+        if (keyword != null && domainId == null) {
+            return learningPathRepository.findByTitleContainingIgnoreCaseAndCreator_UserIdOrderByCreatedAtDesc(keyword, creatorId);
+        } else if (domainId != null && keyword == null) {
+            return learningPathRepository.findByDomain_DomainIdAndCreator_UserIdOrderByCreatedAtDesc(domainId, creatorId);
+        } else if (keyword != null) {
+            return learningPathRepository.findByTitleContainingIgnoreCaseAndDomain_DomainIdAndCreator_UserIdOrderByCreatedAtDesc(keyword, domainId, creatorId);
+        } else {
+            return learningPathRepository.findByCreator_UserIdOrderByCreatedAtDesc(creatorId);
+        }
     }
 }
