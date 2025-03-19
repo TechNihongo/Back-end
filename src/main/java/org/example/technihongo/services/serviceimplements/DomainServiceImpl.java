@@ -56,6 +56,11 @@ public class DomainServiceImpl implements DomainService {
         Domain domain = domainRepository.findById(domainId)
                 .orElseThrow(() -> new ResourceNotFoundException("Domain not found with ID: " + domainId));
 
+        if (domain.getSubDomains() != null && !domain.getSubDomains().isEmpty()) {
+            throw new RuntimeException("Cannot update domain with ID: " + domainId +
+                    " because it is a parent domain with existing child domains.");
+        }
+
         if (request.getTag() != null) {
             domain.setTag(request.getTag());
         }
@@ -75,6 +80,7 @@ public class DomainServiceImpl implements DomainService {
         return convertToDomainResponseDTO(updatedDomain);
     }
 
+
     @Override
     public void deleteDomain(Integer domainId) {
         Domain domain = domainRepository.findById(domainId)
@@ -90,26 +96,10 @@ public class DomainServiceImpl implements DomainService {
                     " because it is referenced by one or more learning paths.");
         }
 
-//        if (learningResourceRepository.existsByDomainDomainId(domainId)) {
-//            throw new RuntimeException("Cannot delete domain with ID: " + domainId +
-//                    " because it is referenced by one or more learning resources.");
-//        }
-
         if (courseRepository.existsByDomainDomainId(domainId)) {
             throw new RuntimeException("Cannot delete domain with ID: " + domainId +
                     " because it is referenced by one or more courses.");
         }
-
-//        if (systemFlashcardSetRepository.existsByDomainDomainId(domainId)) {
-//            throw new RuntimeException("Cannot delete domain with ID: " + domainId +
-//                    " because it is referenced by one or more flashcard sets.");
-//        }
-//
-//        if (quizRepository.existsByDomainDomainId(domainId)) {
-//            throw new RuntimeException("Cannot delete domain with ID: " + domainId +
-//                    " because it is referenced by one or more quizzes.");
-//        }
-
         domainRepository.delete(domain);
     }
 
