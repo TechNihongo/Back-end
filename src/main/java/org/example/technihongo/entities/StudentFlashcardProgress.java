@@ -4,7 +4,7 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
-import java.math.BigDecimal;
+
 import java.time.LocalDateTime;
 
 @Entity
@@ -30,8 +30,8 @@ public class StudentFlashcardProgress {
     @JoinColumn(name = "flashcard_id", nullable = false, referencedColumnName = "flashcard_id")
     private Flashcard flashcard;
 
-    @Column(name = "is_learned")
-    private boolean isLearned;
+//    @Column(name = "is_learned")
+//    private boolean isLearned;
 
     @Column(name = "last_studied")
     private LocalDateTime lastStudied;
