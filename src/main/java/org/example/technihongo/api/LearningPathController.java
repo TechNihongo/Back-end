@@ -24,14 +24,17 @@ public class LearningPathController {
     private JwtUtil jwtUtil;
 
     @GetMapping("/all")
-    public ResponseEntity<ApiResponse> getAllLearningPaths(@RequestHeader("Authorization") String authorizationHeader) throws Exception {
+    public ResponseEntity<ApiResponse> getAllLearningPaths(
+            @RequestHeader("Authorization") String authorizationHeader,
+            @RequestParam(defaultValue = "") String keyword,
+            @RequestParam(defaultValue = "") Integer domainId) throws Exception {
         try{
             if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
                 String token = authorizationHeader.substring(7);
                 int roleId = jwtUtil.extractUserRoleId(token);
 
                 if (roleId == 1 || roleId == 2) {
-                    List<LearningPath> learningPaths = learningPathService.getAllLearningPaths();
+                    List<LearningPath> learningPaths = learningPathService.getAllLearningPaths(keyword, domainId);
                     if (learningPaths.isEmpty()) {
                         return ResponseEntity.ok(ApiResponse.builder()
                                 .success(false)
@@ -45,7 +48,7 @@ public class LearningPathController {
                                 .build());
                     }
                 } else {
-                    List<LearningPath> learningPaths = learningPathService.getPublicLearningPaths();
+                    List<LearningPath> learningPaths = learningPathService.getPublicLearningPaths(keyword, domainId);
                     if (learningPaths.isEmpty()) {
                         return ResponseEntity.ok(ApiResponse.builder()
                                 .success(false)
@@ -248,13 +251,16 @@ public class LearningPathController {
     }
 
     @GetMapping("/creator")
-    public ResponseEntity<ApiResponse> getLearningPathListByCreator(@RequestHeader("Authorization") String authorizationHeader) throws Exception {
+    public ResponseEntity<ApiResponse> getLearningPathListByCreator(
+            @RequestHeader("Authorization") String authorizationHeader,
+            @RequestParam(defaultValue = "") String keyword,
+            @RequestParam(defaultValue = "") Integer domainId) throws Exception {
         try{
             if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
                 String token = authorizationHeader.substring(7);
                 Integer userId = jwtUtil.extractUserId(token);
 
-                List<LearningPath> learningPaths = learningPathService.getListLearningPathsByCreatorId(userId);
+                List<LearningPath> learningPaths = learningPathService.getListLearningPathsByCreatorId(userId, keyword, domainId);
                 if (learningPaths.isEmpty()) {
                     return ResponseEntity.ok(ApiResponse.builder()
                             .success(false)

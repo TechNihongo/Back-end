@@ -31,7 +31,7 @@ public class StudentDailyLearningLogServiceImpl implements StudentDailyLearningL
     @Transactional
     @Override
     public void trackStudentDailyLearningLog(Integer studentId, Integer studyTimeInput) {
-// Lấy ngày hiện tại
+        // Lấy ngày hiện tại
         LocalDate today = LocalDate.now();
 
         // Tìm student
@@ -43,6 +43,7 @@ public class StudentDailyLearningLogServiceImpl implements StudentDailyLearningL
                 .findByStudentStudentIdAndLogDate(studentId, today);
 
         StudentDailyLearningLog dailyLog;
+        boolean isNewLog = false; // Biến để kiểm tra log mới
         if (existingLogOpt.isPresent()) {
             // Nếu đã tồn tại log, cập nhật
             dailyLog = existingLogOpt.get();
@@ -51,13 +52,14 @@ public class StudentDailyLearningLogServiceImpl implements StudentDailyLearningL
             // Nếu chưa tồn tại, tạo mới log
             dailyLog = createNewDailyLog(student, today);
             updateDailyLog(dailyLog, studyTimeInput, student.getDailyGoal());
+            isNewLog = true; // Đánh dấu là log mới
         }
 
         // Lưu daily log
         dailyLogRepository.save(dailyLog);
 
         // Cập nhật StudentLearningStatistics
-        updateLearningStatistics(student, dailyLog);
+        updateLearningStatistics(student, dailyLog, isNewLog);
     }
 
     @Override
@@ -107,7 +109,7 @@ public class StudentDailyLearningLogServiceImpl implements StudentDailyLearningL
         return yesterdayLogOpt.map(studentDailyLearningLog -> studentDailyLearningLog.getStreak() + 1).orElse(1);
     }
 
-    private void updateLearningStatistics(Student student, StudentDailyLearningLog dailyLog) {
+    private void updateLearningStatistics(Student student, StudentDailyLearningLog dailyLog, boolean isNewLog) {
         // Tìm hoặc tạo StudentLearningStatistics
         StudentLearningStatistics stats = statsRepository.findByStudentStudentId(student.getStudentId())
                 .orElseGet(() -> {
@@ -126,8 +128,8 @@ public class StudentDailyLearningLogServiceImpl implements StudentDailyLearningL
         // Cập nhật totalStudyTime
         stats.setTotalStudyTime(stats.getTotalStudyTime() + dailyLog.getStudyTime());
 
-        // Cập nhật activeDaysCount (nếu là log mới)
-        if (dailyLog.getCreatedAt().toLocalDate().equals(dailyLog.getLogDate())) {
+        // Cập nhật activeDaysCount (chỉ khi log là mới)
+        if (isNewLog) {
             stats.setActiveDaysCount(stats.getActiveDaysCount() + 1);
         }
 

@@ -36,7 +36,7 @@ public class StudentDailyLearningLogController {
 
                 studentDailyLearningLogService.trackStudentDailyLearningLog(studentId, studyTime);
                 return ResponseEntity.ok(ApiResponse.builder()
-                        .success(false)
+                        .success(true)
                         .message("Daily Learning Log Recorded Successfully!")
                         .build());
             }
@@ -56,7 +56,7 @@ public class StudentDailyLearningLogController {
         }
     }
 
-    @PostMapping("/view")
+    @GetMapping("/view")
     public ResponseEntity<ApiResponse> getStudentDailyLearningLog(
             @RequestHeader("Authorization") String authorizationHeader){
         try{

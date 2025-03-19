@@ -7,8 +7,8 @@ import org.example.technihongo.entities.LearningPath;
 import java.util.List;
 
 public interface LearningPathService {
-    List<LearningPath> getAllLearningPaths();
-    List<LearningPath> getPublicLearningPaths();
+    List<LearningPath> getAllLearningPaths(String keyword, Integer domainId);
+    List<LearningPath> getPublicLearningPaths(String keyword, Integer domainId);
     List<LearningPath> getLearningPathsByTitle(String keyword);
     List<LearningPath> getPublicLearningPathsByTitle(String keyword);
     LearningPath getLearningPathById(Integer pathId);
@@ -17,5 +17,5 @@ public interface LearningPathService {
     void updateLearningPath(Integer pathId, UpdateLearningPathDTO updateLearningPathDTO);
     void deleteLearningPath(Integer pathId);
     void updateTotalCourses(Integer pathId);
-    List<LearningPath> getListLearningPathsByCreatorId(Integer creatorId);
+    List<LearningPath> getListLearningPathsByCreatorId(Integer creatorId, String keyword, Integer domainId);
 }
