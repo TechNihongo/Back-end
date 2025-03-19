@@ -91,7 +91,7 @@ public class DomainController {
     public ResponseEntity<ApiResponse> getAllDomain(
             @RequestParam(defaultValue = "0") int pageNo,
             @RequestParam(defaultValue = "10") int pageSize,
-            @RequestParam(defaultValue = "createAt") String sortBy,
+            @RequestParam(defaultValue = "createdAt") String sortBy,
             @RequestParam(defaultValue = "desc") String sortDir) {
         try {
             PageResponseDTO<DomainResponseDTO> response = domainService.getAllDomains(pageNo, pageSize, sortBy, sortDir);
@@ -119,7 +119,7 @@ public class DomainController {
     public ResponseEntity<ApiResponse> getAllParentDomain(
             @RequestParam(defaultValue = "0") int pageNo,
             @RequestParam(defaultValue = "10") int pageSize,
-            @RequestParam(defaultValue = "createAt") String sortBy,
+            @RequestParam(defaultValue = "createdAt") String sortBy,
             @RequestParam(defaultValue = "desc") String sortDir) {
         try {
             PageResponseDTO<DomainResponseDTO> response = domainService.getAllParentDomains(pageNo, pageSize, sortBy, sortDir);
@@ -200,7 +200,7 @@ public class DomainController {
             @RequestParam String keyword,
             @RequestParam(defaultValue = "0") int pageNo,
             @RequestParam(defaultValue = "10") int pageSize,
-            @RequestParam(defaultValue = "createAt") String sortBy,
+            @RequestParam(defaultValue = "createdAt") String sortBy,
             @RequestParam(defaultValue = "desc") String sortDir) {
         try {
             PageResponseDTO<DomainResponseDTO> response = domainService.searchName(keyword, pageNo, pageSize, sortBy, sortDir);
@@ -229,7 +229,7 @@ public class DomainController {
             @RequestParam List<String> tags,
             @RequestParam(defaultValue = "0") int pageNo,
             @RequestParam(defaultValue = "10") int pageSize,
-            @RequestParam(defaultValue = "createAt") String sortBy,
+            @RequestParam(defaultValue = "createdAt") String sortBy,
             @RequestParam(defaultValue = "desc") String sortDir) {
         try {
             PageResponseDTO<DomainResponseDTO> response = domainService.getDomainsByTags(tags, pageNo, pageSize, sortBy, sortDir);
@@ -258,7 +258,7 @@ public class DomainController {
             @PathVariable("parentId") Integer parentDomainId,
             @RequestParam(defaultValue = "0") int pageNo,
             @RequestParam(defaultValue = "10") int pageSize,
-            @RequestParam(defaultValue = "createAt") String sortBy,
+            @RequestParam(defaultValue = "createdAt") String sortBy,
             @RequestParam(defaultValue = "desc") String sortDir) {
         try {
             PageResponseDTO<DomainResponseDTO> response = domainService.getChildDomains(parentDomainId, pageNo, pageSize, sortBy, sortDir);
