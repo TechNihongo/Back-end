@@ -5,6 +5,7 @@ import org.example.technihongo.dto.*;
 import org.example.technihongo.entities.Quiz;
 import org.example.technihongo.response.ApiResponse;
 import org.example.technihongo.services.interfaces.QuizService;
+import org.example.technihongo.services.interfaces.StudentService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -21,6 +22,8 @@ public class QuizController {
     private QuizService quizService;
     @Autowired
     private JwtUtil jwtUtil;
+    @Autowired
+    private StudentService studentService;
 
     @GetMapping("/all")
     public ResponseEntity<ApiResponse> getAllQuizzes(@RequestHeader("Authorization") String authorizationHeader) throws Exception {
@@ -39,7 +42,7 @@ public class QuizController {
                     } else {
                         return ResponseEntity.ok(ApiResponse.builder()
                                 .success(true)
-                                .message("Get All Quizzes")
+                                .message("Get All Quizzes: ")
                                 .data(quizList)
                                 .build());
                     }
@@ -70,8 +73,9 @@ public class QuizController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<ApiResponse> viewQuiz(@PathVariable Integer id,
-                                                  @RequestHeader("Authorization") String authorizationHeader) throws Exception {
+    public ResponseEntity<ApiResponse> viewQuiz(
+            @PathVariable Integer id,
+            @RequestHeader("Authorization") String authorizationHeader) throws Exception {
         try{
             if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
                 String token = authorizationHeader.substring(7);
@@ -111,8 +115,9 @@ public class QuizController {
     }
 
     @PostMapping("/create")
-    public ResponseEntity<ApiResponse> createQuiz(@RequestBody CreateQuizDTO createQuizDTO,
-                                                    @RequestHeader("Authorization") String authorizationHeader) {
+    public ResponseEntity<ApiResponse> createQuiz(
+            @RequestBody CreateQuizDTO createQuizDTO,
+            @RequestHeader("Authorization") String authorizationHeader) {
         try {
             if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
                 String token = authorizationHeader.substring(7);
@@ -143,8 +148,9 @@ public class QuizController {
     }
 
     @PatchMapping("/update/{quizId}")
-    public ResponseEntity<ApiResponse> updateQuiz(@PathVariable Integer quizId,
-                                                    @RequestBody UpdateQuizDTO updateQuizDTO) {
+    public ResponseEntity<ApiResponse> updateQuiz(
+            @PathVariable Integer quizId,
+            @RequestBody UpdateQuizDTO updateQuizDTO) {
         try{
             quizService.updateQuiz(quizId, updateQuizDTO);
             return ResponseEntity.ok(ApiResponse.builder()
@@ -167,8 +173,9 @@ public class QuizController {
     }
 
     @PatchMapping("/update-status/{quizId}")
-    public ResponseEntity<ApiResponse> updateQuizStatus(@PathVariable Integer quizId,
-                                                  @RequestBody UpdateQuizStatusDTO updateQuizStatusDTO) {
+    public ResponseEntity<ApiResponse> updateQuizStatus(
+            @PathVariable Integer quizId,
+            @RequestBody UpdateQuizStatusDTO updateQuizStatusDTO) {
         try{
             quizService.updateQuizStatus(quizId, updateQuizStatusDTO);
             return ResponseEntity.ok(ApiResponse.builder()
@@ -226,4 +233,7 @@ public class QuizController {
                             .build());
         }
     }
+
+
+
 }

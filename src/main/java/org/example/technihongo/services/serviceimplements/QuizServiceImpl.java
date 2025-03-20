@@ -4,12 +4,15 @@ import lombok.RequiredArgsConstructor;
 import org.example.technihongo.dto.CreateQuizDTO;
 import org.example.technihongo.dto.UpdateQuizDTO;
 import org.example.technihongo.dto.UpdateQuizStatusDTO;
-import org.example.technihongo.entities.*;
+import org.example.technihongo.entities.DifficultyLevel;
+import org.example.technihongo.entities.Quiz;
+import org.example.technihongo.entities.User;
 import org.example.technihongo.repositories.*;
 import org.example.technihongo.services.interfaces.QuizService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -17,6 +20,7 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 @Component
+@Transactional
 public class QuizServiceImpl implements QuizService {
     @Autowired
     private QuizRepository quizRepository;
@@ -26,6 +30,16 @@ public class QuizServiceImpl implements QuizService {
     private DifficultyLevelRepository difficultyLevelRepository;
     @Autowired
     private QuizQuestionRepository quizQuestionRepository;
+    @Autowired
+    private StudentQuizAttemptRepository studentQuizAttemptRepository;
+    @Autowired
+    private QuizAnswerResponseRepository quizAnswerResponseRepository;
+    @Autowired
+    private QuestionAnswerOptionRepository questionAnswerOptionRepository;
+
+    private static final int MAX_ATTEMPTS = 3;
+    private static final long WAIT_TIME_MINUTES = 30;
+
 
     @Override
     public List<Quiz> getQuizList() {
@@ -149,4 +163,6 @@ public class QuizServiceImpl implements QuizService {
                 .orElseThrow(() -> new RuntimeException("User ID not found."));
         return quizRepository.findByCreator_UserId(creatorId);
     }
+
+
 }

@@ -14,7 +14,6 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/flashcard")
 public class FlashCardController {
-
     @Autowired
     private FlashcardService flashcardService;
 
@@ -51,7 +50,7 @@ public class FlashCardController {
             @PathVariable("setId") Integer flashcardSetId,
             @RequestBody List<FlashcardRequestDTO> requests) {
         try {
-            List<FlashcardResponseDTO> responses = flashcardService.createStudentFlashcards(userId, flashcardSetId, requests);
+            List<FlashcardResponseDTO> responses = flashcardService.createSystemFlashcards(userId, flashcardSetId, requests);
             return ResponseEntity.ok(ApiResponse.builder()
                     .success(true)
                     .message("Flashcards created successfully")
@@ -71,13 +70,13 @@ public class FlashCardController {
                             .build());
         }
     }
-    @PatchMapping("/{studentId}/{flashcardId}/update")
+    @PatchMapping("/{userId}/{flashcardId}/update")
     public ResponseEntity<ApiResponse> updateFlashcard(
-            @PathVariable Integer studentId,
+            @PathVariable Integer userId,
             @PathVariable Integer flashcardId,
             @RequestBody FlashcardRequestDTO request) {
         try {
-            FlashcardResponseDTO response = flashcardService.updateFlashcard(studentId, flashcardId, request);
+            FlashcardResponseDTO response = flashcardService.updateFlashcard(userId, flashcardId, request);
             return ResponseEntity.ok(ApiResponse.builder()
                     .success(true)
                     .message("Flashcard updated successfully")
@@ -97,12 +96,12 @@ public class FlashCardController {
                             .build());
         }
     }
-    @DeleteMapping("/delete/{studentId}/{flashcardId}")
+    @DeleteMapping("/delete/{userId}/{flashcardId}")
     public ResponseEntity<ApiResponse> deleteFlashcard(
-            @PathVariable Integer studentId,
+            @PathVariable Integer userId,
             @PathVariable Integer flashcardId) {
         try {
-            flashcardService.deleteFlashcard(studentId, flashcardId);
+            flashcardService.deleteFlashcard(userId, flashcardId);
             return ResponseEntity.ok(ApiResponse.builder()
                     .success(true)
                     .message("Flashcard deleted successfully")
