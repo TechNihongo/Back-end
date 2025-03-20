@@ -37,12 +37,19 @@ public class FlashcardServiceImpl implements FlashcardService {
             throw new IllegalArgumentException("You don't have permission to add flashcards to this set");
         }
 
+        Integer maxVocabOrder = flashcardRepository.findMaxVocabOrderByStudentFlashCardSet(flashcardSet);
+        if (maxVocabOrder == null) {
+            maxVocabOrder = 0;
+        }
+
         List<Flashcard> flashcards = new ArrayList<>();
+        int currentOrder = maxVocabOrder + 1;
         for (FlashcardRequestDTO request : requests) {
             Flashcard flashcard = new Flashcard();
             flashcard.setDefinition(request.getJapaneseDefinition());
             flashcard.setTranslation(request.getVietEngTranslation());
             flashcard.setImgUrl(request.getImageUrl());
+            flashcard.setVocabOrder(currentOrder);
             flashcard.setStudentFlashCardSet(flashcardSet);
             flashcards.add(flashcard);
         }
@@ -60,12 +67,18 @@ public class FlashcardServiceImpl implements FlashcardService {
         if (!flashcardSet.getCreator().getUserId().equals(userId)) {
             throw new IllegalArgumentException("You don't have permission to add flashcards to this set");
         }
+        Integer maxVocabOrder = flashcardRepository.findMaxVocabOrderBySystemFlashCardSet(flashcardSet);
+        if (maxVocabOrder == null) {
+            maxVocabOrder = 0;
+        }
         List<Flashcard> flashcards = new ArrayList<>();
+        int currentOrder = maxVocabOrder + 1;
         for (FlashcardRequestDTO request : requests) {
             Flashcard flashcard = new Flashcard();
             flashcard.setDefinition(request.getJapaneseDefinition());
             flashcard.setTranslation(request.getVietEngTranslation());
             flashcard.setImgUrl(request.getImageUrl());
+            flashcard.setVocabOrder(currentOrder);
             flashcard.setSystemFlashCardSet(flashcardSet);
             flashcards.add(flashcard);
         }
@@ -79,28 +92,41 @@ public class FlashcardServiceImpl implements FlashcardService {
 
 
     @Override
-    public FlashcardResponseDTO updateFlashcard(Integer studentId, Integer flashcardId, FlashcardRequestDTO request) {
+    public FlashcardResponseDTO updateFlashcard(Integer userId, Integer flashcardId, FlashcardRequestDTO request) {
         Flashcard flashcard = flashcardRepository.findById(flashcardId)
                 .orElseThrow(() -> new ResourceNotFoundException("Flashcard not found with Id: " + flashcardId));
 
-        if (!flashcard.getStudentFlashCardSet().getCreator().getStudentId().equals(studentId)) {
+        boolean hasPermission = false;
+        if (flashcard.getStudentFlashCardSet() != null) {
+            hasPermission = flashcard.getStudentFlashCardSet().getCreator().getStudentId().equals(userId);
+        } else if (flashcard.getSystemFlashCardSet() != null) {
+            hasPermission = flashcard.getSystemFlashCardSet().getCreator().getUserId().equals(userId);
+        }
+        if (!hasPermission) {
             throw new RuntimeException("You don't have permission to update this flashcard");
         }
+
         flashcard.setDefinition(request.getJapaneseDefinition());
         flashcard.setTranslation(request.getVietEngTranslation());
         flashcard.setImgUrl(request.getImageUrl());
-
+        flashcard.setVocabOrder(Integer.valueOf(request.getVocabOrder()));
         flashcard = flashcardRepository.save(flashcard);
         return convertToFlashcardResponseDTO(flashcard);
     }
 
     @Override
-    public void deleteFlashcard(Integer studentId, Integer flashcardId) {
+    public void deleteFlashcard(Integer userId, Integer flashcardId) {
         Flashcard flashcard = flashcardRepository.findById(flashcardId)
                 .orElseThrow(() -> new ResourceNotFoundException("Flashcard not found with id: " + flashcardId));
 
-        if (!flashcard.getStudentFlashCardSet().getCreator().getStudentId().equals(studentId)) {
-            throw new RuntimeException("You don't have permission to delete this flashcard");
+        boolean hasPermission = false;
+        if (flashcard.getStudentFlashCardSet() != null) {
+            hasPermission = flashcard.getStudentFlashCardSet().getCreator().getStudentId().equals(userId);
+        } else if (flashcard.getSystemFlashCardSet() != null) {
+            hasPermission = flashcard.getSystemFlashCardSet().getCreator().getUserId().equals(userId);
+        }
+        if (!hasPermission) {
+            throw new RuntimeException("You don't have permission to update this flashcard");
         }
 
         flashcardRepository.deleteById(flashcardId);
