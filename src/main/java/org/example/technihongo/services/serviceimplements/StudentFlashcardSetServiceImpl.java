@@ -213,7 +213,7 @@ public class StudentFlashcardSetServiceImpl implements StudentFlashcardSetServic
                     .definition(dto.getJapaneseDefinition())
                     .translation(dto.getVietEngTranslation())
                     .imgUrl(dto.getImageUrl())
-                    .vocabOrder(i + 1)
+                    .cardOrder(i + 1)
                     .build();
 
             flashcards.add(flashcardRepository.save(flashcard));

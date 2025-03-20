@@ -48,7 +48,7 @@ public class SystemFlashcardSetServiceImpl implements SystemFlashcardSetService 
 
 //        if(requestDTO.getDomainId() != null) {
 //            Domain domain = domainRepository.findById(requestDTO.getDomainId())
-//                    .orElseThrow(() -> new ResourceNotFoundException("Domain not found with Id: " + requestDTO.getDomainId()));
+//                    .orElseThrow(() -> new ResourceNotFoundException("Domain not found with ID: " + requestDTO.getDomainId()));
 //            flashcardSet.setDomain(domain);
 //        }
 
@@ -86,7 +86,7 @@ public class SystemFlashcardSetServiceImpl implements SystemFlashcardSetService 
 
 //        if (requestDTO.getDomainId() != null) {
 //            Domain domain = domainRepository.findById(requestDTO.getDomainId())
-//                    .orElseThrow(() -> new ResourceNotFoundException("Domain not found with Id: " + requestDTO.getDomainId()));
+//                    .orElseThrow(() -> new ResourceNotFoundException("Domain not found with ID: " + requestDTO.getDomainId()));
 //            flashcardSet.setDomain(domain);
 //        }
 

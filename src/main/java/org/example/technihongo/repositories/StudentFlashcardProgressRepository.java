@@ -9,7 +9,7 @@ import java.util.Optional;
 
 @Repository
 public interface StudentFlashcardProgressRepository extends JpaRepository<StudentFlashcardProgress, Integer> {
-    List<StudentFlashcardProgress> findByStudentStudentIdAndFlashcard_StudentFlashCardSet_StudentSetId(Integer studentId, Integer studentSetId);
-    List<StudentFlashcardProgress> findByStudentStudentIdAndFlashcard_SystemFlashCardSet_SystemSetId(Integer studentId, Integer systemSetId);
+    List<StudentFlashcardProgress> findByStudentStudentIdAndFlashcard_StudentFlashCardSet_StudentSetIdAndStarred(Integer studentId, Integer studentSetId, boolean starred);
+    List<StudentFlashcardProgress> findByStudentStudentIdAndFlashcard_SystemFlashCardSet_SystemSetIdAndStarred(Integer studentId, Integer systemSetId, boolean starred);
     Optional<StudentFlashcardProgress> findByStudentStudentIdAndFlashcardFlashCardId(Integer studentId, Integer flashcardId);
 }

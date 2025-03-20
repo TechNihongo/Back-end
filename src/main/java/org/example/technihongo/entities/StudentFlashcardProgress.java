@@ -30,8 +30,8 @@ public class StudentFlashcardProgress {
     @JoinColumn(name = "flashcard_id", nullable = false, referencedColumnName = "flashcard_id")
     private Flashcard flashcard;
 
-//    @Column(name = "is_learned")
-//    private boolean isLearned;
+    @Column(name = "is_learned")
+    private boolean isLearned;
 
     @Column(name = "last_studied")
     private LocalDateTime lastStudied;
