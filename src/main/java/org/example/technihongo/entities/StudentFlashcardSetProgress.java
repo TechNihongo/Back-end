@@ -47,6 +47,10 @@ public class StudentFlashcardSetProgress {
     @Column(name = "study_count")
     private Integer studyCount;
 
+    @ManyToOne
+    @JoinColumn(name = "current_flashcard_id")
+    private Flashcard currentFlashCardId;
+
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;

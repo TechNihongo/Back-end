@@ -39,7 +39,7 @@ public class Flashcard {
     private String imgUrl;
 
     @Column(name = "card_order")
-    private Integer vocabOrder;
+    private Integer cardOrder;
 
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
