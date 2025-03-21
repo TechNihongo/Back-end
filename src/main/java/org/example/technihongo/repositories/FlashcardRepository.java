@@ -16,9 +16,9 @@ public interface FlashcardRepository extends JpaRepository<Flashcard, Integer> {
     List<Flashcard> findBySystemFlashCardSetSystemSetId(Integer systemSetId);
     List<Flashcard> findByStudentFlashCardSet_StudentSetId(Integer studentSetId);
 
-    @Query("SELECT MAX(f.vocabOrder) FROM Flashcard f WHERE f.studentFlashCardSet = :flashcardSet")
+    @Query("SELECT MAX(f.cardOrder) FROM Flashcard f WHERE f.studentFlashCardSet = :flashcardSet")
     Integer findMaxVocabOrderByStudentFlashCardSet(@Param("flashcardSet") StudentFlashcardSet flashcardSet);
 
-    @Query("select MAX(f.vocabOrder) FROM Flashcard f WHERE f.systemFlashCardSet = :flashcardSet")
+    @Query("select MAX(f.cardOrder) FROM Flashcard f WHERE f.systemFlashCardSet = :flashcardSet")
     Integer findMaxVocabOrderBySystemFlashCardSet(@Param("flashcardSet") SystemFlashcardSet flashcardSet);
 }
