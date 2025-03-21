@@ -1,13 +1,14 @@
 package org.example.technihongo.services.interfaces;
 
 import org.example.technihongo.dto.CreatePathCourseDTO;
+import org.example.technihongo.dto.PageResponseDTO;
 import org.example.technihongo.dto.UpdatePathCourseOrderDTO;
 import org.example.technihongo.entities.PathCourse;
 
 import java.util.List;
 
 public interface PathCourseService {
-    List<PathCourse> getPathCoursesByLearningPathId(Integer pathId);
+    PageResponseDTO<PathCourse> getPathCoursesByLearningPathId(Integer pathId, int pageNo, int pageSize, String sortBy, String sortDir);
     PathCourse getPathCourseById(Integer pathCourseId);
     PathCourse createPathCourse(CreatePathCourseDTO createPathCourseDTO);
     void updatePathCourseOrder(Integer pathId, UpdatePathCourseOrderDTO updatePathCourseOrderDTO);

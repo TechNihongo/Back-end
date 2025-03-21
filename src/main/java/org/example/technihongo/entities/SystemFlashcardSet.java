@@ -45,11 +45,17 @@ public class SystemFlashcardSet {
     @JoinColumn(name = "difficulty_level_id", referencedColumnName = "level_id", nullable = false)
     private DifficultyLevel difficultyLevel;
 
+    @Column(name = "total_cards")
+    private Integer totalCards;
+
     @Column(name = "is_public")
     private boolean isPublic;
 
     @Column(name = "is_premium")
     private boolean isPremium;
+
+    @Column(name = "is_deleted")
+    private boolean isDeleted = false;
 
     @CreationTimestamp
     @Column(name = "created_at")

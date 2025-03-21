@@ -15,10 +15,8 @@ public class FlashcardSetProgressDTO {
     private String title;
     private Integer totalCards;
     private Integer cardStudied;
-    private String completionStatus;
     private LocalDateTime lastStudied;
     private Integer studyCount;
-    private CompletionStatus completableStatus;
-    private String setType;
-
+    private CompletionStatus completionStatus;
+    private Boolean isSystemSet;
 }

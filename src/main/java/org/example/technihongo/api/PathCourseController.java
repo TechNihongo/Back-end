@@ -2,6 +2,7 @@ package org.example.technihongo.api;
 
 import lombok.RequiredArgsConstructor;
 import org.example.technihongo.dto.CreatePathCourseDTO;
+import org.example.technihongo.dto.PageResponseDTO;
 import org.example.technihongo.dto.UpdatePathCourseOrderDTO;
 import org.example.technihongo.entities.PathCourse;
 import org.example.technihongo.response.ApiResponse;
@@ -24,10 +25,15 @@ public class PathCourseController {
     private LearningPathService learningPathService;
 
     @GetMapping("/learning-path/{pathId}")
-    public ResponseEntity<ApiResponse> getPathCourseListByLearningPathId(@PathVariable Integer pathId) throws Exception {
+    public ResponseEntity<ApiResponse> getPathCourseListByLearningPathId(
+            @PathVariable Integer pathId,
+            @RequestParam(defaultValue = "0") int pageNo,
+            @RequestParam(defaultValue = "100") int pageSize,
+            @RequestParam(defaultValue = "createdAt") String sortBy,
+            @RequestParam(defaultValue = "desc") String sortDir){
         try{
-            List<PathCourse> pathCourses = pathCourseService.getPathCoursesByLearningPathId(pathId);
-            if(pathCourses.isEmpty()){
+            PageResponseDTO<PathCourse> pathCourses = pathCourseService.getPathCoursesByLearningPathId(pathId, pageNo, pageSize, sortBy, sortDir);
+            if(pathCourses.getContent().isEmpty()){
                 return ResponseEntity.ok(ApiResponse.builder()
                         .success(false)
                         .message("List PathCourse is empty!")

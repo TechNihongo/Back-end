@@ -2,7 +2,9 @@ package org.example.technihongo.services.serviceimplements;
 
 import lombok.RequiredArgsConstructor;
 import org.example.technihongo.dto.CreatePathCourseDTO;
+import org.example.technihongo.dto.PageResponseDTO;
 import org.example.technihongo.dto.UpdatePathCourseOrderDTO;
+import org.example.technihongo.entities.Course;
 import org.example.technihongo.entities.PathCourse;
 import org.example.technihongo.entities.QuizQuestion;
 import org.example.technihongo.repositories.CourseRepository;
@@ -10,6 +12,10 @@ import org.example.technihongo.repositories.LearningPathRepository;
 import org.example.technihongo.repositories.PathCourseRepository;
 import org.example.technihongo.services.interfaces.PathCourseService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -28,11 +34,18 @@ public class PathCourseServiceImpl implements PathCourseService {
     private CourseRepository courseRepository;
 
     @Override
-    public List<PathCourse> getPathCoursesByLearningPathId(Integer pathId) {
+    public PageResponseDTO<PathCourse> getPathCoursesByLearningPathId(Integer pathId, int pageNo, int pageSize, String sortBy, String sortDir) {
         if(learningPathRepository.findByPathId(pathId) == null){
             throw new RuntimeException("LearningPath ID not found!");
         }
-        return pathCourseRepository.findByLearningPath_PathIdOrderByCourseOrderAsc(pathId);
+
+        Sort sort = sortDir.equalsIgnoreCase(Sort.Direction.ASC.name())
+                ? Sort.by(sortBy).ascending()
+                : Sort.by(sortBy).descending();
+
+        Pageable pageable = PageRequest.of(pageNo, pageSize, sort);
+        Page<PathCourse> pathCourses = pathCourseRepository.findByLearningPath_PathId(pathId, pageable);
+        return getPageResponseDTO(pathCourses);
     }
 
     @Override
@@ -49,6 +62,10 @@ public class PathCourseServiceImpl implements PathCourseService {
 
         if(courseRepository.findByCourseId(createPathCourseDTO.getCourseId()) == null){
             throw new RuntimeException("Course ID not found!");
+        }
+
+        if(pathCourseRepository.findByLearningPath_PathIdAndCourse_CourseId(createPathCourseDTO.getPathId(), createPathCourseDTO.getCourseId()) != null){
+            throw new RuntimeException("Course already exists in this learning path!");
         }
 
         PathCourse pathCourse = pathCourseRepository.save(PathCourse.builder()
@@ -132,5 +149,16 @@ public class PathCourseServiceImpl implements PathCourseService {
         target.setCourseOrder(newOrder);
 
         pathCourseRepository.saveAll(pathCourses);
+    }
+
+    private PageResponseDTO<PathCourse> getPageResponseDTO(Page<PathCourse> page) {
+        return PageResponseDTO.<PathCourse>builder()
+                .content(page.getContent())
+                .pageNo(page.getNumber())
+                .pageSize(page.getSize())
+                .totalElements(page.getTotalElements())
+                .totalPages(page.getTotalPages())
+                .last(page.isLast())
+                .build();
     }
 }
