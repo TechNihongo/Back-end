@@ -46,7 +46,13 @@ public class StudentFlashcardSet {
     private Integer totalViews;
 
     @Column(name = "is_public")
-    private boolean isPublic = true;
+    private boolean isPublic = false;
+
+    @Column(name = "is_violated")
+    private boolean isViolated = false;
+
+    @Column(name = "is_deleted")
+    private boolean isDeleted = false;
 
     @CreationTimestamp
     @Column(name = "created_at")
