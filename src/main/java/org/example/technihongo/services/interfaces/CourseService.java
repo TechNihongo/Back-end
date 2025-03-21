@@ -23,5 +23,6 @@ public interface CourseService {
     PageResponseDTO<Course> getPublicCoursesPaginated(String keyword, Integer domainId, Integer difficultyLevelId, int pageNo, int pageSize, String sortBy, String sortDir);
     PageResponseDTO<Course> getListCoursesByCreatorIdPaginated(String keyword, Integer creatorId, Integer domainId, Integer difficultyLevelId, int pageNo, int pageSize, String sortBy, String sortDir);
     PageResponseDTO<Course> searchCourseByTitlePaginated(String keyword, int pageNo, int pageSize, String sortBy, String sortDir);
+    PageResponseDTO<Course> getCourseListByParentDomainId(Integer parentDomainId, int pageNo, int pageSize, String sortBy, String sortDir);
 }
 

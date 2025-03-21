@@ -9,6 +9,7 @@ import java.util.List;
 
 public interface PathCourseService {
     PageResponseDTO<PathCourse> getPathCoursesByLearningPathId(Integer pathId, int pageNo, int pageSize, String sortBy, String sortDir);
+    PageResponseDTO<PathCourse> getPublicPathCourseListByLearningPathId(Integer pathId, int pageNo, int pageSize, String sortBy, String sortDir);
     PathCourse getPathCourseById(Integer pathCourseId);
     PathCourse createPathCourse(CreatePathCourseDTO createPathCourseDTO);
     void updatePathCourseOrder(Integer pathId, UpdatePathCourseOrderDTO updatePathCourseOrderDTO);

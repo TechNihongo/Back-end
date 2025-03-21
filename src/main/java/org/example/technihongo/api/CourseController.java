@@ -379,4 +379,41 @@ public class CourseController {
                             .build());
         }
     }
+
+    @GetMapping("/domain/{parentDomainId}")
+    public ResponseEntity<ApiResponse> getCourseListByParentDomainId(
+            @PathVariable Integer parentDomainId,
+            @RequestParam(defaultValue = "0") int pageNo,
+            @RequestParam(defaultValue = "100") int pageSize,
+            @RequestParam(defaultValue = "createdAt") String sortBy,
+            @RequestParam(defaultValue = "desc") String sortDir) {
+        try {
+            PageResponseDTO<Course> courses = courseService.getCourseListByParentDomainId(parentDomainId, pageNo, pageSize, sortBy, sortDir);
+
+            if (courses.getContent().isEmpty()) {
+                return ResponseEntity.ok(ApiResponse.builder()
+                        .success(false)
+                        .message("No courses found for this parent domain!")
+                        .build());
+            } else {
+                return ResponseEntity.ok(ApiResponse.builder()
+                        .success(true)
+                        .message("Course list retrieved successfully")
+                        .data(courses)
+                        .build());
+            }
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(ApiResponse.builder()
+                            .success(false)
+                            .message("Failed to get course list: " + e.getMessage())
+                            .build());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponse.builder()
+                            .success(false)
+                            .message("Internal Server Error: " + e.getMessage())
+                            .build());
+        }
+    }
 }

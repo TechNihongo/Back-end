@@ -45,7 +45,7 @@ public class FlashcardProgressController {
                 }
                 else return ResponseEntity.ok(ApiResponse.builder()
                         .success(true)
-                        .message("Flashcard progress retrieved successfully")
+                        .message("Starred flashcards retrieved successfully")
                         .data(progressList)
                         .build());
             } else {

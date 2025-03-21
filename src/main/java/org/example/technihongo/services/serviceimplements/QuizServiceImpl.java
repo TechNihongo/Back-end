@@ -6,6 +6,7 @@ import org.example.technihongo.dto.UpdateQuizDTO;
 import org.example.technihongo.dto.UpdateQuizStatusDTO;
 import org.example.technihongo.entities.DifficultyLevel;
 import org.example.technihongo.entities.Quiz;
+import org.example.technihongo.entities.Student;
 import org.example.technihongo.entities.User;
 import org.example.technihongo.repositories.*;
 import org.example.technihongo.services.interfaces.QuizService;
@@ -30,6 +31,10 @@ public class QuizServiceImpl implements QuizService {
     private DifficultyLevelRepository difficultyLevelRepository;
     @Autowired
     private QuizQuestionRepository quizQuestionRepository;
+    @Autowired
+    private StudentRepository studentRepository;
+    @Autowired
+    private StudentSubscriptionRepository studentSubscriptionRepository;
     @Autowired
     private StudentQuizAttemptRepository studentQuizAttemptRepository;
     @Autowired
@@ -61,10 +66,26 @@ public class QuizServiceImpl implements QuizService {
     }
 
     @Override
-    public Quiz getPublicQuizById(Integer quizId) {
+    public Quiz getPublicQuizById(Integer userId, Integer quizId) {
         Quiz quiz = quizRepository.findByQuizId(quizId);
         if(quiz == null || quiz.isDeleted() || !quiz.isPublic()){
             throw new RuntimeException("Quiz ID not found!");
+        }
+
+        User user = userRepository.findByUserId(userId);
+        if(user == null){
+            throw new RuntimeException("User ID not found!");
+        }
+
+        if(user.getRole().getRoleId() == 3){
+            Student student = studentRepository.findByUser_UserId(user.getUserId());
+            if(student == null){
+                throw new RuntimeException("Student not found for this user!");
+            }
+
+            if(!studentSubscriptionRepository.existsByStudent_StudentIdAndIsActive(student.getStudentId(), true)){
+                throw new RuntimeException("Student not allowed to view this quiz!");
+            }
         }
         return quiz;
     }

@@ -11,6 +11,7 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @Builder
 public class FlashcardSetProgressDTO {
+    private Integer progressId;
     private Integer setId;
     private String title;
     private Integer totalCards;

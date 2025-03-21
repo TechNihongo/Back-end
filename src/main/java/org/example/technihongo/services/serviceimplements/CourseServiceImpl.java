@@ -269,6 +269,30 @@ public class CourseServiceImpl implements CourseService {
         return getPageResponseDTO(courses);
     }
 
+    @Override
+    public PageResponseDTO<Course> getCourseListByParentDomainId(Integer parentDomainId, int pageNo, int pageSize, String sortBy, String sortDir) {
+        domainRepository.findById(parentDomainId)
+                .orElseThrow(() -> new RuntimeException("Parent Domain ID not found!"));
+
+        List<Integer> subDomainIds = domainRepository.findByParentDomain_DomainId(parentDomainId)
+                .stream()
+                .map(Domain::getDomainId)
+                .collect(Collectors.toList());
+
+        if (subDomainIds.isEmpty()) {
+            throw new RuntimeException("No subdomains found for this parent domain!");
+        }
+
+        Sort sort = sortDir.equalsIgnoreCase(Sort.Direction.ASC.name())
+                ? Sort.by(sortBy).ascending()
+                : Sort.by(sortBy).descending();
+
+        Pageable pageable = PageRequest.of(pageNo, pageSize, sort);
+        Page<Course> courses = courseRepository.findByDomain_DomainIdIn(subDomainIds, pageable);
+
+        return getPageResponseDTO(courses);
+    }
+
     private PageResponseDTO<Course> getPageResponseDTO(Page<Course> page) {
         return PageResponseDTO.<Course>builder()
                 .content(page.getContent())
