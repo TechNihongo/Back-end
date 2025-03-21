@@ -15,7 +15,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/flashcard")
-public class FlashCardController {
+public class FlashcardController {
     @Autowired
     private FlashcardService flashcardService;
 
