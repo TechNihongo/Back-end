@@ -26,6 +26,9 @@ public class Achievement {
     @Column(name = "achievement_id")
     private Integer achievementId;
 
+    @Column(name = "code", length = 50)
+    private String code;
+
     @NotBlank
     @Size(max = 100)
     @Column(name = "badge_name", nullable = false, length = 100)
