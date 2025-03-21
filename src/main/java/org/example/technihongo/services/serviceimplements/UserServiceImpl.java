@@ -69,7 +69,7 @@ public class UserServiceImpl implements UserService {
                 user.getEmail(),
                 user.getRole().getRoleName(),
                 true,
-                "Login Successfully"
+                "Login Successful!!"
         );
     }
 
