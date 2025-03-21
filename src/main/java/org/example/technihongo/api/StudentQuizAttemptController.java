@@ -37,7 +37,6 @@ public class StudentQuizAttemptController {
             Integer userId = jwtUtil.extractUserId(token);
             Integer studentId = studentService.getStudentIdByUserId(userId);
 
-
             QuizAttemptResponseDTO response = studentQuizAttemptService.attemptQuiz(studentId, request);
             return ResponseEntity.ok(ApiResponse.builder()
                     .success(true)

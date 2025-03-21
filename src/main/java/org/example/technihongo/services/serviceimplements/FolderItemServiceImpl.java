@@ -13,6 +13,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -31,16 +32,23 @@ public class FolderItemServiceImpl implements FolderItemService {
     private StudentFlashcardSetRepository studentFlashcardSetRepository;
 
     @Override
-    public FolderItemDTO addFolderItem(FolderItemDTO folderItemDTO) {
+    public FolderItemDTO addFolderItem(Integer studentId, FolderItemDTO folderItemDTO) {
         StudentFolder studentFolder = studentFolderRepository.findById(folderItemDTO.getFolderId())
                 .orElseThrow(() -> new RuntimeException("Student folder not found with ID: " + folderItemDTO.getFolderId()));
+
+        if (!studentFolder.getStudent().getStudentId().equals(studentId)) {
+            throw new SecurityException("You do not have permission to add items to this folder");
+        }
 
         if (studentFolder.isDeleted()) {
             throw new IllegalStateException("Cannot add item to a deleted folder");
         }
-
         StudentFlashcardSet studentFlashcardSet = studentFlashcardSetRepository.findById(folderItemDTO.getStudentSetId())
                 .orElseThrow(() -> new RuntimeException("Student flashcard set not found with ID: " + folderItemDTO.getStudentSetId()));
+
+        if (!studentFlashcardSet.getCreator().getStudentId().equals(studentId) && !studentFlashcardSet.isPublic()) {
+            throw new SecurityException("You do not have permission to access this flashcard set");
+        }
 
         Optional<FolderItem> existingItem = folderItemRepository.findByStudentFolderFolderIdAndStudentFlashcardSetStudentSetId(
                 folderItemDTO.getFolderId(),
@@ -61,41 +69,123 @@ public class FolderItemServiceImpl implements FolderItemService {
     }
 
     @Override
-    public void removeFolderItem(RemoveItemDTO removeItemDTO) {
+    public List<FolderItemDTO> addMultipleFolderItems(Integer studentId, List<FolderItemDTO> folderItemDTOs) {
+        List<FolderItemDTO> results = new ArrayList<>();
+        for (FolderItemDTO dto : folderItemDTOs) {
+            try {
+                FolderItemDTO addItem = addFolderItem(studentId, dto);
+                results.add(addItem);
+            }catch (Exception e) {
+                continue;
+            }
+        }
+        return results;
+    }
+
+    @Override
+    public void removeFolderItem(Integer studentId, RemoveItemDTO removeItemDTO) {
         Integer folderItemId = removeItemDTO.getFolderItemId();
-        Integer studentId = removeItemDTO.getStudentId();
 
         FolderItem folderItem = folderItemRepository.findById(folderItemId)
                 .orElseThrow(() -> new RuntimeException("Folder item not found with ID: " + folderItemId));
 
-        StudentFlashcardSet flashcardSet = folderItem.getStudentFlashcardSet();
-        Integer flashcardStudentId = flashcardSet.getStudentSetId();
-        if (!flashcardStudentId.equals(studentId)) {
-            throw new IllegalStateException("You do not have permission to remove this flashcard set from the folder");
+        if (!folderItem.getStudentFolder().getStudent().getStudentId().equals(studentId)) {
+            throw new SecurityException("You do not have permission to remove items from this folder");
         }
 
         folderItemRepository.deleteById(folderItemId);
     }
 
     @Override
-    public List<FolderItemDTO> getFolderItemsByFolderId(Integer folderId) {
+    public void removeMultipleFolderItems(Integer studentId, List<RemoveItemDTO> requests) {
+        for (RemoveItemDTO request : requests) {
+            try {
+                removeFolderItem(studentId, request);
+            } catch (Exception e) {
+                continue;
+            }
+        }
+    }
+
+    @Override
+    public List<FolderItemDTO> getFolderItemsByFolderId(Integer studentId, Integer folderId) {
         if (folderId == null) {
             throw new IllegalArgumentException("Folder ID cannot be null");
         }
 
         StudentFolder folder = studentFolderRepository.findById(folderId)
                 .orElseThrow(() -> new RuntimeException("Student folder not found with ID: " + folderId));
-
+        if (!folder.getStudent().getStudentId().equals(studentId)) {
+            throw new SecurityException("You do not have permission to access this folder");
+        }
         if (folder.isDeleted()) {
             throw new IllegalStateException("Cannot get items from a deleted folder");
         }
-
         List<FolderItem> folderItems = folderItemRepository.findByStudentFolderFolderId(folderId);
 
         return folderItems.stream()
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
     }
+
+    @Override
+    public List<FolderItemDTO> searchItems(Integer studentId, Integer folderId, String searchTerm) {
+        StudentFolder folder = studentFolderRepository.findById(folderId)
+                .orElseThrow(() -> new RuntimeException("Student folder not found with ID: " + folderId));
+
+        if (!folder.getStudent().getStudentId().equals(studentId)) {
+            throw new SecurityException("You do not have permission to access this folder");
+        }
+
+        if (folder.isDeleted()) {
+            throw new IllegalStateException("Cannot search items in a deleted folder");
+        }
+
+        List<FolderItem> folderItems = folderItemRepository.findByStudentFolderFolderId(folderId);
+
+        return folderItems.stream()
+                .filter(item -> item.getStudentFlashcardSet().getTitle().toLowerCase()
+                        .contains(searchTerm.toLowerCase()))
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public FolderItemDTO moveItem(Integer studentId, Integer folderItemId, Integer targetFolderId) {
+        FolderItem folderItem = folderItemRepository.findById(folderItemId)
+                .orElseThrow(() -> new RuntimeException("Folder item not found with ID: " + folderItemId));
+
+        StudentFolder sourceFolder = folderItem.getStudentFolder();
+        if (!sourceFolder.getStudent().getStudentId().equals(studentId)) {
+            throw new SecurityException("You do not have permission to move items from this folder");
+        }
+
+        StudentFolder targetFolder = studentFolderRepository.findById(targetFolderId)
+                .orElseThrow(() -> new RuntimeException("Target folder not found with ID: " + targetFolderId));
+
+        if (!targetFolder.getStudent().getStudentId().equals(studentId)) {
+            throw new SecurityException("You do not have permission to move items to this folder");
+        }
+
+        if (sourceFolder.isDeleted() || targetFolder.isDeleted()) {
+            throw new IllegalStateException("Cannot move items from/to a deleted folder");
+        }
+
+        Optional<FolderItem> existingItem = folderItemRepository
+                .findByStudentFolderFolderIdAndStudentFlashcardSetStudentSetId(
+                        targetFolderId,
+                        folderItem.getStudentFlashcardSet().getStudentSetId());
+
+        if (existingItem.isPresent()) {
+            throw new IllegalStateException("This flashcard set is already in the target folder");
+        }
+
+        folderItem.setStudentFolder(targetFolder);
+        FolderItem updatedItem = folderItemRepository.save(folderItem);
+
+        return convertToDTO(updatedItem);
+    }
+
     private FolderItemDTO convertToDTO(FolderItem item) {
         return new FolderItemDTO(
                 item.getFolderItemId(),
@@ -104,4 +194,3 @@ public class FolderItemServiceImpl implements FolderItemService {
         );
     }
 }
-
