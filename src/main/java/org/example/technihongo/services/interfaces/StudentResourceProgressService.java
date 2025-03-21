@@ -1,4 +1,5 @@
 package org.example.technihongo.services.interfaces;
 
-public interface StudentResourseProgressService {
+public interface StudentResourceProgressService {
+    void trackLearningResourceProgress(Integer studentId, Integer resourceId, String notes);
 }

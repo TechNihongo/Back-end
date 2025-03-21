@@ -43,4 +43,6 @@ public interface CourseRepository extends JpaRepository<Course, Integer> {
     Page<Course> findByTitleContainingIgnoreCaseAndCreator_UserIdAndDifficultyLevel_LevelId(String keyword, Integer creatorId, Integer difficultyLevelId, Pageable pageable);
     Page<Course> findByDomain_DomainIdAndCreator_UserIdAndDifficultyLevel_LevelId(Integer domainId, Integer creatorId, Integer difficultyLevelId, Pageable pageable);
     Page<Course> findByDomain_DomainIdAndCreator_UserIdAndTitleContainingIgnoreCaseAndDifficultyLevel_LevelId(Integer domainId, Integer creatorId, String keyword, Integer difficultyLevelId, Pageable pageable);
+
+    Page<Course> findByDomain_DomainIdIn(List<Integer> subDomainIds, Pageable pageable);
 }

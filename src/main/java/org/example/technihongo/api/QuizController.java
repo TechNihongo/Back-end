@@ -72,17 +72,18 @@ public class QuizController {
         }
     }
 
-    @GetMapping("/{id}")
+    @GetMapping("/{quizId}")
     public ResponseEntity<ApiResponse> viewQuiz(
-            @PathVariable Integer id,
-            @RequestHeader("Authorization") String authorizationHeader) throws Exception {
+            @PathVariable Integer quizId,
+            @RequestHeader("Authorization") String authorizationHeader){
         try{
             if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
                 String token = authorizationHeader.substring(7);
                 int roleId = jwtUtil.extractUserRoleId(token);
+                int userId = jwtUtil.extractUserId(token);
 
                 if (roleId == 1 || roleId == 2) {
-                    Quiz quiz = quizService.getQuizById(id);
+                    Quiz quiz = quizService.getQuizById(quizId);
                     return ResponseEntity.ok(ApiResponse.builder()
                             .success(true)
                             .message("Get Quiz")
@@ -90,7 +91,7 @@ public class QuizController {
                             .build());
                 }
                 else{
-                    Quiz quiz = quizService.getPublicQuizById(id);
+                    Quiz quiz = quizService.getPublicQuizById(userId, quizId);
                     return ResponseEntity.ok(ApiResponse.builder()
                             .success(true)
                             .message("Get Quiz")

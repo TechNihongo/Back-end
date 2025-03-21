@@ -1,6 +1,7 @@
 package org.example.technihongo.api;
 
 import lombok.RequiredArgsConstructor;
+import org.example.technihongo.core.security.JwtUtil;
 import org.example.technihongo.dto.CreatePathCourseDTO;
 import org.example.technihongo.dto.PageResponseDTO;
 import org.example.technihongo.dto.UpdatePathCourseOrderDTO;
@@ -23,27 +24,54 @@ public class PathCourseController {
     private PathCourseService pathCourseService;
     @Autowired
     private LearningPathService learningPathService;
+    @Autowired
+    private JwtUtil jwtUtil;
 
     @GetMapping("/learning-path/{pathId}")
     public ResponseEntity<ApiResponse> getPathCourseListByLearningPathId(
+            @RequestHeader("Authorization") String authorizationHeader,
             @PathVariable Integer pathId,
             @RequestParam(defaultValue = "0") int pageNo,
             @RequestParam(defaultValue = "100") int pageSize,
             @RequestParam(defaultValue = "createdAt") String sortBy,
-            @RequestParam(defaultValue = "desc") String sortDir){
-        try{
-            PageResponseDTO<PathCourse> pathCourses = pathCourseService.getPathCoursesByLearningPathId(pathId, pageNo, pageSize, sortBy, sortDir);
-            if(pathCourses.getContent().isEmpty()){
-                return ResponseEntity.ok(ApiResponse.builder()
-                        .success(false)
-                        .message("List PathCourse is empty!")
-                        .build());
-            }else{
-                return ResponseEntity.ok(ApiResponse.builder()
-                        .success(true)
-                        .message("Get PathCourse List")
-                        .data(pathCourses)
-                        .build());
+            @RequestParam(defaultValue = "desc") String sortDir) {
+        try {
+            if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
+                String token = authorizationHeader.substring(7);
+                int roleId = jwtUtil.extractUserRoleId(token);
+
+                if (roleId == 1 || roleId == 2) {
+                    PageResponseDTO<PathCourse> pathCourses = pathCourseService.getPathCoursesByLearningPathId(pathId, pageNo, pageSize, sortBy, sortDir);
+                    if (pathCourses.getContent().isEmpty()) {
+                        return ResponseEntity.ok(ApiResponse.builder()
+                                .success(false)
+                                .message("List PathCourse is empty!")
+                                .build());
+                    } else {
+                        return ResponseEntity.ok(ApiResponse.builder()
+                                .success(true)
+                                .message("Get PathCourse List")
+                                .data(pathCourses)
+                                .build());
+                    }
+                }
+                else{
+                    PageResponseDTO<PathCourse> pathCourses = pathCourseService.getPublicPathCourseListByLearningPathId(pathId, pageNo, pageSize, sortBy, sortDir);
+                    if (pathCourses.getContent().isEmpty()) {
+                        return ResponseEntity.ok(ApiResponse.builder()
+                                .success(false)
+                                .message("List PathCourse is empty!")
+                                .build());
+                    } else {
+                        return ResponseEntity.ok(ApiResponse.builder()
+                                .success(true)
+                                .message("Get Public PathCourse List")
+                                .data(pathCourses)
+                                .build());
+                    }
+                }
+            } else {
+                throw new Exception("Authorization failed!");
             }
         } catch (RuntimeException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)

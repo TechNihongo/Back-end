@@ -15,4 +15,5 @@ public interface PathCourseRepository extends JpaRepository<PathCourse, Integer>
     int countByLearningPath_PathId(Integer pathId);
     Page<PathCourse> findByLearningPath_PathId(Integer pathId, Pageable pageable);
     PathCourse findByLearningPath_PathIdAndCourse_CourseId(Integer pathId, Integer courseId);
+    Page<PathCourse> findByLearningPath_PathIdAndCourse_PublicStatus(Integer pathId, boolean isPublic, Pageable pageable);
 }

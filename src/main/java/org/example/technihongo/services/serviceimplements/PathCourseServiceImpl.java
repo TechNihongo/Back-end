@@ -4,10 +4,9 @@ import lombok.RequiredArgsConstructor;
 import org.example.technihongo.dto.CreatePathCourseDTO;
 import org.example.technihongo.dto.PageResponseDTO;
 import org.example.technihongo.dto.UpdatePathCourseOrderDTO;
-import org.example.technihongo.entities.Course;
-import org.example.technihongo.entities.PathCourse;
-import org.example.technihongo.entities.QuizQuestion;
+import org.example.technihongo.entities.*;
 import org.example.technihongo.repositories.CourseRepository;
+import org.example.technihongo.repositories.DomainRepository;
 import org.example.technihongo.repositories.LearningPathRepository;
 import org.example.technihongo.repositories.PathCourseRepository;
 import org.example.technihongo.services.interfaces.PathCourseService;
@@ -32,6 +31,8 @@ public class PathCourseServiceImpl implements PathCourseService {
     private LearningPathRepository learningPathRepository;
     @Autowired
     private CourseRepository courseRepository;
+    @Autowired
+    private DomainRepository domainRepository;
 
     @Override
     public PageResponseDTO<PathCourse> getPathCoursesByLearningPathId(Integer pathId, int pageNo, int pageSize, String sortBy, String sortDir) {
@@ -49,23 +50,50 @@ public class PathCourseServiceImpl implements PathCourseService {
     }
 
     @Override
+    public PageResponseDTO<PathCourse> getPublicPathCourseListByLearningPathId(Integer pathId, int pageNo, int pageSize, String sortBy, String sortDir) {
+        if (learningPathRepository.findByPathId(pathId) == null) {
+            throw new RuntimeException("LearningPath ID not found!");
+        }
+
+        Sort sort = sortDir.equalsIgnoreCase(Sort.Direction.ASC.name())
+                ? Sort.by(sortBy).ascending()
+                : Sort.by(sortBy).descending();
+
+        Pageable pageable = PageRequest.of(pageNo, pageSize, sort);
+        Page<PathCourse> pathCourses = pathCourseRepository.findByLearningPath_PathIdAndCourse_PublicStatus(pathId, true, pageable);
+        return getPageResponseDTO(pathCourses);
+    }
+
+    @Override
     public PathCourse getPathCourseById(Integer pathCourseId) {
         return pathCourseRepository.findById(pathCourseId)
                 .orElseThrow(() -> new RuntimeException("PathCourse ID not found"));
     }
 
     @Override
+    @Transactional
     public PathCourse createPathCourse(CreatePathCourseDTO createPathCourseDTO) {
-        if(learningPathRepository.findByPathId(createPathCourseDTO.getPathId()) == null){
+        LearningPath learningPath = learningPathRepository.findByPathId(createPathCourseDTO.getPathId());
+        if (learningPath == null) {
             throw new RuntimeException("LearningPath ID not found!");
         }
 
-        if(courseRepository.findByCourseId(createPathCourseDTO.getCourseId()) == null){
+        Course course = courseRepository.findByCourseId(createPathCourseDTO.getCourseId());
+        if (course == null) {
             throw new RuntimeException("Course ID not found!");
         }
 
         if(pathCourseRepository.findByLearningPath_PathIdAndCourse_CourseId(createPathCourseDTO.getPathId(), createPathCourseDTO.getCourseId()) != null){
             throw new RuntimeException("Course already exists in this learning path!");
+        }
+
+        Domain learningPathDomain = domainRepository.findById(learningPath.getDomain().getDomainId())
+                .orElseThrow(() -> new RuntimeException("LearningPath domain not found!"));
+        Domain courseDomain = domainRepository.findById(course.getDomain().getDomainId())
+                .orElseThrow(() -> new RuntimeException("Course domain not found!"));
+
+        if (courseDomain.getParentDomain() == null || !courseDomain.getParentDomain().getDomainId().equals(learningPathDomain.getDomainId())) {
+            throw new RuntimeException("Course domain must be a direct subdomain of LearningPath domain!");
         }
 
         PathCourse pathCourse = pathCourseRepository.save(PathCourse.builder()
