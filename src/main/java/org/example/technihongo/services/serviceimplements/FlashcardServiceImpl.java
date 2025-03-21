@@ -49,7 +49,7 @@ public class FlashcardServiceImpl implements FlashcardService {
             flashcard.setDefinition(request.getJapaneseDefinition());
             flashcard.setTranslation(request.getVietEngTranslation());
             flashcard.setImgUrl(request.getImageUrl());
-            flashcard.setVocabOrder(currentOrder);
+            flashcard.setCardOrder(currentOrder);
             flashcard.setStudentFlashCardSet(flashcardSet);
             flashcards.add(flashcard);
         }
@@ -78,7 +78,7 @@ public class FlashcardServiceImpl implements FlashcardService {
             flashcard.setDefinition(request.getJapaneseDefinition());
             flashcard.setTranslation(request.getVietEngTranslation());
             flashcard.setImgUrl(request.getImageUrl());
-            flashcard.setVocabOrder(currentOrder);
+            flashcard.setCardOrder(currentOrder);
             flashcard.setSystemFlashCardSet(flashcardSet);
             flashcards.add(flashcard);
         }
@@ -109,7 +109,7 @@ public class FlashcardServiceImpl implements FlashcardService {
         flashcard.setDefinition(request.getJapaneseDefinition());
         flashcard.setTranslation(request.getVietEngTranslation());
         flashcard.setImgUrl(request.getImageUrl());
-        flashcard.setVocabOrder(Integer.valueOf(request.getVocabOrder()));
+        flashcard.setCardOrder(request.getVocabOrder());
         flashcard = flashcardRepository.save(flashcard);
         return convertToFlashcardResponseDTO(flashcard);
     }
