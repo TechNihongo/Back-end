@@ -1,11 +1,13 @@
 package org.example.technihongo.api;
 
+import org.example.technihongo.core.security.JwtUtil;
 import org.example.technihongo.dto.DomainRequestDTO;
 import org.example.technihongo.dto.DomainResponseDTO;
 import org.example.technihongo.dto.PageResponseDTO;
 import org.example.technihongo.exception.ResourceNotFoundException;
 import org.example.technihongo.response.ApiResponse;
 import org.example.technihongo.services.interfaces.DomainService;
+import org.example.technihongo.services.interfaces.StudentService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -19,6 +21,12 @@ public class DomainController {
 
     @Autowired
     private DomainService domainService;
+
+    @Autowired
+    private JwtUtil jwtUtil;
+
+    @Autowired
+    private StudentService studentService;
 
     @PostMapping("/create")
     public ResponseEntity<ApiResponse> createDomain(@RequestBody DomainRequestDTO request) {
