@@ -9,6 +9,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface FlashcardRepository extends JpaRepository<Flashcard, Integer> {
@@ -21,4 +22,7 @@ public interface FlashcardRepository extends JpaRepository<Flashcard, Integer> {
 
     @Query("select MAX(f.cardOrder) FROM Flashcard f WHERE f.systemFlashCardSet = :flashcardSet")
     Integer findMaxVocabOrderBySystemFlashCardSet(@Param("flashcardSet") SystemFlashcardSet flashcardSet);
+
+    Optional<Flashcard> findTopBySystemFlashCardSet_SystemSetIdOrderByCardOrderAsc(Integer setId);
+    Optional<Flashcard> findTopByStudentFlashCardSet_StudentSetIdOrderByCardOrderAsc(Integer setId);
 }

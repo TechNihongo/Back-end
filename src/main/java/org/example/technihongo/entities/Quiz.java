@@ -51,6 +51,9 @@ public class Quiz {
     @Column(name = "is_deleted")
     private boolean isDeleted = false;
 
+    @Column(name = "is_premium")
+    private boolean isPremium;
+
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
