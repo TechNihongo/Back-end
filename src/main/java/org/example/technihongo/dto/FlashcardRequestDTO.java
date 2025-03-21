@@ -9,5 +9,5 @@ public class FlashcardRequestDTO {
     private String japaneseDefinition;
     private String vietEngTranslation;
     private String imageUrl;
-    private String vocabOrder;
+    private Integer vocabOrder;
 }
