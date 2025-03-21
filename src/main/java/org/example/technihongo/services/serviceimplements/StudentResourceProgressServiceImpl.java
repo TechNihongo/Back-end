@@ -1,0 +1,77 @@
+package org.example.technihongo.services.serviceimplements;
+
+import org.example.technihongo.entities.LearningResource;
+import org.example.technihongo.entities.Student;
+import org.example.technihongo.entities.StudentResourceProgress;
+import org.example.technihongo.enums.CompletionStatus;
+import org.example.technihongo.repositories.LearningResourceRepository;
+import org.example.technihongo.repositories.StudentRepository;
+import org.example.technihongo.repositories.StudentResourceProgressRepository;
+import org.example.technihongo.services.interfaces.StudentResourceProgressService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Optional;
+
+@Service
+@Transactional
+public class StudentResourceProgressServiceImpl implements StudentResourceProgressService {
+
+    @Autowired
+    private StudentResourceProgressRepository studentResourceProgressRepository;
+    @Autowired
+    private StudentRepository studentRepository;
+    @Autowired
+    private LearningResourceRepository learningResourceRepository;
+
+    @Override
+    public void trackLearningResourceProgress(Integer studentId, Integer resourceId, String notes) {
+        Student student = studentRepository.findById(studentId)
+                .orElseThrow(() -> new RuntimeException("Student not found with ID: " + studentId));
+        LearningResource learningResource = learningResourceRepository.findById(resourceId)
+                .orElseThrow(() -> new RuntimeException("LearningResource not found with ID: " + resourceId));
+
+        Optional<StudentResourceProgress> existingProgressOpt = studentResourceProgressRepository
+                .findByStudent_StudentIdAndLearningResource_ResourceId(studentId, resourceId);
+
+        StudentResourceProgress progress;
+        if (existingProgressOpt.isEmpty()) {
+            progress = new StudentResourceProgress();
+            progress.setStudent(student);
+            progress.setLearningResource(learningResource);
+            progress.setCompletionStatus(CompletionStatus.IN_PROGRESS);
+            progress.setLastStudied(LocalDateTime.now());
+        } else {
+            progress = existingProgressOpt.get();
+            progress.setLastStudied(LocalDateTime.now());
+            progress.setNotes(notes);
+            progress.setCompletionStatus(CompletionStatus.COMPLETED);
+        }
+
+        studentResourceProgressRepository.save(progress);
+    }
+
+    @Override
+    public List<StudentResourceProgress> getAllStudentResourceProgress(Integer studentId) {
+        studentRepository.findById(studentId)
+                .orElseThrow(() -> new RuntimeException("Student not found with ID: " + studentId));
+
+        return studentResourceProgressRepository.findByStudent_StudentId(studentId);
+    }
+
+    @Override
+    public StudentResourceProgress viewStudentResourceProgress(Integer studentId, Integer resourceId) {
+        studentRepository.findById(studentId)
+                .orElseThrow(() -> new RuntimeException("Student not found with ID: " + studentId));
+
+        learningResourceRepository.findById(resourceId)
+                .orElseThrow(() -> new RuntimeException("LearningResource not found with ID: " + resourceId));
+
+        return studentResourceProgressRepository
+                .findByStudent_StudentIdAndLearningResource_ResourceId(studentId, resourceId)
+                .orElseThrow(() -> new RuntimeException("Progress not found for student ID: " + studentId + " and resource ID: " + resourceId));
+    }
+}
