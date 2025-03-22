@@ -10,6 +10,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Comparator;
 import java.util.List;
@@ -27,6 +28,10 @@ public class StudentQuizAttemptServiceImpl implements StudentQuizAttemptService 
     private QuizAnswerResponseRepository quizAnswerResponseRepository;
     @Autowired
     private QuestionAnswerOptionRepository questionAnswerOptionRepository;
+    @Autowired
+    private StudentDailyLearningLogRepository dailyLogRepository;
+    @Autowired
+    private StudentLearningStatisticsRepository statisticsRepository;
 
     private static final int MAX_ATTEMPTS = 3;
     private static final long WAIT_TIME_MINUTES = 30;
@@ -139,6 +144,16 @@ public class StudentQuizAttemptServiceImpl implements StudentQuizAttemptService 
                 .dateTaken(LocalDateTime.now())
                 .build();
         attempt = studentQuizAttemptRepository.save(attempt);
+
+        if(studentQuizAttemptRepository.countByStudentStudentIdAndQuizQuizIdAndIsPassedAndIsCompleted(studentId, quiz.getQuizId(), true, true) == 1){
+            StudentDailyLearningLog dailyLog = dailyLogRepository.findByStudentStudentIdAndLogDate(studentId, LocalDate.now()).get();
+            dailyLog.setCompletedQuizzes(dailyLog.getCompletedQuizzes() + 1);
+            dailyLogRepository.save(dailyLog);
+
+            StudentLearningStatistics statistics = statisticsRepository.findByStudentStudentId(studentId).get();
+            statistics.setTotalCompletedQuizzes(statistics.getTotalCompletedCourses() + 1);
+            statisticsRepository.save(statistics);
+        }
 
         for (QuizAnswerDTO answerDTO : request.getAnswers()) {
             QuestionAnswerOption selectedOption = questionAnswerOptionRepository.findByOptionId(answerDTO.getSelectedOptionId());

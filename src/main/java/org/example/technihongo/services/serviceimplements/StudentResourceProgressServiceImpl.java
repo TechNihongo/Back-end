@@ -2,9 +2,11 @@ package org.example.technihongo.services.serviceimplements;
 
 import org.example.technihongo.entities.LearningResource;
 import org.example.technihongo.entities.Student;
+import org.example.technihongo.entities.StudentDailyLearningLog;
 import org.example.technihongo.entities.StudentResourceProgress;
 import org.example.technihongo.enums.CompletionStatus;
 import org.example.technihongo.repositories.LearningResourceRepository;
+import org.example.technihongo.repositories.StudentDailyLearningLogRepository;
 import org.example.technihongo.repositories.StudentRepository;
 import org.example.technihongo.repositories.StudentResourceProgressRepository;
 import org.example.technihongo.services.interfaces.StudentResourceProgressService;
@@ -12,6 +14,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -19,13 +22,14 @@ import java.util.Optional;
 @Service
 @Transactional
 public class StudentResourceProgressServiceImpl implements StudentResourceProgressService {
-
     @Autowired
     private StudentResourceProgressRepository studentResourceProgressRepository;
     @Autowired
     private StudentRepository studentRepository;
     @Autowired
     private LearningResourceRepository learningResourceRepository;
+    @Autowired
+    private StudentDailyLearningLogRepository dailyLogRepository;
 
     @Override
     public void trackLearningResourceProgress(Integer studentId, Integer resourceId, String notes) {
@@ -47,8 +51,17 @@ public class StudentResourceProgressServiceImpl implements StudentResourceProgre
         } else {
             progress = existingProgressOpt.get();
             progress.setLastStudied(LocalDateTime.now());
-            progress.setNotes(notes);
-            progress.setCompletionStatus(CompletionStatus.COMPLETED);
+
+            if(progress.getNotes() != null) {
+                progress.setNotes(notes);
+            }
+
+            if (progress.getCompletionStatus() != CompletionStatus.COMPLETED) {
+                progress.setCompletionStatus(CompletionStatus.COMPLETED);
+                StudentDailyLearningLog dailyLog = dailyLogRepository.findByStudentStudentIdAndLogDate(studentId, LocalDate.now()).get();
+                dailyLog.setCompletedResources(dailyLog.getCompletedResources() + 1);
+                dailyLogRepository.save(dailyLog);
+            }
         }
 
         studentResourceProgressRepository.save(progress);
