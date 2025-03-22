@@ -6,6 +6,7 @@ import org.hibernate.annotations.CreationTimestamp;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 
 @Entity
 @Table(name = "StudentQuizAttempt")
@@ -35,7 +36,7 @@ public class StudentQuizAttempt {
     private Boolean isPassed;
 
     @Column(name = "time_taken")
-    private Integer timeTaken;
+    private LocalTime timeTaken;
 
     @Column(name = "is_completed")
     private Boolean isCompleted;

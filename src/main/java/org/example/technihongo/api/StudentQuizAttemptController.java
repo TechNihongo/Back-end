@@ -4,6 +4,7 @@ import org.example.technihongo.core.security.JwtUtil;
 import org.example.technihongo.dto.QuizAttemptRequestDTO;
 import org.example.technihongo.dto.QuizAttemptResponseDTO;
 import org.example.technihongo.dto.QuizPerformanceReportDTO;
+import org.example.technihongo.dto.StartQuizResponseDTO;
 import org.example.technihongo.response.ApiResponse;
 import org.example.technihongo.services.interfaces.StudentQuizAttemptService;
 import org.example.technihongo.services.interfaces.StudentService;
@@ -25,6 +26,39 @@ public class StudentQuizAttemptController {
     private JwtUtil jwtUtil;
     @Autowired
     private StudentService studentService;
+
+    @PostMapping("/startAttempt/{quizId}")
+    public ResponseEntity<ApiResponse> startQuiz(
+            @RequestHeader("Authorization") String authorizationHeader,
+            @PathVariable Integer quizId) {
+        try {
+            Integer studentId = extractStudentId(authorizationHeader);
+            StartQuizResponseDTO response = studentQuizAttemptService.startQuiz(studentId, quizId);
+            return ResponseEntity.ok(ApiResponse.builder()
+                    .success(true)
+                    .message("Quiz started successfully")
+                    .data(response)
+                    .build());
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(ApiResponse.builder()
+                            .success(false)
+                            .message(e.getMessage())
+                            .build());
+        } catch (IllegalStateException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(ApiResponse.builder()
+                            .success(false)
+                            .message(e.getMessage())
+                            .build());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponse.builder()
+                            .success(false)
+                            .message("Internal Server Error: " + e.getMessage())
+                            .build());
+        }
+    }
 
     @PostMapping("/attempt")
     public ResponseEntity<ApiResponse> attemptQuiz(
@@ -119,7 +153,6 @@ public class StudentQuizAttemptController {
                             .build());
         }
     }
-
 
     private Integer extractStudentId(String authorizationHeader) throws Exception {
         if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {

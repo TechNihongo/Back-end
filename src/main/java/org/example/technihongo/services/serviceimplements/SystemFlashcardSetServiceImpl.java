@@ -49,7 +49,7 @@ public class SystemFlashcardSetServiceImpl implements SystemFlashcardSetService 
         flashcardSet.setDescription(requestDTO.getDescription());
         flashcardSet.setPublic(requestDTO.getIsPublic() != null ? requestDTO.getIsPublic() : false);
         flashcardSet.setPremium(requestDTO.getIsPremium() != null ? requestDTO.getIsPremium() : false);
-        flashcardSet.setTotalCards(0); // Khởi tạo là 0, sẽ cập nhật khi thêm flashcard
+        flashcardSet.setTotalCards(0);
         flashcardSet.setCreator(user);
         flashcardSet.setDeleted(false);
 
@@ -138,10 +138,6 @@ public class SystemFlashcardSetServiceImpl implements SystemFlashcardSetService 
     public SystemFlashcardSetResponseDTO getAllFlashcardsInSet(Integer userId, Integer flashcardSetId) {
         SystemFlashcardSet flashcardSet = getActiveFlashcardSet(flashcardSetId);
 
-        if (!flashcardSet.getCreator().getUserId().equals(userId)) {
-            throw new UnauthorizedAccessException("You do not have permission to access this Flashcard Set.");
-        }
-
         List<Flashcard> flashcards = flashcardRepository.findBySystemFlashCardSetSystemSetId(flashcardSetId);
         flashcardSet.setTotalCards(flashcards.size());
         systemFlashcardSetRepository.save(flashcardSet);
@@ -164,7 +160,7 @@ public class SystemFlashcardSetServiceImpl implements SystemFlashcardSetService 
     public List<SystemFlashcardSetResponseDTO> systemFlashcardList(Integer userId) {
         List<SystemFlashcardSet> flashcardSets = systemFlashcardSetRepository.findByCreatorUserId(userId);
         return flashcardSets.stream()
-                .filter(set -> !set.isDeleted()) // Chỉ lấy các set chưa bị xóa
+                .filter(set -> !set.isDeleted())
                 .map(this::convertToSystemFlashcardSetResponseDTO)
                 .collect(Collectors.toList());
     }

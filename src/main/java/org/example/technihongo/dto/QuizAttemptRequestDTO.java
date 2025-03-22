@@ -11,5 +11,6 @@ import java.util.List;
 @Builder
 public class QuizAttemptRequestDTO {
     private Integer quizId;
+    private Integer attemptId;
     private List<QuizAnswerDTO> answers;
 }
