@@ -13,6 +13,8 @@ public interface StudentQuizAttemptRepository extends JpaRepository<StudentQuizA
     List<StudentQuizAttempt> findByStudentStudentIdAndQuizQuizId(Integer studentId, Integer quizId);
     Integer countByStudentStudentIdAndQuizQuizIdAndIsPassedAndIsCompleted
             (Integer studentId, Integer quizId, boolean isPassed, boolean isCompleted);
+    boolean existsByStudentStudentIdAndQuizQuizIdAndIsPassedAndIsCompleted
+            (Integer studentId, Integer quizId, boolean isPassed, boolean isCompleted);
 
     Optional<StudentQuizAttempt> findByStudentStudentIdAndQuizQuizIdAndIsCompletedFalse(Integer studentId, Integer quizId);
     Optional<StudentQuizAttempt> findByAttemptId(Integer attemptId);

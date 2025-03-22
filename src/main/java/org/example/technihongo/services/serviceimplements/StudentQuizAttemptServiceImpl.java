@@ -214,6 +214,7 @@ public class StudentQuizAttemptServiceImpl implements StudentQuizAttemptService 
                 .divide(BigDecimal.valueOf(quiz.getTotalQuestions()), 2, RoundingMode.HALF_UP);
         boolean isPassed = score.compareTo(quiz.getPassingScore()) >= 0;
 
+
         LocalTime timeTaken = calculateTimeTaken(attempt);
 
         attempt.setScore(score);

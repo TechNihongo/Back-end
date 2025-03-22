@@ -17,4 +17,5 @@ public interface LessonService {
     void updateLessonOrder(Integer studyPlanId, UpdateLessonOrderDTO updateLessonOrderDTO);
 
     PageResponseDTO<Lesson> getLessonListByStudyPlanIdPaginated(Integer studyPlanId, int pageNo, int pageSize, String sortBy, String sortDir, String keyword);
+    void checkLessonProgressPrerequisite(Integer studentId, Integer lessonId);
 }
