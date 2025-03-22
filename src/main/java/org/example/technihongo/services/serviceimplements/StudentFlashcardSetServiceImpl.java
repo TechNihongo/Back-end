@@ -33,13 +33,11 @@ public class StudentFlashcardSetServiceImpl implements StudentFlashcardSetServic
     private FlashcardRepository flashcardRepository;
     @Autowired
     private LearningResourceRepository learningResourceRepository;
-    @Autowired
-    private StudentFlashcardSetRepository studentFlashcardSetRepository;
 
     @Override
     public FlashcardSetResponseDTO createFlashcardSet(Integer studentId, FlashcardSetRequestDTO request) {
         if(request.getTitle() == null) {
-            throw new IllegalArgumentException("You must fill all fields required!");
+            throw new IllegalArgumentException("Title is required!");
         }
         Student student = studentRepository.findById(studentId)
                 .orElseThrow(() -> new ResourceNotFoundException("Student not found with Id: " + studentId));
@@ -48,7 +46,8 @@ public class StudentFlashcardSetServiceImpl implements StudentFlashcardSetServic
         flashcardSet.setDescription(request.getDescription());
         flashcardSet.setPublic(request.getIsPublic());
         flashcardSet.setCreator(student);
-
+        flashcardSet.setDeleted(false);
+        flashcardSet.setViolated(false);
         flashcardSet.setTotalCards(0);
         flashcardSet.setTotalViews(0);
 
@@ -58,8 +57,13 @@ public class StudentFlashcardSetServiceImpl implements StudentFlashcardSetServic
 
     @Override
     public FlashcardSetResponseDTO updateFlashcardSet(Integer studentId, Integer flashcardSetId, FlashcardSetRequestDTO request) {
+
         StudentFlashcardSet flashcardSet = flashcardSetRepository.findById(flashcardSetId)
                 .orElseThrow(() -> new RuntimeException("FlashcardSet not found"));
+
+        if (!flashcardSet.getCreator().getStudentId().equals(studentId)) {
+            throw new UnauthorizedAccessException("You do not have permission to update this flashcard set.");
+        }
 
         if (request.getTitle() != null) {
             flashcardSet.setTitle(request.getTitle());
@@ -71,12 +75,19 @@ public class StudentFlashcardSetServiceImpl implements StudentFlashcardSetServic
             flashcardSet.setPublic(request.getIsPublic());
         }
 
+        flashcardSet.setTotalCards(flashcardRepository.findByStudentFlashCardSetStudentSetId(flashcardSetId).size());
+
         flashcardSet = flashcardSetRepository.save(flashcardSet);
         return convertToFlashcardSetResponseDTO(flashcardSet);
     }
 
     @Override
     public void deleteFlashcardSet(Integer studentId, Integer flashcardSetId) {
+        StudentFlashcardSet flashcardSet = getActiveFlashcardSet(flashcardSetId);
+
+        if (!flashcardSet.getCreator().getStudentId().equals(studentId)) {
+            throw new UnauthorizedAccessException("You do not have permission to delete this flashcard set.");
+        }
         flashcardSetRepository.deleteById(flashcardSetId);
     }
 
@@ -90,21 +101,30 @@ public class StudentFlashcardSetServiceImpl implements StudentFlashcardSetServic
 
     @Override
     public FlashcardSetResponseDTO updateFlashcardSetVisibility(Integer studentId, Integer flashcardSetId, Boolean isPublic) {
-        StudentFlashcardSet flashcardSet = flashcardSetRepository.findById(flashcardSetId)
-                .orElseThrow(() -> new RuntimeException("FlashcardSet not found"));
+        StudentFlashcardSet flashcardSet = getActiveFlashcardSet(flashcardSetId);
+
+        if (!flashcardSet.getCreator().getStudentId().equals(studentId)) {
+            throw new UnauthorizedAccessException("You do not have permission to update visibility of this flashcard set.");
+        }
         flashcardSet.setPublic(isPublic);
         flashcardSet = flashcardSetRepository.save(flashcardSet);
         return convertToFlashcardSetResponseDTO(flashcardSet);    }
 
     @Override
     public FlashcardSetResponseDTO getAllFlashcardsInSet(Integer studentId,Integer flashcardSetId) {
-        StudentFlashcardSet flashcardSet = flashcardSetRepository.findById(flashcardSetId)
-                .orElseThrow(() -> new ResourceNotFoundException("Flashcard Set not found with id: " + flashcardSetId));
+        StudentFlashcardSet flashcardSet = getActiveFlashcardSet(flashcardSetId);
 
-        if(!flashcardSet.getCreator().getStudentId().equals(studentId)) {
-            throw new UnauthorizedAccessException("You do not have permission to access this Flashcard Set.");
+        if (!flashcardSet.getCreator().getStudentId().equals(studentId)) {
+            flashcardSet.setTotalViews(flashcardSet.getTotalViews() + 1);
+            flashcardSetRepository.save(flashcardSet);
         }
+
+        if (!flashcardSet.isPublic() && !flashcardSet.getCreator().getStudentId().equals(studentId)) {
+            throw new UnauthorizedAccessException("You do not have permission to access this flashcard set.");
+        }
+
         List<Flashcard> flashcards = flashcardRepository.findByStudentFlashCardSetStudentSetId(flashcardSetId);
+        flashcardSet.setTotalCards(flashcards.size());
 
         FlashcardSetResponseDTO response = new FlashcardSetResponseDTO();
         response.setStudentSetId(flashcardSet.getStudentSetId());
@@ -122,6 +142,7 @@ public class StudentFlashcardSetServiceImpl implements StudentFlashcardSetServic
     public List<FlashcardSetResponseDTO> studentFlashcardList(Integer studentId) {
         List<StudentFlashcardSet> flashcardSets = flashcardSetRepository.findByCreatorStudentId(studentId);
         return flashcardSets.stream()
+                .filter(set -> !set.isDeleted())
                 .map(this::convertToFlashcardSetResponseDTO)
                 .collect(Collectors.toList());
     }
@@ -133,6 +154,7 @@ public class StudentFlashcardSetServiceImpl implements StudentFlashcardSetServic
         }
         List<StudentFlashcardSet> studentFlashcardSets = flashcardSetRepository.findByTitleContainingIgnoreCase(keyword.trim());
         return studentFlashcardSets.stream()
+                .filter(set -> !set.isDeleted())
                 .map(this::convertToFlashcardSetResponseDTO)
                 .collect(Collectors.toList());
     }
@@ -143,13 +165,13 @@ public class StudentFlashcardSetServiceImpl implements StudentFlashcardSetServic
                 .orElseThrow(() -> new ResourceNotFoundException("Student not found with Id: " + studentId));
 
         LearningResource resource = learningResourceRepository.findByResourceId(request.getResourceId());
-        if(resource == null) {
+        if (resource == null) {
             throw new ResourceNotFoundException("Resource not found with Id: " + request.getResourceId());
         }
-        if(resource.getVideoUrl() == null || resource.getVideoUrl().trim().isEmpty()) {
+        if (!StringUtils.hasText(resource.getVideoUrl())) {
             throw new IllegalArgumentException("Resource must have a video URL to create Flashcard Set.");
         }
-        if(request.getFlashcards() == null || request.getFlashcards().isEmpty()) {
+        if (request.getFlashcards() == null || request.getFlashcards().isEmpty()) {
             throw new IllegalArgumentException("You must provide at least one Flashcard to create Flashcard Set.");
         }
 
@@ -159,8 +181,10 @@ public class StudentFlashcardSetServiceImpl implements StudentFlashcardSetServic
                 .title(StringUtils.hasText(request.getTitle()) ? request.getTitle() : resource.getTitle())
                 .description(request.getDescription())
                 .isPublic(request.getIsPublic() != null ? request.getIsPublic() : true)
-                .totalCards(request.getFlashcards().size())
+                .totalCards(0)
                 .totalViews(0)
+                .isViolated(false)
+                .isDeleted(false)
                 .flashcards(new HashSet<>())
                 .build();
 
@@ -168,13 +192,11 @@ public class StudentFlashcardSetServiceImpl implements StudentFlashcardSetServic
 
         List<Flashcard> flashcards = createFlashcards(savedFlashcardSet, request.getFlashcards());
         savedFlashcardSet.setFlashcards(new HashSet<>(flashcards));
-
         savedFlashcardSet.setTotalCards(flashcards.size());
 
-        studentFlashcardSetRepository.save(savedFlashcardSet);
+        flashcardSetRepository.save(savedFlashcardSet);
 
-        return  mapToFlashcardSetResponseDTO(savedFlashcardSet, flashcards);
-
+        return mapToFlashcardSetResponseDTO(savedFlashcardSet, flashcards);
     }
 
 
@@ -245,6 +267,15 @@ public class StudentFlashcardSetServiceImpl implements StudentFlashcardSetServic
         responseDTO.setImageUrl(flashcard.getImgUrl());
 
         return responseDTO;
+    }
+
+    private StudentFlashcardSet getActiveFlashcardSet(Integer flashcardSetId) {
+        StudentFlashcardSet flashcardSet = flashcardSetRepository.findById(flashcardSetId)
+                .orElseThrow(() -> new ResourceNotFoundException("Flashcard Set not found with id: " + flashcardSetId));
+        if (flashcardSet.isDeleted()) {
+            throw new ResourceNotFoundException("Flashcard Set has been deleted and cannot be accessed.");
+        }
+        return flashcardSet;
     }
 
 }
