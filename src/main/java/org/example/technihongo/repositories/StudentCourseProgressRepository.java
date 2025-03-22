@@ -1,5 +1,6 @@
 package org.example.technihongo.repositories;
 
+
 import org.example.technihongo.enums.CompletionStatus;
 import org.springframework.stereotype.Repository;
 import org.example.technihongo.entities.StudentCourseProgress;
@@ -13,4 +14,5 @@ public interface StudentCourseProgressRepository extends JpaRepository<StudentCo
     Optional<StudentCourseProgress> findByStudent_StudentIdAndCourse_CourseId(Integer studentId, Integer courseId);
     List<StudentCourseProgress> findByStudent_StudentId(Integer studentId);
     Integer countByCourse_CourseIdAndCompletionStatus(Integer courseId, CompletionStatus completionStatus);
+    boolean existsByStudentStudentIdAndCourseCourseId(Integer studentId, Integer courseId);
 }
