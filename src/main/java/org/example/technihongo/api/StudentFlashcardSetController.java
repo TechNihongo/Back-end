@@ -31,26 +31,27 @@ public class StudentFlashcardSetController {
     @PostMapping("/create")
     public ResponseEntity<ApiResponse> createFlashcardSet(
             @RequestHeader("Authorization") String authorizationHeader,
-            @RequestBody FlashcardSetRequestDTO request) {
+            @Valid @RequestBody FlashcardSetRequestDTO request) {
         try {
-            if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
-                String token = authorizationHeader.substring(7);
-                Integer userId = jwtUtil.extractUserId(token);
-                Integer studentId = studentService.getStudentIdByUserId(userId);
-
-                FlashcardSetResponseDTO response = studentFlashcardSetService.createFlashcardSet(studentId, request);
-                return ResponseEntity.ok(ApiResponse.builder()
-                        .success(true)
-                        .message("Flashcard set created successfully")
-                        .data(response)
-                        .build());
-            }
-            else throw new Exception("Authorization failed!");
-        } catch (RuntimeException e) {
+            Integer studentId = extractStudentId(authorizationHeader);
+            FlashcardSetResponseDTO response = studentFlashcardSetService.createFlashcardSet(studentId, request);
+            return ResponseEntity.status(HttpStatus.CREATED)
+                    .body(ApiResponse.builder()
+                            .success(true)
+                            .message("Flashcard set created successfully")
+                            .data(response)
+                            .build());
+        } catch (IllegalArgumentException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(ApiResponse.builder()
                             .success(false)
-                            .message("Failed to create flashcard set: " + e.getMessage())
+                            .message(e.getMessage())
+                            .build());
+        } catch (ResourceNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(ApiResponse.builder()
+                            .success(false)
+                            .message(e.getMessage())
                             .build());
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
@@ -65,26 +66,26 @@ public class StudentFlashcardSetController {
     public ResponseEntity<ApiResponse> updateFlashcardSet(
             @RequestHeader("Authorization") String authorizationHeader,
             @PathVariable("setId") Integer flashcardSetId,
-            @RequestBody FlashcardSetRequestDTO request) {
+            @Valid @RequestBody FlashcardSetRequestDTO request) {
         try {
-            if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
-                String token = authorizationHeader.substring(7);
-                Integer userId = jwtUtil.extractUserId(token);
-                Integer studentId = studentService.getStudentIdByUserId(userId);
-
-                FlashcardSetResponseDTO response = studentFlashcardSetService.updateFlashcardSet(studentId, flashcardSetId, request);
-                return ResponseEntity.ok(ApiResponse.builder()
-                        .success(true)
-                        .message("Flashcard set updated successfully")
-                        .data(response)
-                        .build());
-            }
-            else throw new Exception("Authorization failed!");
-        } catch (RuntimeException e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+            Integer studentId = extractStudentId(authorizationHeader);
+            FlashcardSetResponseDTO response = studentFlashcardSetService.updateFlashcardSet(studentId, flashcardSetId, request);
+            return ResponseEntity.ok(ApiResponse.builder()
+                    .success(true)
+                    .message("Flashcard set updated successfully")
+                    .data(response)
+                    .build());
+        } catch (UnauthorizedAccessException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ApiResponse.builder()
                             .success(false)
-                            .message("Failed to update flashcard set: " + e.getMessage())
+                            .message(e.getMessage())
+                            .build());
+        } catch (ResourceNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(ApiResponse.builder()
+                            .success(false)
+                            .message(e.getMessage())
                             .build());
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
@@ -100,23 +101,23 @@ public class StudentFlashcardSetController {
             @RequestHeader("Authorization") String authorizationHeader,
             @PathVariable("setId") Integer flashcardSetId) {
         try {
-            if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
-                String token = authorizationHeader.substring(7);
-                Integer userId = jwtUtil.extractUserId(token);
-                Integer studentId = studentService.getStudentIdByUserId(userId);
-
-                studentFlashcardSetService.deleteFlashcardSet(studentId, flashcardSetId);
-                return ResponseEntity.ok(ApiResponse.builder()
-                        .success(true)
-                        .message("Flashcard set deleted successfully")
-                        .build());
-            }
-            else throw new Exception("Authorization failed!");
-        } catch (RuntimeException e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+            Integer studentId = extractStudentId(authorizationHeader);
+            studentFlashcardSetService.deleteFlashcardSet(studentId, flashcardSetId);
+            return ResponseEntity.ok(ApiResponse.builder()
+                    .success(true)
+                    .message("Flashcard set marked as deleted successfully")
+                    .build());
+        } catch (UnauthorizedAccessException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ApiResponse.builder()
                             .success(false)
-                            .message("Failed to delete flashcard set: " + e.getMessage())
+                            .message(e.getMessage())
+                            .build());
+        } catch (ResourceNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(ApiResponse.builder()
+                            .success(false)
+                            .message(e.getMessage())
                             .build());
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
@@ -129,19 +130,28 @@ public class StudentFlashcardSetController {
 
     @GetMapping("/getUserFlashcard/{setId}")
     public ResponseEntity<ApiResponse> getFlashcardSet(
+            @RequestHeader("Authorization") String authorizationHeader,
             @PathVariable("setId") Integer flashcardSetId) {
         try {
-            FlashcardSetResponseDTO response = studentFlashcardSetService.getFlashcardSetById(flashcardSetId);
+            Integer studentId = extractStudentId(authorizationHeader);
+
+            FlashcardSetResponseDTO response = studentFlashcardSetService.getAllFlashcardsInSet(studentId, flashcardSetId);
             return ResponseEntity.ok(ApiResponse.builder()
                     .success(true)
                     .message("Flashcard set retrieved successfully")
                     .data(response)
                     .build());
-        } catch (RuntimeException e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+        } catch (UnauthorizedAccessException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ApiResponse.builder()
                             .success(false)
-                            .message("Failed to retrieve flashcard set: " + e.getMessage())
+                            .message(e.getMessage())
+                            .build());
+        } catch (ResourceNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(ApiResponse.builder()
+                            .success(false)
+                            .message(e.getMessage())
                             .build());
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
@@ -156,78 +166,26 @@ public class StudentFlashcardSetController {
     public ResponseEntity<ApiResponse> updateFlashcardSetVisibility(
             @RequestHeader("Authorization") String authorizationHeader,
             @PathVariable("setId") Integer flashcardSetId,
-            @RequestParam(required = false) Boolean isPublic) {
-        if (isPublic == null) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(ApiResponse.builder()
-                            .success(false)
-                            .message("Parameter 'isPublic' is required")
-                            .build());
-        }
-
+            @RequestParam(required = true) Boolean isPublic) {
         try {
-            if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
-                String token = authorizationHeader.substring(7);
-                Integer userId = jwtUtil.extractUserId(token);
-                Integer studentId = studentService.getStudentIdByUserId(userId);
-
-                FlashcardSetResponseDTO response = studentFlashcardSetService.updateFlashcardSetVisibility(studentId, flashcardSetId, isPublic);
-                return ResponseEntity.ok(ApiResponse.builder()
-                        .success(true)
-                        .message("Flashcard set visibility updated successfully")
-                        .data(response)
-                        .build());
-            }
-            else throw new Exception("Authorization failed!");
-        } catch (RuntimeException e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(ApiResponse.builder()
-                            .success(false)
-                            .message("Failed to update flashcard set visibility: " + e.getMessage())
-                            .build());
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(ApiResponse.builder()
-                            .success(false)
-                            .message("Internal Server Error: " + e.getMessage())
-                            .build());
-        }
-    }
-    @GetMapping("getAllFlashcardOfSet/{setId}")
-    public ResponseEntity<ApiResponse> getAllFlashcardsInSet(
-            @RequestHeader("Authorization") String authorizationHeader,
-            @PathVariable("setId") Integer flashcardSetId) {
-        try {
-            if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
-                String token = authorizationHeader.substring(7);
-                Integer userId = jwtUtil.extractUserId(token);
-                Integer studentId = studentService.getStudentIdByUserId(userId);
-
-                FlashcardSetResponseDTO response = studentFlashcardSetService.getAllFlashcardsInSet(studentId, flashcardSetId);
-                return ResponseEntity.ok(ApiResponse.builder()
-                        .success(true)
-                        .message("Flashcards retrieved successfully")
-                        .data(response)
-                        .build());
-            }
-            else throw new Exception("Authorization failed!");
-        } catch (ResourceNotFoundException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(ApiResponse.builder()
-                            .success(false)
-                            .message(e.getMessage())
-                            .build());
+            Integer studentId = extractStudentId(authorizationHeader);
+            FlashcardSetResponseDTO response = studentFlashcardSetService.updateFlashcardSetVisibility(studentId, flashcardSetId, isPublic);
+            return ResponseEntity.ok(ApiResponse.builder()
+                    .success(true)
+                    .message("Flashcard set visibility updated successfully")
+                    .data(response)
+                    .build());
         } catch (UnauthorizedAccessException e) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ApiResponse.builder()
                             .success(false)
                             .message(e.getMessage())
                             .build());
-        } catch (RuntimeException e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+        } catch (ResourceNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(ApiResponse.builder()
                             .success(false)
-                            .message("Failed to retrieve flashcards: " + e.getMessage())
+                            .message(e.getMessage())
                             .build());
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
@@ -238,68 +196,93 @@ public class StudentFlashcardSetController {
         }
     }
 
-
-    @GetMapping("/all")
-    public ResponseEntity<ApiResponse> getAllStudentFlashcardSet(@RequestHeader("Authorization") String authorizationHeader) {
+    @GetMapping("/getAllFlashcardOfSet/{setId}")
+    public ResponseEntity<ApiResponse> getAllFlashcardsInSet(
+            @RequestHeader("Authorization") String authorizationHeader,
+            @PathVariable("setId") Integer flashcardSetId) {
         try {
-            if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
-                String token = authorizationHeader.substring(7);
-                Integer userId = jwtUtil.extractUserId(token);
-                Integer studentId = studentService.getStudentIdByUserId(userId);
-
-                List<FlashcardSetResponseDTO> studentFlashcardList = studentFlashcardSetService.studentFlashcardList(studentId);
-
-                if (studentFlashcardList.isEmpty()) {
-                    return ResponseEntity.status(HttpStatus.NO_CONTENT)
-                            .body(ApiResponse.builder()
-                                    .success(true)
-                                    .message("Student has no flashcard sets")
-                                    .data(Collections.emptyList())
-                                    .build());
-                }
-                return ResponseEntity.ok(ApiResponse.builder()
-                        .success(true)
-                        .message("Retrieved all flashcard sets successfully")
-                        .data(studentFlashcardList)
-                        .build());
-            }
-            else throw new Exception("Authorization failed!");
+            Integer studentId = extractStudentId(authorizationHeader);
+            FlashcardSetResponseDTO response = studentFlashcardSetService.getAllFlashcardsInSet(studentId, flashcardSetId);
+            return ResponseEntity.ok(ApiResponse.builder()
+                    .success(true)
+                    .message("Flashcards retrieved successfully")
+                    .data(response)
+                    .build());
+        } catch (UnauthorizedAccessException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(ApiResponse.builder()
+                            .success(false)
+                            .message(e.getMessage())
+                            .build());
         } catch (ResourceNotFoundException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(ApiResponse.builder()
                             .success(false)
-                            .message("Student not found")
+                            .message(e.getMessage())
                             .build());
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(ApiResponse.builder()
                             .success(false)
-                            .message("Error retrieving flashcard sets: " + e.getMessage())
+                            .message("Internal Server Error: " + e.getMessage())
+                            .build());
+        }
+    }
+
+    @GetMapping("/all")
+    public ResponseEntity<ApiResponse> getAllStudentFlashcardSet(
+            @RequestHeader("Authorization") String authorizationHeader) {
+        try {
+            Integer studentId = extractStudentId(authorizationHeader);
+            List<FlashcardSetResponseDTO> studentFlashcardList = studentFlashcardSetService.studentFlashcardList(studentId);
+            if (studentFlashcardList.isEmpty()) {
+                return ResponseEntity.ok(ApiResponse.builder()
+                        .success(true)
+                        .message("Student has no active flashcard sets")
+                        .data(Collections.emptyList())
+                        .build());
+            }
+            return ResponseEntity.ok(ApiResponse.builder()
+                    .success(true)
+                    .message("Retrieved all flashcard sets successfully")
+                    .data(studentFlashcardList)
+                    .build());
+        } catch (ResourceNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(ApiResponse.builder()
+                            .success(false)
+                            .message(e.getMessage())
+                            .build());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponse.builder()
+                            .success(false)
+                            .message("Internal Server Error: " + e.getMessage())
                             .build());
         }
     }
 
     @GetMapping("/searchTitle")
-    public ResponseEntity<ApiResponse> searchTitle(@RequestParam String keyword){
+    public ResponseEntity<ApiResponse> searchTitle(@RequestParam String keyword) {
         try {
             List<FlashcardSetResponseDTO> responseDTO = studentFlashcardSetService.searchTitle(keyword);
-            if(responseDTO.isEmpty()) {
+            if (responseDTO.isEmpty()) {
                 return ResponseEntity.ok(ApiResponse.builder()
-                                .success(false)
-                                .message("Not found FlashcardSet you need: " + keyword)
-                                .build());
+                        .success(true)
+                        .message("No active flashcard sets found for keyword: " + keyword)
+                        .data(Collections.emptyList())
+                        .build());
             }
             return ResponseEntity.ok(ApiResponse.builder()
-                            .success(true)
-                            .message("Here is FlashcardSet we thing we need!!")
-                            .data(responseDTO)
+                    .success(true)
+                    .message("Found flashcard sets for keyword: " + keyword)
+                    .data(responseDTO)
                     .build());
-        }
-        catch(Exception e) {
+        } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(ApiResponse.builder()
                             .success(false)
-                            .message("Failed to search Title: " + e.getMessage())
+                            .message("Failed to search flashcard sets: " + e.getMessage())
                             .build());
         }
     }
@@ -308,31 +291,43 @@ public class StudentFlashcardSetController {
     public ResponseEntity<ApiResponse> createFlashcardSetFromResource(
             @RequestHeader("Authorization") String authorizationHeader,
             @Valid @RequestBody CreateFlashcardSetFromResourceDTO request) {
-
         try {
-            if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
-                String token = authorizationHeader.substring(7);
-                Integer userId = jwtUtil.extractUserId(token);
-                Integer studentId = studentService.getStudentIdByUserId(userId);
-
-                FlashcardSetResponseDTO responseDTO = studentFlashcardSetService
-                        .createFlashcardSetFromResource(studentId, request);
-
-                return ResponseEntity.status(HttpStatus.CREATED)
-                        .body(ApiResponse.builder()
-                                .success(true)
-                                .message("Flashcard set created successfully from learning resource")
-                                .data(responseDTO)
-                                .build());
-            }
-            else throw new Exception("Authorization failed!");
+            Integer studentId = extractStudentId(authorizationHeader);
+            FlashcardSetResponseDTO responseDTO = studentFlashcardSetService.createFlashcardSetFromResource(studentId, request);
+            return ResponseEntity.status(HttpStatus.CREATED)
+                    .body(ApiResponse.builder()
+                            .success(true)
+                            .message("Flashcard set created successfully from learning resource")
+                            .data(responseDTO)
+                            .build());
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(ApiResponse.builder()
+                            .success(false)
+                            .message(e.getMessage())
+                            .build());
+        } catch (ResourceNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(ApiResponse.builder()
+                            .success(false)
+                            .message(e.getMessage())
+                            .build());
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(ApiResponse.builder()
                             .success(false)
-                            .message("Failed to create flashcard set: " + e.getMessage())
+                            .message("Internal Server Error: " + e.getMessage())
                             .build());
         }
     }
 
+    // Helper method to extract studentId from JWT
+    private Integer extractStudentId(String authorizationHeader) throws Exception {
+        if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
+            String token = authorizationHeader.substring(7);
+            Integer userId = jwtUtil.extractUserId(token);
+            return studentService.getStudentIdByUserId(userId);
+        }
+        throw new Exception("Authorization failed!");
+    }
 }

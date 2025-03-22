@@ -15,14 +15,12 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
-
 @Service
 @Transactional
 public class StudentQuizAttemptServiceImpl implements StudentQuizAttemptService {
 
     @Autowired
     private QuizRepository quizRepository;
-
     @Autowired
     private StudentQuizAttemptRepository studentQuizAttemptRepository;
     @Autowired
@@ -37,19 +35,35 @@ public class StudentQuizAttemptServiceImpl implements StudentQuizAttemptService 
     public QuizAttemptResponseDTO attemptQuiz(Integer studentId, QuizAttemptRequestDTO request) {
         Quiz quiz = quizRepository.findByQuizId(request.getQuizId());
         if (quiz == null || quiz.isDeleted()) {
-            throw new RuntimeException("Quiz ID not found!");
+            throw new IllegalArgumentException("Quiz not found or has been deleted.");
         }
 
-        int attemptNumber = studentQuizAttemptRepository.findByStudentStudentIdAndQuizQuizId(studentId, request.getQuizId()).size() + 1;
+        List<StudentQuizAttempt> attempts = studentQuizAttemptRepository.findByStudentStudentIdAndQuizQuizId(studentId, quiz.getQuizId());
+        int attemptNumber = attempts.size() + 1;
+
+        validateAttempt(studentId, quiz, attempts, attemptNumber);
         return processQuizAttempt(studentId, quiz, request, attemptNumber);
     }
 
+    @Override
+    public QuizAttemptResponseDTO retryFailedQuiz(Integer studentId, Integer quizId, QuizAttemptRequestDTO request) {
+        Quiz quiz = quizRepository.findByQuizId(quizId);
+        if (quiz == null || quiz.isDeleted()) {
+            throw new IllegalArgumentException("Quiz not found or has been deleted.");
+        }
+
+        List<StudentQuizAttempt> attempts = studentQuizAttemptRepository.findByStudentStudentIdAndQuizQuizId(studentId, quizId);
+        int attemptNumber = attempts.size() + 1;
+
+        validateAttempt(studentId, quiz, attempts, attemptNumber);
+        return processQuizAttempt(studentId, quiz, request, attemptNumber);
+    }
 
     @Override
     public QuizPerformanceReportDTO generatePerformanceReport(Integer studentId, Integer quizId) {
         Quiz quiz = quizRepository.findByQuizId(quizId);
         if (quiz == null || quiz.isDeleted()) {
-            throw new RuntimeException("Quiz ID not found!");
+            throw new IllegalArgumentException("Quiz not found or has been deleted.");
         }
 
         List<StudentQuizAttempt> attempts = studentQuizAttemptRepository.findByStudentStudentIdAndQuizQuizId(studentId, quizId);
@@ -59,7 +73,9 @@ public class StudentQuizAttemptServiceImpl implements StudentQuizAttemptService 
                 .score(attempt.getScore())
                 .isPassed(attempt.getIsPassed())
                 .dateTaken(attempt.getDateTaken())
+                .isCompleted(attempt.getIsCompleted())
                 .build()).collect(Collectors.toList());
+
         BigDecimal averageScore = attempts.isEmpty() ? BigDecimal.ZERO :
                 BigDecimal.valueOf(attempts.stream().mapToDouble(a -> a.getScore().doubleValue()).average().orElse(0));
         int passedAttempts = (int) attempts.stream().filter(StudentQuizAttempt::getIsPassed).count();
@@ -74,57 +90,51 @@ public class StudentQuizAttemptServiceImpl implements StudentQuizAttemptService 
                 .build();
     }
 
-    @Override
-    public QuizAttemptResponseDTO retryFailedQuiz(Integer studentId, Integer quizId, QuizAttemptRequestDTO request) {
-        Quiz quiz = quizRepository.findByQuizId(quizId);
-        if (quiz == null || quiz.isDeleted()) {
-            throw new RuntimeException("Quiz ID not found!");
+    private void validateAttempt(Integer studentId, Quiz quiz, List<StudentQuizAttempt> attempts, int attemptNumber) {
+        boolean hasPassed = attempts.stream().anyMatch(StudentQuizAttempt::getIsPassed);
+        if (hasPassed) {
+            throw new IllegalStateException("You have already passed this quiz and cannot attempt it again.");
         }
+        if (attemptNumber > MAX_ATTEMPTS) {
+            StudentQuizAttempt lastAttempt = attempts.stream()
+                    .max(Comparator.comparing(StudentQuizAttempt::getDateTaken))
+                    .orElseThrow(() -> new IllegalStateException("No previous attempts found."));
 
-        List<StudentQuizAttempt> attempt = studentQuizAttemptRepository.findByStudentStudentIdAndQuizQuizId(studentId, quizId);
-        int attemptNumber = attempt.size() + 1;
+            LocalDateTime lastAttemptTime = lastAttempt.getDateTaken();
+            LocalDateTime now = LocalDateTime.now();
+            long minutesSinceLastAttempt = lastAttemptTime.until(now, java.time.temporal.ChronoUnit.MINUTES);
 
-        if(attempt.size() >= MAX_ATTEMPTS) {
-            boolean hasPassed = attempt.stream().anyMatch(StudentQuizAttempt::getIsPassed);
-            if(!hasPassed) {
-                StudentQuizAttempt lastAttempt = attempt.stream()
-                        .max(Comparator.comparing(StudentQuizAttempt::getDateTaken))
-                        .orElseThrow(() -> new RuntimeException("No attempts found!"));
-
-                LocalDateTime lastAttemptTime = lastAttempt.getDateTaken();
-                LocalDateTime now = LocalDateTime.now();
-                long minutesSinceLastAttempt = lastAttemptTime.until(now, java.time.temporal.ChronoUnit.MINUTES);
-
-                if (minutesSinceLastAttempt  < WAIT_TIME_MINUTES) {
-                    long minutesToWait = WAIT_TIME_MINUTES - minutesSinceLastAttempt;
-                    throw new RuntimeException("You must wait  " + minutesToWait + " minutes before retrying this quiz.");
-                }
+            if (minutesSinceLastAttempt < WAIT_TIME_MINUTES) {
+                long minutesToWait = WAIT_TIME_MINUTES - minutesSinceLastAttempt;
+                throw new IllegalStateException("You have reached the maximum number of attempts (" + MAX_ATTEMPTS + "). Please wait " + minutesToWait + " minutes before retrying.");
             }
+            attemptNumber = 1;
         }
-        return processQuizAttempt(studentId, quiz, request, attemptNumber);
-
     }
+
     private QuizAttemptResponseDTO processQuizAttempt(Integer studentId, Quiz quiz, QuizAttemptRequestDTO request, int attemptNumber) {
         int correctAnswers = 0;
         for (QuizAnswerDTO answer : request.getAnswers()) {
             QuestionAnswerOption option = questionAnswerOptionRepository.findByOptionId(answer.getSelectedOptionId());
             if (option == null) {
-                throw new RuntimeException("Option ID not found!");
+                throw new IllegalArgumentException("Option ID " + answer.getSelectedOptionId() + " not found.");
             }
             if (option.isCorrect()) {
                 correctAnswers++;
             }
         }
 
-        BigDecimal score = BigDecimal.valueOf(correctAnswers).divide(BigDecimal.valueOf(quiz.getTotalQuestions()), 2, RoundingMode.HALF_UP);
+        BigDecimal score = BigDecimal.valueOf(correctAnswers)
+                .divide(BigDecimal.valueOf(quiz.getTotalQuestions()), 2, RoundingMode.HALF_UP);
         boolean isPassed = score.compareTo(quiz.getPassingScore()) >= 0;
+
         StudentQuizAttempt attempt = StudentQuizAttempt.builder()
                 .quiz(quiz)
                 .student(Student.builder().studentId(studentId).build())
                 .score(score)
                 .isPassed(isPassed)
                 .timeTaken(0)
-                .isCompleted(true)
+                .isCompleted(isPassed)
                 .attemptNumber(attemptNumber)
                 .dateTaken(LocalDateTime.now())
                 .build();
@@ -132,9 +142,6 @@ public class StudentQuizAttemptServiceImpl implements StudentQuizAttemptService 
 
         for (QuizAnswerDTO answerDTO : request.getAnswers()) {
             QuestionAnswerOption selectedOption = questionAnswerOptionRepository.findByOptionId(answerDTO.getSelectedOptionId());
-            if (selectedOption == null) {
-                throw new RuntimeException("Option ID not found!");
-            }
             QuizAnswerResponse response = QuizAnswerResponse.builder()
                     .studentQuizAttempt(attempt)
                     .selectedOption(selectedOption)
