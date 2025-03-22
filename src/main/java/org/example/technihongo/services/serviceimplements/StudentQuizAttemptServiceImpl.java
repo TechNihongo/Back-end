@@ -281,7 +281,7 @@ public class StudentQuizAttemptServiceImpl implements StudentQuizAttemptService 
                 .quizId(attempt.getQuiz().getQuizId())
                 .score(attempt.getScore().multiply(BigDecimal.valueOf(100)))
                 .isPassed(attempt.getIsPassed())
-                .timeTaken(attempt.getTimeTaken().toSecondOfDay())
+                .timeTaken(LocalTime.ofSecondOfDay(attempt.getTimeTaken().toSecondOfDay()))
                 .isCompleted(attempt.getIsCompleted())
                 .attemptNumber(attempt.getAttemptNumber())
                 .dateTaken(attempt.getDateTaken())
