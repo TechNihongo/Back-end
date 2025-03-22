@@ -9,4 +9,6 @@ import java.util.List;
 @Service
 public interface StudentQuizAttemptRepository extends JpaRepository<StudentQuizAttempt, Integer> {
     List<StudentQuizAttempt> findByStudentStudentIdAndQuizQuizId(Integer studentId, Integer quizId);
+    Integer countByStudentStudentIdAndQuizQuizIdAndIsPassedAndIsCompleted
+            (Integer studentId, Integer quizId, boolean isPassed, boolean isCompleted);
 }

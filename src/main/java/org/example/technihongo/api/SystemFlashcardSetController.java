@@ -6,6 +6,8 @@ import org.example.technihongo.dto.SystemFlashcardSetResponseDTO;
 import org.example.technihongo.exception.ResourceNotFoundException;
 import org.example.technihongo.exception.UnauthorizedAccessException;
 import org.example.technihongo.response.ApiResponse;
+import org.example.technihongo.services.interfaces.StudentFlashcardSetProgressService;
+import org.example.technihongo.services.interfaces.StudentService;
 import org.example.technihongo.services.interfaces.SystemFlashcardSetService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -23,6 +25,10 @@ public class SystemFlashcardSetController {
     private SystemFlashcardSetService systemFlashcardSetService;
     @Autowired
     private JwtUtil jwtUtil;
+    @Autowired
+    private StudentService studentService;
+    @Autowired
+    private StudentFlashcardSetProgressService studentFlashcardSetProgressService;
 
     @PostMapping("/create")
     public ResponseEntity<ApiResponse> create(
@@ -132,6 +138,13 @@ public class SystemFlashcardSetController {
             Integer userId = extractUserId(authorizationHeader);
             // Sử dụng getAllFlashcardsInSet để lấy đầy đủ thông tin và kiểm tra quyền truy cập
             SystemFlashcardSetResponseDTO response = systemFlashcardSetService.getAllFlashcardsInSet(userId, flashcardSetId);
+
+            // Hàm track progress, nào sửa cho Student vào thì bỏ comment
+//            Integer studentId = studentService.getStudentIdByUserId(userId);
+//            if(studentId != null) {
+//                studentFlashcardSetProgressService.trackFlashcardSetProgress(studentId, flashcardSetId, true, null);
+//            }
+
             return ResponseEntity.ok(ApiResponse.builder()
                     .success(true)
                     .message("System Flashcard Set retrieved successfully")
@@ -145,6 +158,12 @@ public class SystemFlashcardSetController {
                             .build());
         } catch (ResourceNotFoundException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(ApiResponse.builder()
+                            .success(false)
+                            .message(e.getMessage())
+                            .build());
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(ApiResponse.builder()
                             .success(false)
                             .message(e.getMessage())
@@ -192,6 +211,7 @@ public class SystemFlashcardSetController {
         }
     }
 
+    // HÀM NÀY KHÁC MÉO GÌ HÀM getSystemFlashcardSetById TRÊN ???
     @GetMapping("/getAllFlashcardOfSet/{setId}")
     public ResponseEntity<ApiResponse> getAllFlashcardsInSet(
             @RequestHeader("Authorization") String authorizationHeader,
@@ -212,6 +232,12 @@ public class SystemFlashcardSetController {
                             .build());
         } catch (ResourceNotFoundException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(ApiResponse.builder()
+                            .success(false)
+                            .message(e.getMessage())
+                            .build());
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(ApiResponse.builder()
                             .success(false)
                             .message(e.getMessage())

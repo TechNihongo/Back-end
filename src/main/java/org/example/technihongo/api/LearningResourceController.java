@@ -7,6 +7,8 @@ import org.example.technihongo.dto.LearningResourceStatusDTO;
 import org.example.technihongo.entities.LearningResource;;
 import org.example.technihongo.response.ApiResponse;
 import org.example.technihongo.services.interfaces.LearningResourceService;
+import org.example.technihongo.services.interfaces.StudentResourceProgressService;
+import org.example.technihongo.services.interfaces.StudentService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -22,6 +24,10 @@ public class LearningResourceController {
     private JwtUtil jwtUtil;
     @Autowired
     private LearningResourceService learningResourceService;
+    @Autowired
+    private StudentService studentService;
+    @Autowired
+    private StudentResourceProgressService studentResourceProgressService;
 
     @GetMapping("/all")
     public ResponseEntity<ApiResponse> getAllLearningResources() throws Exception {
@@ -56,6 +62,7 @@ public class LearningResourceController {
                 String token = authorizationHeader.substring(7);
                 int roleId = jwtUtil.extractUserRoleId(token);
                 Integer userId = jwtUtil.extractUserId(token);
+                Integer studentId = studentService.getStudentIdByUserId(userId);
 
                 if (roleId == 1 || roleId == 2) {
                     LearningResource learningResource = learningResourceService.getLearningResourceById(id);
@@ -67,6 +74,11 @@ public class LearningResourceController {
                 }
                 else{
                     LearningResource learningResource = learningResourceService.getPublicLearningResourceById(userId, id);
+
+                    if(studentId != null){
+                        studentResourceProgressService.trackLearningResourceProgress(studentId, id, null);
+                    }
+
                     return ResponseEntity.ok(ApiResponse.builder()
                             .success(true)
                             .message("Get LearningResource")

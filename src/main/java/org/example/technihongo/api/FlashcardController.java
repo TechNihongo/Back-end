@@ -3,7 +3,9 @@ package org.example.technihongo.api;
 import org.example.technihongo.core.security.JwtUtil;
 import org.example.technihongo.dto.FlashcardRequestDTO;
 import org.example.technihongo.dto.FlashcardResponseDTO;
+import org.example.technihongo.entities.StudentFlashcardProgress;
 import org.example.technihongo.response.ApiResponse;
+import org.example.technihongo.services.interfaces.FlashcardProgressService;
 import org.example.technihongo.services.interfaces.FlashcardService;
 import org.example.technihongo.services.interfaces.StudentService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,12 +20,12 @@ import java.util.List;
 public class FlashcardController {
     @Autowired
     private FlashcardService flashcardService;
-
     @Autowired
     private StudentService studentService;
-
     @Autowired
     private JwtUtil jwtUtil;
+    @Autowired
+    private FlashcardProgressService flashcardProgressService;
 
 
     @PostMapping("/{setId}/studentCreate")
@@ -161,14 +163,28 @@ public class FlashcardController {
     }
     @GetMapping("/getFlashcard/{flashcardId}")
     public ResponseEntity<ApiResponse> getFlashcard(
+            @RequestHeader("Authorization") String authorizationHeader,
             @PathVariable Integer flashcardId) {
         try {
-            FlashcardResponseDTO responseDTO = flashcardService.getFlashcardById(flashcardId);
-            return ResponseEntity.ok(ApiResponse.builder()
-                            .success(true)
-                            .message("Flashcard retrieved successfully")
-                            .data(responseDTO)
-                            .build());
+            if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
+                String token = authorizationHeader.substring(7);
+                Integer userId = jwtUtil.extractUserId(token);
+                Integer studentId = studentService.getStudentIdByUserId(userId);
+
+                FlashcardResponseDTO responseDTO = flashcardService.getFlashcardById(flashcardId);
+
+                if(studentId != null){
+                    flashcardProgressService.updateFlashcardProgress(studentId, flashcardId, null);
+                }
+
+                return ResponseEntity.ok(ApiResponse.builder()
+                                .success(true)
+                                .message("Flashcard retrieved successfully")
+                                .data(responseDTO)
+                                .build());
+            } else {
+                throw new Exception("Authorization failed!");
+            }
 
         } catch (RuntimeException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
