@@ -120,7 +120,7 @@ public class StudentQuizAttemptController {
         }
     }
 
-    // Helper method to extract studentId from JWT
+
     private Integer extractStudentId(String authorizationHeader) throws Exception {
         if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
             String token = authorizationHeader.substring(7);
