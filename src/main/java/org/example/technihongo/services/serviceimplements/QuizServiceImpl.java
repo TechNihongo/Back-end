@@ -74,11 +74,6 @@ public class QuizServiceImpl implements QuizService {
         User user = userRepository.findById(creatorId).orElseThrow(()
                 -> new RuntimeException("User ID not found!"));
 
-//        Domain domain = domainRepository.findById(createQuizDTO.getDomainId())
-//                .orElseThrow(() -> new RuntimeException("Domain ID not found!"));
-//        if(domain.getParentDomain() == null){
-//            throw new RuntimeException("Cannot assign parent domain!");
-//        }
 
         DifficultyLevel difficultyLevel = difficultyLevelRepository.findById(createQuizDTO.getDifficultyLevelId())
                 .orElseThrow(() -> new RuntimeException("DifficultyLevel ID not found!"));

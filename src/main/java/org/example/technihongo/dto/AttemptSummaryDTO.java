@@ -16,4 +16,5 @@ public class AttemptSummaryDTO {
     private BigDecimal score;
     private boolean isPassed;
     private LocalDateTime dateTaken;
+    private Boolean isCompleted;
 }
