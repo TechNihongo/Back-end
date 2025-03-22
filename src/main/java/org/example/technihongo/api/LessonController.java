@@ -1,10 +1,12 @@
 package org.example.technihongo.api;
 
 import lombok.RequiredArgsConstructor;
+import org.example.technihongo.core.security.JwtUtil;
 import org.example.technihongo.dto.*;
 import org.example.technihongo.entities.Lesson;
 import org.example.technihongo.response.ApiResponse;
 import org.example.technihongo.services.interfaces.LessonService;
+import org.example.technihongo.services.interfaces.StudentService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -19,23 +21,48 @@ import java.util.Optional;
 public class LessonController {
     @Autowired
     private LessonService lessonService;
+    @Autowired
+    private JwtUtil jwtUtil;
+    @Autowired
+    private StudentService studentService;
 
     @GetMapping("/{id}")
-    public ResponseEntity<ApiResponse> getLessonById(@PathVariable Integer id) throws Exception {
+    public ResponseEntity<ApiResponse> getLessonById(
+            @PathVariable Integer id,
+            @RequestHeader("Authorization") String authorizationHeader) throws Exception {
         try{
-            Optional<Lesson> lesson = lessonService.getLessonById(id);
-            if(lesson.isEmpty()){
-                return ResponseEntity.ok(ApiResponse.builder()
-                        .success(false)
-                        .message("Lesson not found!")
-                        .build());
-            }else{
-                return ResponseEntity.ok(ApiResponse.builder()
-                        .success(true)
-                        .message("Get Lesson")
-                        .data(lesson)
-                        .build());
+            if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
+                String token = authorizationHeader.substring(7);
+                Integer userId = jwtUtil.extractUserId(token);
+                Integer studentId = studentService.getStudentIdByUserId(userId);
+
+                Optional<Lesson> lesson = lessonService.getLessonById(id);
+
+                if(studentId != null) {
+                    lessonService.checkLessonProgressPrerequisite(studentId, id);
+                }
+
+                if(lesson.isEmpty()){
+                    return ResponseEntity.ok(ApiResponse.builder()
+                            .success(false)
+                            .message("Lesson not found!")
+                            .build());
+                }else{
+                    return ResponseEntity.ok(ApiResponse.builder()
+                            .success(true)
+                            .message("Get Lesson")
+                            .data(lesson)
+                            .build());
+                }
+            } else {
+                throw new Exception("Authorization failed!");
             }
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(ApiResponse.builder()
+                            .success(false)
+                            .message(e.getMessage())
+                            .build());
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(ApiResponse.builder()

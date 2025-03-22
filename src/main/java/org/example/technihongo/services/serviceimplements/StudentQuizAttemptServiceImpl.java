@@ -214,6 +214,7 @@ public class StudentQuizAttemptServiceImpl implements StudentQuizAttemptService 
                 .divide(BigDecimal.valueOf(quiz.getTotalQuestions()), 2, RoundingMode.HALF_UP);
         boolean isPassed = score.compareTo(quiz.getPassingScore()) >= 0;
 
+
         LocalTime timeTaken = calculateTimeTaken(attempt);
 
         attempt.setScore(score);
@@ -280,7 +281,7 @@ public class StudentQuizAttemptServiceImpl implements StudentQuizAttemptService 
                 .quizId(attempt.getQuiz().getQuizId())
                 .score(attempt.getScore().multiply(BigDecimal.valueOf(100)))
                 .isPassed(attempt.getIsPassed())
-                .timeTaken(attempt.getTimeTaken().toSecondOfDay())
+                .timeTaken(LocalTime.ofSecondOfDay(attempt.getTimeTaken().toSecondOfDay()))
                 .isCompleted(attempt.getIsCompleted())
                 .attemptNumber(attempt.getAttemptNumber())
                 .dateTaken(attempt.getDateTaken())
