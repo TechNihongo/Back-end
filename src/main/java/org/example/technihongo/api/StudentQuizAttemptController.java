@@ -153,7 +153,6 @@ public class StudentQuizAttemptController {
                             .build());
         }
     }
-
     private Integer extractStudentId(String authorizationHeader) throws Exception {
         if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
             String token = authorizationHeader.substring(7);
