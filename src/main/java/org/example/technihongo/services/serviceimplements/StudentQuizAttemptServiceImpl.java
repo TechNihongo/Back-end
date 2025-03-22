@@ -12,6 +12,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -138,7 +139,7 @@ public class StudentQuizAttemptServiceImpl implements StudentQuizAttemptService 
                 .student(Student.builder().studentId(studentId).build())
                 .score(score)
                 .isPassed(isPassed)
-                .timeTaken(0)
+                .timeTaken(LocalTime.parse("00:00:00"))
                 .isCompleted(isPassed)
                 .attemptNumber(attemptNumber)
                 .dateTaken(LocalDateTime.now())

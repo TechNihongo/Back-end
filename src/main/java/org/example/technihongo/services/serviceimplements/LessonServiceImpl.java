@@ -6,8 +6,11 @@ import org.example.technihongo.dto.PageResponseDTO;
 import org.example.technihongo.dto.UpdateLessonDTO;
 import org.example.technihongo.dto.UpdateLessonOrderDTO;
 import org.example.technihongo.entities.Course;
+import org.example.technihongo.entities.StudentLessonProgress;
 import org.example.technihongo.entities.StudyPlan;
 import org.example.technihongo.entities.Lesson;
+import org.example.technihongo.enums.CompletionStatus;
+import org.example.technihongo.repositories.StudentLessonProgressRepository;
 import org.example.technihongo.repositories.StudyPlanRepository;
 import org.example.technihongo.repositories.LessonRepository;
 import org.example.technihongo.services.interfaces.LessonService;
@@ -32,6 +35,8 @@ public class LessonServiceImpl implements LessonService {
     private LessonRepository lessonRepository;
     @Autowired
     private StudyPlanRepository studyPlanRepository;
+    @Autowired
+    private StudentLessonProgressRepository studentLessonProgressRepository;
 
     @Override
     public Optional<Lesson> getLessonById(Integer lessonId) {
@@ -114,6 +119,17 @@ public class LessonServiceImpl implements LessonService {
         }
 
         return getPageResponseDTO(lessons);
+    }
+
+    @Override
+    public void checkLessonProgressPrerequisite(Integer studentId, Integer lessonId) {
+        StudentLessonProgress progress = studentLessonProgressRepository
+                .findByStudentStudentIdAndLessonLessonId(studentId, lessonId)
+                .orElseThrow(() -> new RuntimeException("Lesson progress not found for student ID: " + studentId));
+
+        if (progress.getCompletionStatus().equals(CompletionStatus.NOT_STARTED)) {
+            throw new RuntimeException("This lesson is not yet available to view!");
+        }
     }
 
     private PageResponseDTO<Lesson> getPageResponseDTO(Page<Lesson> page) {

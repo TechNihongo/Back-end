@@ -4,6 +4,7 @@ import lombok.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 
 @Getter
 @Setter
@@ -15,7 +16,7 @@ public class QuizAttemptResponseDTO {
     private Integer quizId;
     private BigDecimal score;
     private boolean isPassed;
-    private Integer timeTaken;
+    private LocalTime timeTaken;
     private boolean isCompleted;
     private Integer attemptNumber;
     private LocalDateTime dateTaken;
