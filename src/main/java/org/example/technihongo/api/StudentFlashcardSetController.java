@@ -8,6 +8,7 @@ import org.example.technihongo.dto.FlashcardSetResponseDTO;
 import org.example.technihongo.exception.ResourceNotFoundException;
 import org.example.technihongo.exception.UnauthorizedAccessException;
 import org.example.technihongo.response.ApiResponse;
+import org.example.technihongo.services.interfaces.StudentFlashcardSetProgressService;
 import org.example.technihongo.services.interfaces.StudentFlashcardSetService;
 import org.example.technihongo.services.interfaces.StudentService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,6 +28,8 @@ public class StudentFlashcardSetController {
     private JwtUtil jwtUtil;
     @Autowired
     private StudentService studentService;
+    @Autowired
+    private StudentFlashcardSetProgressService studentFlashcardSetProgressService;
 
     @PostMapping("/create")
     public ResponseEntity<ApiResponse> createFlashcardSet(
@@ -136,6 +139,11 @@ public class StudentFlashcardSetController {
             Integer studentId = extractStudentId(authorizationHeader);
 
             FlashcardSetResponseDTO response = studentFlashcardSetService.getAllFlashcardsInSet(studentId, flashcardSetId);
+
+            if(studentId != null){
+                studentFlashcardSetProgressService.trackFlashcardSetProgress(studentId, flashcardSetId, false, null);
+            }
+
             return ResponseEntity.ok(ApiResponse.builder()
                     .success(true)
                     .message("Flashcard set retrieved successfully")
@@ -149,6 +157,12 @@ public class StudentFlashcardSetController {
                             .build());
         } catch (ResourceNotFoundException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(ApiResponse.builder()
+                            .success(false)
+                            .message(e.getMessage())
+                            .build());
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(ApiResponse.builder()
                             .success(false)
                             .message(e.getMessage())
