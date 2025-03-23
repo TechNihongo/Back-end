@@ -20,6 +20,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -107,23 +109,56 @@ public class PathCourseServiceImpl implements PathCourseService {
 
     @Override
     public void updatePathCourseOrder(Integer pathId, UpdatePathCourseOrderDTO updatePathCourseOrderDTO) {
-        if(learningPathRepository.findByPathId(pathId) == null){
+        if (learningPathRepository.findByPathId(pathId) == null) {
             throw new RuntimeException("LearningPath ID not found!");
         }
 
-        List<PathCourse> pathCourses = pathCourseRepository.findByLearningPath_PathIdOrderByCourseOrderAsc(pathId);
-        List<Integer> newOrder = updatePathCourseOrderDTO.getNewPathCourseOrder();
+        List<PathCourse> pathCourses = pathCourseRepository.findByLearningPath_PathId(pathId);
+        List<UpdatePathCourseOrderDTO.PathCourseOrderItem> newOrders = updatePathCourseOrderDTO.getNewPathCourseOrders();
 
-        if (pathCourses.size() != newOrder.size()) {
-            throw new IllegalArgumentException("PathCourse count does not match newOrder!");
+        if (pathCourses.size() != newOrders.size()) {
+            throw new RuntimeException("PathCourse count does not match newOrder!");
         }
 
-        for (int i = 0; i < pathCourses.size(); i++) {
-            pathCourses.get(i).setCourseOrder(newOrder.get(i));
+        Set<Integer> existingIds = pathCourses.stream()
+                .map(PathCourse::getPathCourseId)
+                .collect(Collectors.toSet());
+        for (UpdatePathCourseOrderDTO.PathCourseOrderItem item : newOrders) {
+            if (!existingIds.contains(item.getPathCourseId())) {
+                throw new RuntimeException("Invalid pathCourseId: " + item.getPathCourseId());
+            }
+        }
+
+        for (UpdatePathCourseOrderDTO.PathCourseOrderItem item : newOrders) {
+            PathCourse pathCourse = pathCourses.stream()
+                    .filter(pc -> pc.getPathCourseId().equals(item.getPathCourseId()))
+                    .findFirst()
+                    .orElseThrow(() -> new RuntimeException("PathCourse not found!"));
+            pathCourse.setCourseOrder(item.getCourseOrder());
         }
 
         pathCourseRepository.saveAll(pathCourses);
     }
+
+//    @Override
+//    public void updatePathCourseOrder(Integer pathId, UpdatePathCourseOrderDTO updatePathCourseOrderDTO) {
+//        if(learningPathRepository.findByPathId(pathId) == null){
+//            throw new RuntimeException("LearningPath ID not found!");
+//        }
+//
+//        List<PathCourse> pathCourses = pathCourseRepository.findByLearningPath_PathIdOrderByCourseOrderAsc(pathId);
+//        List<Integer> newOrder = updatePathCourseOrderDTO.getNewPathCourseOrder();
+//
+//        if (pathCourses.size() != newOrder.size()) {
+//            throw new IllegalArgumentException("PathCourse count does not match newOrder!");
+//        }
+//
+//        for (int i = 0; i < pathCourses.size(); i++) {
+//            pathCourses.get(i).setCourseOrder(newOrder.get(i));
+//        }
+//
+//        pathCourseRepository.saveAll(pathCourses);
+//    }
 
     @Override
     @Transactional

@@ -1,14 +1,20 @@
 package org.example.technihongo.dto;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.util.List;
 
-@Data
+@Getter
+@Setter
+@Builder
 @AllArgsConstructor
 @NoArgsConstructor
 public class UpdatePathCourseOrderDTO {
-    private List<Integer> newPathCourseOrder;
+    private List<PathCourseOrderItem> newPathCourseOrders;
+
+    @Data
+    public static class PathCourseOrderItem {
+        private Integer pathCourseId;
+        private Integer courseOrder;
+    }
 }
