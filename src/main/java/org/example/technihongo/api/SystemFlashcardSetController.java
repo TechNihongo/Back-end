@@ -139,11 +139,11 @@ public class SystemFlashcardSetController {
             // Sử dụng getAllFlashcardsInSet để lấy đầy đủ thông tin và kiểm tra quyền truy cập
             SystemFlashcardSetResponseDTO response = systemFlashcardSetService.getAllFlashcardsInSet(userId, flashcardSetId);
 
-            // Hàm track progress, nào sửa cho Student vào thì bỏ comment
-//            Integer studentId = studentService.getStudentIdByUserId(userId);
-//            if(studentId != null) {
-//                studentFlashcardSetProgressService.trackFlashcardSetProgress(studentId, flashcardSetId, true, null);
-//            }
+            // Hàm track progress cho Student
+            Integer studentId = studentService.getStudentIdByUserId(userId);
+            if(studentId != null) {
+                studentFlashcardSetProgressService.trackFlashcardSetProgress(studentId, flashcardSetId, true, null);
+            }
 
             return ResponseEntity.ok(ApiResponse.builder()
                     .success(true)

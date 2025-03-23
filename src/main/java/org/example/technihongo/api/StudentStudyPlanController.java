@@ -5,6 +5,7 @@ import org.example.technihongo.dto.EnrollStudyPlanRequest;
 import org.example.technihongo.dto.StudentStudyPlanDTO;
 import org.example.technihongo.dto.StudyPlanDTO;
 import org.example.technihongo.dto.SwitchStudyPlanRequestDTO;
+import org.example.technihongo.exception.ResourceNotFoundException;
 import org.example.technihongo.response.ApiResponse;
 import org.example.technihongo.services.interfaces.StudentStudyPlanService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -47,6 +48,18 @@ public class StudentStudyPlanController {
                     .message("Study plan successfully switched")
                     .data(newPlan)
                     .build());
+        } catch (ResourceNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(ApiResponse.builder()
+                            .success(false)
+                            .message(e.getMessage())
+                            .build());
+        } catch (IllegalStateException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(ApiResponse.builder()
+                            .success(false)
+                            .message(e.getMessage())
+                            .build());
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(ApiResponse.builder()

@@ -1,6 +1,7 @@
 package org.example.technihongo.services.serviceimplements;
 
 import lombok.RequiredArgsConstructor;
+import org.apache.tomcat.util.digester.Rule;
 import org.example.technihongo.dto.CreateLessonDTO;
 import org.example.technihongo.dto.PageResponseDTO;
 import org.example.technihongo.dto.UpdateLessonDTO;
@@ -10,6 +11,7 @@ import org.example.technihongo.entities.StudentLessonProgress;
 import org.example.technihongo.entities.StudyPlan;
 import org.example.technihongo.entities.Lesson;
 import org.example.technihongo.enums.CompletionStatus;
+import org.example.technihongo.repositories.CourseRepository;
 import org.example.technihongo.repositories.StudentLessonProgressRepository;
 import org.example.technihongo.repositories.StudyPlanRepository;
 import org.example.technihongo.repositories.LessonRepository;
@@ -37,6 +39,8 @@ public class LessonServiceImpl implements LessonService {
     private StudyPlanRepository studyPlanRepository;
     @Autowired
     private StudentLessonProgressRepository studentLessonProgressRepository;
+    @Autowired
+    private CourseRepository courseRepository;
 
     @Override
     public Optional<Lesson> getLessonById(Integer lessonId) {
@@ -130,6 +134,24 @@ public class LessonServiceImpl implements LessonService {
         if (progress.getCompletionStatus().equals(CompletionStatus.NOT_STARTED)) {
             throw new RuntimeException("This lesson is not yet available to view!");
         }
+
+        if (progress.getCompletionStatus().equals(CompletionStatus.PAUSED)) {
+            throw new RuntimeException("This lesson is not available as it belongs to other StudyPlan!");
+        }
+    }
+
+    @Override
+    public Integer getCourseIdByLessonId(Integer lessonId) {
+        Lesson lesson = lessonRepository.findById(lessonId)
+                .orElseThrow(() -> new RuntimeException("Lesson not found!"));
+
+        StudyPlan studyPlan = studyPlanRepository.findById(lesson.getStudyPlan().getStudyPlanId())
+                .orElseThrow(() -> new RuntimeException("StudyPlan not found!"));
+
+        Course course = courseRepository.findById(studyPlan.getCourse().getCourseId())
+                .orElseThrow(() -> new RuntimeException("Course not found!"));
+
+        return course.getCourseId();
     }
 
     private PageResponseDTO<Lesson> getPageResponseDTO(Page<Lesson> page) {

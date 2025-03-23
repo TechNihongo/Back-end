@@ -4,8 +4,11 @@ import lombok.RequiredArgsConstructor;
 import org.example.technihongo.core.security.JwtUtil;
 import org.example.technihongo.dto.*;
 import org.example.technihongo.entities.Course;
+import org.example.technihongo.entities.StudentCourseProgress;
 import org.example.technihongo.response.ApiResponse;
 import org.example.technihongo.services.interfaces.CourseService;
+import org.example.technihongo.services.interfaces.StudentCourseProgressService;
+import org.example.technihongo.services.interfaces.StudentService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -22,6 +25,10 @@ public class CourseController {
     private CourseService courseService;
     @Autowired
     private JwtUtil jwtUtil;
+    @Autowired
+    private StudentService studentService;
+    @Autowired
+    private StudentCourseProgressService studentCourseProgressService;
 
     @GetMapping("/all")
     public ResponseEntity<ApiResponse> getAllCourses(@RequestHeader("Authorization") String authorizationHeader) throws Exception {
@@ -95,7 +102,10 @@ public class CourseController {
                     }
                 }
                 else{
+                    Integer studentId = studentService.getStudentIdByUserId(jwtUtil.extractUserId(token));
+                    studentCourseProgressService.trackStudentCourseProgress(studentId, id, null);
                     Optional<CoursePublicDTO> course = courseService.getPublicCourseById(id);
+
                     if(course.isEmpty()){
                         return ResponseEntity.ok(ApiResponse.builder()
                                 .success(false)
@@ -111,6 +121,12 @@ public class CourseController {
                 }
             }
             else throw new Exception("Authorization failed!");
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(ApiResponse.builder()
+                            .success(false)
+                            .message(e.getMessage())
+                            .build());
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(ApiResponse.builder()
