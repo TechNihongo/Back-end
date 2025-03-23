@@ -14,6 +14,7 @@ import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
@@ -104,6 +105,74 @@ public class StudentQuizAttemptServiceImpl implements StudentQuizAttemptService 
         newAttempt = studentQuizAttemptRepository.save(newAttempt);
 
         return processQuizAttempt(newAttempt, quiz, request);
+    }
+
+    @Override
+    public List<StudentQuizAttempt> getTopAndRecentQuizAttempts(Integer studentId, Integer quizId) {
+        validateInput(studentId, quizId);
+        getValidQuiz(quizId);
+
+        List<StudentQuizAttempt> allAttempts = studentQuizAttemptRepository
+                .findByStudentStudentIdAndQuizQuizId(studentId, quizId);
+
+        if (allAttempts.isEmpty()) {
+            throw new RuntimeException("No quiz attempts found for student ID: " + studentId + " and quiz ID: " + quizId);
+        }
+
+        StudentQuizAttempt topAttempt = allAttempts.stream()
+                .max(Comparator.comparing(StudentQuizAttempt::getScore))
+                .orElse(null);
+
+        List<StudentQuizAttempt> recentAttempts = allAttempts.stream()
+                .sorted(Comparator.comparing(StudentQuizAttempt::getDateTaken).reversed())
+                .limit(3)
+                .filter(attempt -> !attempt.equals(topAttempt))
+                .toList();
+
+        List<StudentQuizAttempt> selectedAttempts = new ArrayList<>();
+        selectedAttempts.add(topAttempt);
+        selectedAttempts.addAll(recentAttempts);
+        selectedAttempts = selectedAttempts.stream().distinct().limit(4).collect(Collectors.toList());
+        return selectedAttempts;
+    }
+
+    @Override
+    public ReviewQuizAttemptDTO reviewQuizAttempt(Integer studentId, Integer attemptId) {
+        if (studentId == null || attemptId == null) {
+            throw new RuntimeException("Student ID and Attempt ID must not be null.");
+        }
+
+        StudentQuizAttempt attempt = studentQuizAttemptRepository.findById(attemptId)
+                .orElseThrow(() -> new RuntimeException("Quiz attempt not found with ID: " + attemptId));
+
+        if (!attempt.getStudent().getStudentId().equals(studentId)) {
+            throw new RuntimeException("This quiz attempt does not belong to the current student.");
+        }
+
+        List<QuizAnswerResponse> responses = quizAnswerResponseRepository.findByStudentQuizAttempt_AttemptId(attemptId);
+        List<AnswerReviewDTO> answerReviews = responses.stream()
+                .map(response -> AnswerReviewDTO.builder()
+                        .questionId(response.getSelectedOption().getQuestion().getQuestionId())
+                        .questionText(response.getSelectedOption().getQuestion().getQuestionText())
+                        .selectedOptionId(response.getSelectedOption().getOptionId())
+                        .selectedOptionText(response.getSelectedOption().getOptionText())
+                        .isCorrect(response.isCorrect())
+                        .explanation(response.getSelectedOption().getQuestion().getExplanation())
+                        .build())
+                .collect(Collectors.toList());
+
+        return ReviewQuizAttemptDTO.builder()
+                .attemptId(attempt.getAttemptId())
+                .quizId(attempt.getQuiz().getQuizId())
+                .quizTitle(attempt.getQuiz().getTitle())
+                .score(attempt.getScore().multiply(BigDecimal.valueOf(100)))
+                .isPassed(attempt.getIsPassed())
+                .timeTaken(attempt.getTimeTaken())
+                .isCompleted(attempt.getIsCompleted())
+                .attemptNumber(attempt.getAttemptNumber())
+                .dateTaken(attempt.getDateTaken())
+                .answers(answerReviews)
+                .build();
     }
 
     @Override
