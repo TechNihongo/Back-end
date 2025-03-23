@@ -2,6 +2,8 @@ package org.example.technihongo.entities;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.example.technihongo.enums.ActivityType;
+import org.example.technihongo.enums.ContentType;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDateTime;
@@ -24,11 +26,13 @@ public class UserActivityLog {
     @JoinColumn(name = "user_id", nullable = false, referencedColumnName = "user_id")
     private User user;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "activity_type", length = 100, nullable = false)
-    private String activityType;
+    private ActivityType activityType;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "content_type", length = 50)
-    private String contentType;
+    private ContentType contentType;
 
     @Column(name = "content_id")
     private Integer contentId;
