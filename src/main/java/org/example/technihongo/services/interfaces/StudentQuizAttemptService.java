@@ -1,9 +1,9 @@
 package org.example.technihongo.services.interfaces;
 
-import org.example.technihongo.dto.QuizAttemptRequestDTO;
-import org.example.technihongo.dto.QuizAttemptResponseDTO;
-import org.example.technihongo.dto.QuizPerformanceReportDTO;
-import org.example.technihongo.dto.StartQuizResponseDTO;
+import org.example.technihongo.dto.*;
+import org.example.technihongo.entities.StudentQuizAttempt;
+
+import java.util.List;
 
 public interface StudentQuizAttemptService {
 
@@ -15,4 +15,6 @@ public interface StudentQuizAttemptService {
 
     QuizAttemptResponseDTO retryFailedQuiz(Integer studentId, Integer quizId, QuizAttemptRequestDTO request);
 
+    List<StudentQuizAttempt> getTopAndRecentQuizAttempts(Integer studentId, Integer quizId);
+    ReviewQuizAttemptDTO reviewQuizAttempt(Integer studentId, Integer attemptId);
 }
