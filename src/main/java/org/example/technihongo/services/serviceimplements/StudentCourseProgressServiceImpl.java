@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.example.technihongo.dto.CourseStatisticsDTO;
 import org.example.technihongo.entities.*;
 import org.example.technihongo.enums.CompletionStatus;
+import org.example.technihongo.enums.StudyPlanStatus;
 import org.example.technihongo.repositories.*;
 import org.example.technihongo.services.interfaces.StudentCourseProgressService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,7 +13,6 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -63,8 +63,31 @@ public class StudentCourseProgressServiceImpl implements StudentCourseProgressSe
         Course course = courseRepository.findById(courseId)
                 .orElseThrow(() -> new RuntimeException("Course not found with ID: " + courseId));
 
+        List<StudentCourseProgress> progresses = studentCourseProgressRepository.findByCourse_CourseId(courseId);
+
         long completedCount = studentCourseProgressRepository
                 .countByCourse_CourseIdAndCompletionStatus(courseId, CompletionStatus.COMPLETED);
+
+        int totalEnrollments = course.getEnrollmentCount();
+
+        BigDecimal averageCompletionPercentage;
+        if (totalEnrollments == 0) {
+            averageCompletionPercentage = BigDecimal.ZERO;
+        } else {
+            BigDecimal totalPercentage = progresses.stream()
+                    .map(StudentCourseProgress::getCompletionPercentage)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+            averageCompletionPercentage = totalPercentage.divide(BigDecimal.valueOf(totalEnrollments), 2, RoundingMode.HALF_UP);
+        }
+
+        BigDecimal completedPercentage;
+        if (totalEnrollments == 0) {
+            completedPercentage = BigDecimal.ZERO;
+        } else {
+            completedPercentage = BigDecimal.valueOf(completedCount)
+                    .divide(BigDecimal.valueOf(totalEnrollments), 2, RoundingMode.HALF_UP)
+                    .multiply(BigDecimal.valueOf(100));
+        }
 
         return CourseStatisticsDTO.builder()
                 .courseId(course.getCourseId())
@@ -78,6 +101,8 @@ public class StudentCourseProgressServiceImpl implements StudentCourseProgressSe
                 .isPremium(course.isPremium())
                 .createdAt(course.getCreatedAt())
                 .completedCount((int) completedCount)
+                .averageCompletionPercentage(averageCompletionPercentage)
+                .completedPercentage(completedPercentage)
                 .build();
     }
 
@@ -131,10 +156,16 @@ public class StudentCourseProgressServiceImpl implements StudentCourseProgressSe
     public void trackStudentCourseProgress(Integer studentId, Integer courseId, Integer currentLessonId) {
         StudentCourseProgress progress = studentCourseProgressRepository
                 .findByStudent_StudentIdAndCourse_CourseId(studentId, courseId)
-                .orElseThrow(() -> new RuntimeException("Course progress not found"));
+                .orElseThrow(() -> new RuntimeException("Student not yet enroll in this course!"));
 
         if (progress.getCompletionStatus().equals(CompletionStatus.COMPLETED)) {
-            return; // Không cập nhật nếu đã COMPLETED
+            if (currentLessonId != null) {
+                Lesson currentLesson = lessonRepository.findById(currentLessonId)
+                        .orElseThrow(() -> new RuntimeException("Lesson not found"));
+                progress.setCurrentLesson(currentLesson);
+            }
+            studentCourseProgressRepository.save(progress);
+            return;
         }
 
         StudentStudyPlan activePlan = studentStudyPlanRepository.findActiveStudyPlanByStudentId(studentId)
@@ -170,6 +201,10 @@ public class StudentCourseProgressServiceImpl implements StudentCourseProgressSe
         }
 
         if (completedLessons == totalLessons) {
+            StudentStudyPlan studentStudyPlan = studentStudyPlanRepository.findActiveStudyPlanByStudentIdAndCourseId(studentId, courseId).get();
+            studentStudyPlan.setStatus(StudyPlanStatus.COMPLETED);
+            studentStudyPlanRepository.save(studentStudyPlan);
+
             progress.setCompletionStatus(CompletionStatus.COMPLETED);
             progress.setCompletedDate(LocalDateTime.now());
 

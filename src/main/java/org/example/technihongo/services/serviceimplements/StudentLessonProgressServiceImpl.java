@@ -41,6 +41,10 @@ public class StudentLessonProgressServiceImpl implements StudentLessonProgressSe
     private StudentDailyLearningLogRepository dailyLogRepository;
     @Autowired
     private StudentLearningStatisticsRepository statisticsRepository;
+    @Autowired
+    private StudentRepository studentRepository;
+    @Autowired
+    private StudyPlanRepository studyPlanRepository;
 
     @Override
     public void trackStudentLessonProgress(Integer studentId, Integer lessonId) {
@@ -48,8 +52,14 @@ public class StudentLessonProgressServiceImpl implements StudentLessonProgressSe
                 .findByStudentStudentIdAndLessonLessonId(studentId, lessonId)
                 .orElseThrow(() -> new RuntimeException("Lesson progress not found"));
 
-        if (!progress.getCompletionStatus().equals(CompletionStatus.IN_PROGRESS)) {
-            throw new IllegalStateException("Lesson is not in progress!");
+//        if (!progress.getCompletionStatus().equals(CompletionStatus.IN_PROGRESS)) {
+//            throw new IllegalStateException("Lesson is not in progress!");
+//        }
+
+        if (progress.getCompletionStatus().equals(CompletionStatus.COMPLETED)) {
+            progress.setLastStudied(LocalDateTime.now());
+            studentLessonProgressRepository.save(progress);
+            return;
         }
 
         List<LessonResource> resources = lessonResourceRepository.findByLesson_LessonIdOrderByTypeOrderAsc(lessonId);
@@ -57,19 +67,19 @@ public class StudentLessonProgressServiceImpl implements StudentLessonProgressSe
         int completedItems = 0;
 
         for (LessonResource resource : resources) {
-            if (resource.getQuiz().getQuizId() != null) {
+            if (resource.getQuiz() != null) {
                 Quiz quiz = quizRepository.findById(resource.getQuiz().getQuizId()).get();
                 if (quiz.isPublic() && studentQuizAttemptRepository
                         .existsByStudentStudentIdAndQuizQuizIdAndIsPassedAndIsCompleted(studentId, resource.getQuiz().getQuizId(), true, true)) {
                     completedItems++;
                 }
-            } else if (resource.getSystemFlashCardSet().getSystemSetId() != null) {
+            } else if (resource.getSystemFlashCardSet() != null) {
                 SystemFlashcardSet set = systemFlashcardSetRepository.findById(resource.getSystemFlashCardSet().getSystemSetId()).get();
                 if (set.isPublic() && studentFlashcardSetProgressRepository
                         .existsByStudentStudentIdAndSystemFlashcardSetSystemSetIdAndCompletionStatus(studentId, resource.getSystemFlashCardSet().getSystemSetId(), CompletionStatus.COMPLETED)) {
                     completedItems++;
                 }
-            } else if (resource.getLearningResource().getResourceId() != null) {
+            } else if (resource.getLearningResource() != null) {
                 LearningResource lr = learningResourceRepository.findById(resource.getLearningResource().getResourceId()).get();
                 if (lr.isPublic() && studentResourceProgressRepository
                         .existsByStudentStudentIdAndLearningResourceResourceIdAndCompletionStatus(studentId, resource.getLearningResource().getResourceId(), CompletionStatus.COMPLETED)) {
@@ -91,11 +101,11 @@ public class StudentLessonProgressServiceImpl implements StudentLessonProgressSe
             progress.setCompletionStatus(CompletionStatus.COMPLETED);
 
             StudentDailyLearningLog dailyLog = dailyLogRepository.findByStudentStudentIdAndLogDate(studentId, LocalDate.now()).get();
-            dailyLog.setCompletedQuizzes(dailyLog.getCompletedQuizzes() + 1);
+            dailyLog.setCompletedLessons(dailyLog.getCompletedLessons() + 1);
             dailyLogRepository.save(dailyLog);
 
             StudentLearningStatistics statistics = statisticsRepository.findByStudentStudentId(studentId).get();
-            statistics.setTotalCompletedQuizzes(statistics.getTotalCompletedCourses() + 1);
+            statistics.setTotalCompletedLessons(statistics.getTotalCompletedLessons() + 1);
             statisticsRepository.save(statistics);
 
             // Mở Lesson kế tiếp nếu không phải StudyPlan default
@@ -116,5 +126,16 @@ public class StudentLessonProgressServiceImpl implements StudentLessonProgressSe
         }
 
         studentLessonProgressRepository.save(progress);
+    }
+
+    @Override
+    public List<StudentLessonProgress> viewAllStudentLessonProgressInStudyPlan(Integer studentId, Integer studyPlanId) {
+        studentRepository.findById(studentId)
+                .orElseThrow(() -> new RuntimeException("Student not found!"));
+
+        studyPlanRepository.findById(studyPlanId)
+                .orElseThrow(() -> new RuntimeException("Study plan not found!"));
+
+        return studentLessonProgressRepository.findByStudentStudentIdAndLesson_StudyPlanStudyPlanId(studentId, studyPlanId);
     }
 }
