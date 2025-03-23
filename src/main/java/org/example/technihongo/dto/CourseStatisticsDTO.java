@@ -2,6 +2,7 @@ package org.example.technihongo.dto;
 
 import lombok.*;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Getter
@@ -21,4 +22,6 @@ public class CourseStatisticsDTO {
     private boolean isPremium;
     private LocalDateTime createdAt;
     private Integer completedCount;
+    private BigDecimal averageCompletionPercentage;
+    private BigDecimal completedPercentage;
 }

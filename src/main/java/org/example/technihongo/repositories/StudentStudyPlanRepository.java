@@ -15,13 +15,19 @@ public interface StudentStudyPlanRepository extends JpaRepository<StudentStudyPl
 
     List<StudentStudyPlan> findByStudentStudentId(Integer studentId);
 
-    @Query("SELECT ssp FROM StudentStudyPlan ssp WHERE ssp.student.studentId = :studentId AND ssp.status = 'Active'")
+    @Query("SELECT ssp FROM StudentStudyPlan ssp WHERE ssp.student.studentId = :studentId AND ssp.status = 'ACTIVE'")
     Optional<StudentStudyPlan> findActiveStudyPlanByStudentId(@Param("studentId") Integer studentId);
 
     @Query("SELECT ssp FROM StudentStudyPlan ssp WHERE ssp.student.studentId = :studentId AND ssp.studyPlan.studyPlanId = :studyPlanId")
     Optional<StudentStudyPlan> findByStudentIdAndStudyPlanId(
             @Param("studentId") Integer studentId,
             @Param("studyPlanId") Integer studyPlanId
+    );
+
+    @Query("SELECT ssp FROM StudentStudyPlan ssp WHERE ssp.student.studentId = :studentId AND ssp.studyPlan.course.courseId = :courseId AND ssp.status = 'ACTIVE'")
+    Optional<StudentStudyPlan> findActiveStudyPlanByStudentIdAndCourseId(
+            @Param("studentId") Integer studentId,
+            @Param("courseId") Integer courseId
     );
 
 //    @Query("SELECT COUNT(ssp) > 0 FROM StudentStudyPlan ssp WHERE ssp.student.studentId = :studentId AND ssp.status = 'Active'")

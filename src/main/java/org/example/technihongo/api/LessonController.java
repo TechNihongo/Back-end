@@ -4,8 +4,11 @@ import lombok.RequiredArgsConstructor;
 import org.example.technihongo.core.security.JwtUtil;
 import org.example.technihongo.dto.*;
 import org.example.technihongo.entities.Lesson;
+import org.example.technihongo.entities.StudentLessonProgress;
 import org.example.technihongo.response.ApiResponse;
 import org.example.technihongo.services.interfaces.LessonService;
+import org.example.technihongo.services.interfaces.StudentCourseProgressService;
+import org.example.technihongo.services.interfaces.StudentLessonProgressService;
 import org.example.technihongo.services.interfaces.StudentService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -25,22 +28,29 @@ public class LessonController {
     private JwtUtil jwtUtil;
     @Autowired
     private StudentService studentService;
+    @Autowired
+    private StudentCourseProgressService studentCourseProgressService;
+    @Autowired
+    private StudentLessonProgressService studentLessonProgressService;
 
     @GetMapping("/{id}")
     public ResponseEntity<ApiResponse> getLessonById(
             @PathVariable Integer id,
-            @RequestHeader("Authorization") String authorizationHeader) throws Exception {
+            @RequestHeader("Authorization") String authorizationHeader){
         try{
             if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
                 String token = authorizationHeader.substring(7);
                 Integer userId = jwtUtil.extractUserId(token);
                 Integer studentId = studentService.getStudentIdByUserId(userId);
 
-                Optional<Lesson> lesson = lessonService.getLessonById(id);
-
                 if(studentId != null) {
                     lessonService.checkLessonProgressPrerequisite(studentId, id);
+                    studentLessonProgressService.trackStudentLessonProgress(studentId, id);
+                    Integer courseId = lessonService.getCourseIdByLessonId(id);
+                    studentCourseProgressService.trackStudentCourseProgress(studentId, courseId, id);
                 }
+
+                Optional<Lesson> lesson = lessonService.getLessonById(id);
 
                 if(lesson.isEmpty()){
                     return ResponseEntity.ok(ApiResponse.builder()
