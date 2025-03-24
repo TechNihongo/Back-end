@@ -1,10 +1,9 @@
 package org.example.technihongo.services.serviceimplements;
 
 import lombok.RequiredArgsConstructor;
-import org.example.technihongo.dto.CreateQuizQuestionDTO;
-import org.example.technihongo.dto.UpdateQuizQuestionOrderDTO;
-import org.example.technihongo.entities.LessonResource;
-import org.example.technihongo.entities.QuizQuestion;
+import org.example.technihongo.dto.*;
+import org.example.technihongo.entities.*;
+import org.example.technihongo.repositories.QuestionAnswerOptionRepository;
 import org.example.technihongo.repositories.QuestionRepository;
 import org.example.technihongo.repositories.QuizQuestionRepository;
 import org.example.technihongo.repositories.QuizRepository;
@@ -14,6 +13,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -25,6 +25,8 @@ public class QuizQuestionServiceImpl implements QuizQuestionService {
     private QuestionRepository questionRepository;
     @Autowired
     private QuizQuestionRepository quizQuestionRepository;
+    @Autowired
+    private QuestionAnswerOptionRepository questionAnswerOptionRepository;
 
     @Override
     public List<QuizQuestion> getQuizQuestionsByQuizId(Integer quizId) {
@@ -130,5 +132,48 @@ public class QuizQuestionServiceImpl implements QuizQuestionService {
         target.setQuestionOrder(newOrder);
 
         quizQuestionRepository.saveAll(quizQuestions);
+    }
+
+    @Override
+    public QuizQuestionWithNewQuestionResponseDTO createQuizQuestionWithNewQuestion(CreateQuizQuestionWithNewQuestionDTO dto) {
+        Quiz quiz = quizRepository.findById(dto.getQuizId())
+                .orElseThrow(() -> new RuntimeException("Quiz ID not found!"));
+
+        List<QuestionAnswerOptionDTO> options = dto.getOptions();
+        if (options.size() < 2 || options.size() > 4) {
+            throw new RuntimeException("Each question must have between 2 and 4 answer options.");
+        }
+        long correctCount = options.stream().filter(QuestionAnswerOptionDTO::getIsCorrect).count();
+        if (correctCount != 1) {
+            throw new RuntimeException("Each question must have exactly one correct answer.");
+        }
+
+        Question question = Question.builder()
+                .questionText(dto.getQuestionText())
+                .explanation(dto.getExplanation())
+                .url(dto.getUrl())
+                .build();
+        Question savedQuestion = questionRepository.save(question);
+
+        List<QuestionAnswerOption> optionEntities = options.stream()
+                .map(opt -> QuestionAnswerOption.builder()
+                        .question(savedQuestion)
+                        .optionText(opt.getOptionText())
+                        .isCorrect(opt.getIsCorrect())
+                        .build())
+                .collect(Collectors.toList());
+        questionAnswerOptionRepository.saveAll(optionEntities);
+
+        QuizQuestion quizQuestion = QuizQuestion.builder()
+                .quiz(quiz)
+                .question(savedQuestion)
+                .questionOrder(quizQuestionRepository.countByQuiz_QuizId(dto.getQuizId()) + 1)
+                .build();
+        QuizQuestion savedQuizQuestion = quizQuestionRepository.save(quizQuestion);
+
+        return QuizQuestionWithNewQuestionResponseDTO.builder()
+                .quizQuestion(savedQuizQuestion)
+                .options(optionEntities)
+                .build();
     }
 }

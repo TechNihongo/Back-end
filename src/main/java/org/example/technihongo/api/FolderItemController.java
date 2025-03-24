@@ -41,8 +41,12 @@ public class FolderItemController {
                         .message("Flashcard set added to folder successfully")
                         .data(createdFolderItem)
                         .build());
-            } else {
-                throw new Exception("Authorization failed!");
+            }  else {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(ApiResponse.builder()
+                                .success(false)
+                                .message("Unauthorized")
+                                .build());
             }
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest()
@@ -75,8 +79,12 @@ public class FolderItemController {
                         .success(true)
                         .message("Folder item removed successfully")
                         .build());
-            } else {
-                throw new Exception("Authorization failed!");
+            }  else {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(ApiResponse.builder()
+                                .success(false)
+                                .message("Unauthorized")
+                                .build());
             }
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest()
@@ -117,8 +125,12 @@ public class FolderItemController {
                             .data(folderItems)
                             .build());
                 }
-            } else {
-                throw new Exception("Authorization failed!");
+            }  else {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(ApiResponse.builder()
+                                .success(false)
+                                .message("Unauthorized")
+                                .build());
             }
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest()
@@ -152,8 +164,12 @@ public class FolderItemController {
                         .message("Multiple flashcard sets added to folder successfully")
                         .data(createdFolderItems)
                         .build());
-            } else {
-                throw new Exception("Authorization failed!");
+            }  else {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(ApiResponse.builder()
+                                .success(false)
+                                .message("Unauthorized")
+                                .build());
             }
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest()
@@ -186,8 +202,12 @@ public class FolderItemController {
                         .success(true)
                         .message("Multiple folder items removed successfully")
                         .build());
-            } else {
-                throw new Exception("Authorization failed!");
+            }  else {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(ApiResponse.builder()
+                                .success(false)
+                                .message("Unauthorized")
+                                .build());
             }
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest()
@@ -229,8 +249,12 @@ public class FolderItemController {
                             .data(foundItems)
                             .build());
                 }
-            } else {
-                throw new Exception("Authorization failed!");
+            }  else {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(ApiResponse.builder()
+                                .success(false)
+                                .message("Unauthorized")
+                                .build());
             }
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest()
@@ -265,8 +289,12 @@ public class FolderItemController {
                         .message("Folder item moved successfully")
                         .data(movedItem)
                         .build());
-            } else {
-                throw new Exception("Authorization failed!");
+            }  else {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(ApiResponse.builder()
+                                .success(false)
+                                .message("Unauthorized")
+                                .build());
             }
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest()
