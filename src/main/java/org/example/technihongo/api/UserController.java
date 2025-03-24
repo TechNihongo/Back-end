@@ -1,18 +1,18 @@
 package org.example.technihongo.api;
 
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.example.technihongo.core.mail.EmailService;
 import org.example.technihongo.core.security.JWTHelper;
+import org.example.technihongo.core.security.JwtUtil;
 import org.example.technihongo.core.security.MyUserDetailsService;
 import org.example.technihongo.core.security.TokenBlacklist;
 import org.example.technihongo.dto.*;
 import org.example.technihongo.entities.User;
+import org.example.technihongo.enums.ActivityType;
 import org.example.technihongo.enums.TokenType;
 import org.example.technihongo.response.ApiResponse;
-import org.example.technihongo.services.interfaces.AuthTokenService;
-import org.example.technihongo.services.interfaces.StudentDailyLearningLogService;
-import org.example.technihongo.services.interfaces.StudentService;
-import org.example.technihongo.services.interfaces.UserService;
+import org.example.technihongo.services.interfaces.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -43,9 +43,15 @@ public class UserController {
     private StudentDailyLearningLogService studentDailyLearningLogService;
     @Autowired
     private StudentService studentService;
+    @Autowired
+    private UserActivityLogService userActivityLogService;
+    @Autowired
+    private JwtUtil jwtUtil;
 
     @PostMapping("/login")
-    public ResponseEntity<LoginResponseTokenDTO> login(@RequestBody UserLogin userLogin) {
+    public ResponseEntity<LoginResponseTokenDTO> login(
+            @RequestBody UserLogin userLogin,
+            HttpServletRequest httpRequest) {
         try {
             LoginResponseDTO response = userService.login(userLogin.getEmail(), userLogin.getPassword());
             String token = myUserDetailsService.loginToken(userLogin);
@@ -59,6 +65,18 @@ public class UserController {
                 if(studentId != null){
                     studentDailyLearningLogService.trackStudentDailyLearningLog(studentId, 0);
                 }
+
+                String ipAddress = httpRequest.getRemoteAddr();
+                String userAgent = httpRequest.getHeader("User-Agent");
+                userActivityLogService.trackUserActivityLog(
+                        response.getUserId(),
+                        ActivityType.LOGIN,
+                        null,
+                        null,
+                        ipAddress,
+                        userAgent
+                );
+
                 return ResponseEntity.ok(new LoginResponseTokenDTO(response.getUserId(), response.getUserName(),
                         response.getEmail(), response.getRole(), true, response.getMessage(), token));
 
@@ -100,7 +118,9 @@ public class UserController {
 
 
     @PostMapping("/google-auth")
-    public ResponseEntity<LoginResponseTokenDTO> authenticateWithGoogle(@RequestBody GoogleTokenDTO googleTokenDTO) {
+    public ResponseEntity<LoginResponseTokenDTO> authenticateWithGoogle(
+            @RequestBody GoogleTokenDTO googleTokenDTO,
+            HttpServletRequest httpRequest) {
         try {
             LoginResponseDTO response = userService.authenticateWithGoogle(googleTokenDTO);
             UserLogin userLogin = new UserLogin(response.getEmail(), "");
@@ -115,6 +135,17 @@ public class UserController {
                 if(studentId != null){
                     studentDailyLearningLogService.trackStudentDailyLearningLog(studentId, 0);
                 }
+
+                String ipAddress = httpRequest.getRemoteAddr();
+                String userAgent = httpRequest.getHeader("User-Agent");
+                userActivityLogService.trackUserActivityLog(
+                        response.getUserId(),
+                        ActivityType.LOGIN,
+                        null,
+                        null,
+                        ipAddress,
+                        userAgent
+                );
 
                 return ResponseEntity.ok(new LoginResponseTokenDTO(response.getUserId(), response.getUserName(),
                         response.getEmail(), response.getRole(), true, response.getMessage(), token));
@@ -131,11 +162,26 @@ public class UserController {
     }
 
     @PostMapping("/logout")
-    public ResponseEntity<ApiResponse> logout(@RequestHeader("Authorization") String authorizationHeader) {
+    public ResponseEntity<ApiResponse> logout(
+            @RequestHeader("Authorization") String authorizationHeader,
+            HttpServletRequest httpRequest) {
         if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
             String token = authorizationHeader.substring(7);
+            Integer userId = jwtUtil.extractUserId(token);
             authTokenService.setTokenStatus(new TokenStatusDTO(token, false));
             tokenBlacklist.addToken(token);
+
+            String ipAddress = httpRequest.getRemoteAddr();
+            String userAgent = httpRequest.getHeader("User-Agent");
+            userActivityLogService.trackUserActivityLog(
+                    userId,
+                    ActivityType.LOGOUT,
+                    null,
+                    null,
+                    ipAddress,
+                    userAgent
+            );
+
             return ResponseEntity.ok(ApiResponse.builder()
                     .success(true)
                     .message("Logged out successfully.")

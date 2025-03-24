@@ -63,7 +63,13 @@ public class LearningPathController {
                     }
                 }
             }
-            else throw new Exception("Authorization failed!");
+            else {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(ApiResponse.builder()
+                                .success(false)
+                                .message("Unauthorized")
+                                .build());
+            }
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(ApiResponse.builder()
@@ -112,7 +118,13 @@ public class LearningPathController {
                     }
                 }
             }
-            else throw new Exception("Authorization failed!");
+             else {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(ApiResponse.builder()
+                                .success(false)
+                                .message("Unauthorized")
+                                .build());
+            }
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(ApiResponse.builder()
@@ -137,7 +149,13 @@ public class LearningPathController {
                         .data(learningPath)
                         .build());
             }
-            else throw new Exception("Authorization failed!");
+             else {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(ApiResponse.builder()
+                                .success(false)
+                                .message("Unauthorized")
+                                .build());
+            }
 
         } catch (RuntimeException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
@@ -217,7 +235,13 @@ public class LearningPathController {
                     }
                 }
             }
-            else throw new Exception("Authorization failed!");
+             else {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(ApiResponse.builder()
+                                .success(false)
+                                .message("Unauthorized")
+                                .build());
+            }
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(ApiResponse.builder()
@@ -274,7 +298,13 @@ public class LearningPathController {
                             .build());
                 }
             }
-            else throw new Exception("Authorization failed!");
+             else {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(ApiResponse.builder()
+                                .success(false)
+                                .message("Unauthorized")
+                                .build());
+            }
         } catch (RuntimeException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(ApiResponse.builder()

@@ -46,8 +46,12 @@ public class FlashcardController {
                         .data(responseDTO)
                         .build());
 
-            } else {
-                throw new Exception("Authorization failed!");
+            }  else {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(ApiResponse.builder()
+                                .success(false)
+                                .message("Unauthorized")
+                                .build());
             }
         } catch (RuntimeException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
@@ -80,8 +84,12 @@ public class FlashcardController {
                         .message("Flashcards created successfully")
                         .data(responses)
                         .build());
-            } else {
-                throw new Exception("Authorization failed!");
+            }  else {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(ApiResponse.builder()
+                                .success(false)
+                                .message("Unauthorized")
+                                .build());
             }
         } catch (RuntimeException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
@@ -113,8 +121,12 @@ public class FlashcardController {
                         .message("Flashcard updated successfully")
                         .data(response)
                         .build());
-            } else {
-                throw new Exception("Authorization failed!");
+            }  else {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(ApiResponse.builder()
+                                .success(false)
+                                .message("Unauthorized")
+                                .build());
             }
         } catch (RuntimeException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
@@ -144,8 +156,12 @@ public class FlashcardController {
                         .success(true)
                         .message("Flashcard deleted successfully")
                         .build());
-            } else {
-                throw new Exception("Authorization failed!");
+            }  else {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(ApiResponse.builder()
+                                .success(false)
+                                .message("Unauthorized")
+                                .build());
             }
         } catch (RuntimeException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
@@ -182,8 +198,12 @@ public class FlashcardController {
                                 .message("Flashcard retrieved successfully")
                                 .data(responseDTO)
                                 .build());
-            } else {
-                throw new Exception("Authorization failed!");
+            }  else {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(ApiResponse.builder()
+                                .success(false)
+                                .message("Unauthorized")
+                                .build());
             }
 
         } catch (RuntimeException e) {
