@@ -50,7 +50,13 @@ public class LessonResourceController {
                             .build());
                 }
             }
-            else throw new Exception("Authorization failed!");
+            else {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(ApiResponse.builder()
+                                .success(false)
+                                .message("Unauthorized")
+                                .build());
+            }
         } catch (RuntimeException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(ApiResponse.builder()
@@ -87,7 +93,13 @@ public class LessonResourceController {
                         .data(lessonResource)
                         .build());
             }
-            else throw new Exception("Authorization failed!");
+            else {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(ApiResponse.builder()
+                                .success(false)
+                                .message("Unauthorized")
+                                .build());
+            }
         } catch (RuntimeException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(ApiResponse.builder()

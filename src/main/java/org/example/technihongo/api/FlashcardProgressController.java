@@ -48,8 +48,12 @@ public class FlashcardProgressController {
                         .message("Starred flashcards retrieved successfully")
                         .data(progressList)
                         .build());
-            } else {
-                throw new Exception("Authorization failed!");
+            }  else {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(ApiResponse.builder()
+                                .success(false)
+                                .message("Unauthorized")
+                                .build());
             }
         } catch (RuntimeException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
@@ -86,8 +90,12 @@ public class FlashcardProgressController {
                         .message("Flashcard progress updated successfully")
                         .data(null)
                         .build());
-            } else {
-                throw new Exception("Authorization failed!");
+            }  else {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(ApiResponse.builder()
+                                .success(false)
+                                .message("Unauthorized")
+                                .build());
             }
         } catch (RuntimeException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)

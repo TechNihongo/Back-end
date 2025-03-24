@@ -2,6 +2,8 @@ package org.example.technihongo.api;
 
 import lombok.RequiredArgsConstructor;
 import org.example.technihongo.dto.CreateQuizQuestionDTO;
+import org.example.technihongo.dto.CreateQuizQuestionWithNewQuestionDTO;
+import org.example.technihongo.dto.QuizQuestionWithNewQuestionResponseDTO;
 import org.example.technihongo.dto.UpdateQuizQuestionOrderDTO;
 import org.example.technihongo.entities.QuizQuestion;
 import org.example.technihongo.response.ApiResponse;
@@ -176,6 +178,33 @@ public class QuizQuestionController {
                     .body(ApiResponse.builder()
                             .success(false)
                             .message("Failed to update QuizQuestion: " + e.getMessage())
+                            .build());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponse.builder()
+                            .success(false)
+                            .message("Internal Server Error: " + e.getMessage())
+                            .build());
+        }
+    }
+
+    @PostMapping("/create-new-question")
+    public ResponseEntity<ApiResponse> createQuizQuestionWithNewQuestion(
+            @RequestBody CreateQuizQuestionWithNewQuestionDTO dto){
+        try {
+            QuizQuestionWithNewQuestionResponseDTO response = quizQuestionService.createQuizQuestionWithNewQuestion(dto);
+            quizService.updateTotalQuestions(dto.getQuizId());
+            return ResponseEntity.ok(ApiResponse.builder()
+                    .success(true)
+                    .message("QuizQuestion with new question created successfully!")
+                    .data(response)
+                    .build());
+
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(ApiResponse.builder()
+                            .success(false)
+                            .message("Failed to create QuizQuestion: " + e.getMessage())
                             .build());
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)

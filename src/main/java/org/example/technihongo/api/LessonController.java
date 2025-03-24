@@ -64,8 +64,12 @@ public class LessonController {
                             .data(lesson)
                             .build());
                 }
-            } else {
-                throw new Exception("Authorization failed!");
+            }  else {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(ApiResponse.builder()
+                                .success(false)
+                                .message("Unauthorized")
+                                .build());
             }
         } catch (RuntimeException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
