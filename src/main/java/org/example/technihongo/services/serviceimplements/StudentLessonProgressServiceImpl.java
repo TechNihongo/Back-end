@@ -2,9 +2,12 @@ package org.example.technihongo.services.serviceimplements;
 
 import lombok.RequiredArgsConstructor;
 import org.example.technihongo.entities.*;
+import org.example.technihongo.enums.ActivityType;
 import org.example.technihongo.enums.CompletionStatus;
+import org.example.technihongo.enums.ContentType;
 import org.example.technihongo.repositories.*;
 import org.example.technihongo.services.interfaces.StudentLessonProgressService;
+import org.example.technihongo.services.interfaces.UserActivityLogService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
@@ -45,6 +48,10 @@ public class StudentLessonProgressServiceImpl implements StudentLessonProgressSe
     private StudentRepository studentRepository;
     @Autowired
     private StudyPlanRepository studyPlanRepository;
+    @Autowired
+    private UserRepository userRepository;
+    @Autowired
+    private UserActivityLogService userActivityLogService;
 
     @Override
     public void trackStudentLessonProgress(Integer studentId, Integer lessonId) {
@@ -103,6 +110,8 @@ public class StudentLessonProgressServiceImpl implements StudentLessonProgressSe
             StudentDailyLearningLog dailyLog = dailyLogRepository.findByStudentStudentIdAndLogDate(studentId, LocalDate.now()).get();
             dailyLog.setCompletedLessons(dailyLog.getCompletedLessons() + 1);
             dailyLogRepository.save(dailyLog);
+
+            userActivityLogService.trackUserActivityLog(userRepository.findByStudentStudentId(studentId).getUserId(), ActivityType.COMPLETE, ContentType.Lesson, lessonId, null, null);
 
             StudentLearningStatistics statistics = statisticsRepository.findByStudentStudentId(studentId).get();
             statistics.setTotalCompletedLessons(statistics.getTotalCompletedLessons() + 1);

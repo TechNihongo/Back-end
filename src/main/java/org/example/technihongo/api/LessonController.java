@@ -1,15 +1,14 @@
 package org.example.technihongo.api;
 
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.example.technihongo.core.security.JwtUtil;
 import org.example.technihongo.dto.*;
 import org.example.technihongo.entities.Lesson;
-import org.example.technihongo.entities.StudentLessonProgress;
+import org.example.technihongo.enums.ActivityType;
+import org.example.technihongo.enums.ContentType;
 import org.example.technihongo.response.ApiResponse;
-import org.example.technihongo.services.interfaces.LessonService;
-import org.example.technihongo.services.interfaces.StudentCourseProgressService;
-import org.example.technihongo.services.interfaces.StudentLessonProgressService;
-import org.example.technihongo.services.interfaces.StudentService;
+import org.example.technihongo.services.interfaces.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -32,6 +31,8 @@ public class LessonController {
     private StudentCourseProgressService studentCourseProgressService;
     @Autowired
     private StudentLessonProgressService studentLessonProgressService;
+    @Autowired
+    private UserActivityLogService userActivityLogService;
 
     @GetMapping("/{id}")
     public ResponseEntity<ApiResponse> getLessonById(
@@ -149,15 +150,41 @@ public class LessonController {
     }
 
     @PostMapping("/create")
-    public ResponseEntity<ApiResponse> createLesson(@RequestBody CreateLessonDTO createLessonDTO){
+    public ResponseEntity<ApiResponse> createLesson(
+            @RequestBody CreateLessonDTO createLessonDTO,
+            @RequestHeader("Authorization") String authorizationHeader,
+            HttpServletRequest httpRequest){
         try {
+            if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
+                String token = authorizationHeader.substring(7);
+                Integer loginUserId = jwtUtil.extractUserId(token);
+
                 Lesson lesson = lessonService.createLesson(createLessonDTO);
+
+                String ipAddress = httpRequest.getRemoteAddr();
+                String userAgent = httpRequest.getHeader("User-Agent");
+                userActivityLogService.trackUserActivityLog(
+                        loginUserId,
+                        ActivityType.CREATE,
+                        ContentType.Lesson,
+                        lesson.getLessonId(),
+                        ipAddress,
+                        userAgent
+                );
+
                 return ResponseEntity.ok(ApiResponse.builder()
                         .success(true)
                         .message("Lesson created successfully!")
                         .data(lesson)
                         .build());
-
+            }
+            else {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(ApiResponse.builder()
+                                .success(false)
+                                .message("Unauthorized")
+                                .build());
+            }
         } catch (RuntimeException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(ApiResponse.builder()
@@ -174,14 +201,41 @@ public class LessonController {
     }
 
     @PatchMapping("/update/{lessonId}")
-    public ResponseEntity<ApiResponse> updateLesson(@PathVariable Integer lessonId,
-                                                    @RequestBody UpdateLessonDTO updateLessonDTO) {
+    public ResponseEntity<ApiResponse> updateLesson(
+            @PathVariable Integer lessonId,
+            @RequestBody UpdateLessonDTO updateLessonDTO,
+            @RequestHeader("Authorization") String authorizationHeader,
+            HttpServletRequest httpRequest) {
         try{
-            lessonService.updateLesson(lessonId, updateLessonDTO);
-            return ResponseEntity.ok(ApiResponse.builder()
-                    .success(true)
-                    .message("Lesson updated successfully")
-                    .build());
+            if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
+                String token = authorizationHeader.substring(7);
+                Integer loginUserId = jwtUtil.extractUserId(token);
+
+                lessonService.updateLesson(lessonId, updateLessonDTO);
+
+                String ipAddress = httpRequest.getRemoteAddr();
+                String userAgent = httpRequest.getHeader("User-Agent");
+                userActivityLogService.trackUserActivityLog(
+                        loginUserId,
+                        ActivityType.UPDATE,
+                        ContentType.Lesson,
+                        lessonId,
+                        ipAddress,
+                        userAgent
+                );
+
+                return ResponseEntity.ok(ApiResponse.builder()
+                        .success(true)
+                        .message("Lesson updated successfully")
+                        .build());
+            }
+            else {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(ApiResponse.builder()
+                                .success(false)
+                                .message("Unauthorized")
+                                .build());
+            }
         } catch (RuntimeException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(ApiResponse.builder()

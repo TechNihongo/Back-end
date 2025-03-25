@@ -1,11 +1,15 @@
 package org.example.technihongo.api;
 
+import jakarta.servlet.http.HttpServletRequest;
 import org.example.technihongo.dto.FolderItemDTO;
 import org.example.technihongo.dto.RemoveItemDTO;
+import org.example.technihongo.enums.ActivityType;
+import org.example.technihongo.enums.ContentType;
 import org.example.technihongo.response.ApiResponse;
 import org.example.technihongo.services.interfaces.FolderItemService;
 import org.example.technihongo.core.security.JwtUtil;
 import org.example.technihongo.services.interfaces.StudentService;
+import org.example.technihongo.services.interfaces.UserActivityLogService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -22,19 +26,32 @@ public class FolderItemController {
     private JwtUtil jwtUtil;
     @Autowired
     private StudentService studentService;
+    @Autowired
+    private UserActivityLogService userActivityLogService;
 
     @PostMapping("/add")
     public ResponseEntity<ApiResponse> addFolderItem(
             @RequestBody FolderItemDTO folderItemDTO,
-            @RequestHeader("Authorization") String authorizationHeader) {
+            @RequestHeader("Authorization") String authorizationHeader,
+            HttpServletRequest httpRequest) {
         try {
             if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
                 String token = authorizationHeader.substring(7);
                 Integer userId = jwtUtil.extractUserId(token);
                 Integer studentId = studentService.getStudentIdByUserId(userId);
 
-
                 FolderItemDTO createdFolderItem = folderItemService.addFolderItem(studentId, folderItemDTO);
+
+                String ipAddress = httpRequest.getRemoteAddr();
+                String userAgent = httpRequest.getHeader("User-Agent");
+                userActivityLogService.trackUserActivityLog(
+                        userId,
+                        ActivityType.SAVE,
+                        ContentType.FolderItem,
+                        createdFolderItem.getFolderItemId(),
+                        ipAddress,
+                        userAgent
+                );
 
                 return ResponseEntity.ok(ApiResponse.builder()
                         .success(true)
@@ -66,7 +83,8 @@ public class FolderItemController {
     @DeleteMapping("/remove")
     public ResponseEntity<ApiResponse> removeFolderItem(
             @RequestBody RemoveItemDTO request,
-            @RequestHeader("Authorization") String authorizationHeader) {
+            @RequestHeader("Authorization") String authorizationHeader,
+            HttpServletRequest httpRequest) {
         try {
             if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
                 String token = authorizationHeader.substring(7);
@@ -74,6 +92,17 @@ public class FolderItemController {
                 Integer studentId = studentService.getStudentIdByUserId(userId);
 
                 folderItemService.removeFolderItem(studentId, request);
+
+                String ipAddress = httpRequest.getRemoteAddr();
+                String userAgent = httpRequest.getHeader("User-Agent");
+                userActivityLogService.trackUserActivityLog(
+                        userId,
+                        ActivityType.REMOVE,
+                        ContentType.FolderItem,
+                        request.getFolderItemId(),
+                        ipAddress,
+                        userAgent
+                );
 
                 return ResponseEntity.ok(ApiResponse.builder()
                         .success(true)
@@ -150,12 +179,24 @@ public class FolderItemController {
     @PostMapping("/add-multiple")
     public ResponseEntity<ApiResponse> addMultipleFolderItems(
             @RequestBody List<FolderItemDTO> folderItemDTOs,
-            @RequestHeader("Authorization") String authorizationHeader) {
+            @RequestHeader("Authorization") String authorizationHeader,
+            HttpServletRequest httpRequest) {
         try {
             if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
                 String token = authorizationHeader.substring(7);
                 Integer userId = jwtUtil.extractUserId(token);
                 Integer studentId = studentService.getStudentIdByUserId(userId);
+
+                String ipAddress = httpRequest.getRemoteAddr();
+                String userAgent = httpRequest.getHeader("User-Agent");
+                userActivityLogService.trackUserActivityLog(
+                        userId,
+                        ActivityType.SAVE,
+                        ContentType.FolderItem,
+                        null,
+                        ipAddress,
+                        userAgent
+                );
 
                 List<FolderItemDTO> createdFolderItems = folderItemService.addMultipleFolderItems(studentId, folderItemDTOs);
 
@@ -189,12 +230,24 @@ public class FolderItemController {
     @DeleteMapping("/remove-multiple")
     public ResponseEntity<ApiResponse> removeMultipleFolderItems(
             @RequestBody List<RemoveItemDTO> requests,
-            @RequestHeader("Authorization") String authorizationHeader) {
+            @RequestHeader("Authorization") String authorizationHeader,
+            HttpServletRequest httpRequest) {
         try {
             if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
                 String token = authorizationHeader.substring(7);
                 Integer userId = jwtUtil.extractUserId(token);
                 Integer studentId = studentService.getStudentIdByUserId(userId);
+
+                String ipAddress = httpRequest.getRemoteAddr();
+                String userAgent = httpRequest.getHeader("User-Agent");
+                userActivityLogService.trackUserActivityLog(
+                        userId,
+                        ActivityType.REMOVE,
+                        ContentType.FolderItem,
+                        null,
+                        ipAddress,
+                        userAgent
+                );
 
                 folderItemService.removeMultipleFolderItems(studentId, requests);
 

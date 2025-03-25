@@ -1,13 +1,17 @@
 package org.example.technihongo.api;
 
+import jakarta.servlet.http.HttpServletRequest;
 import org.example.technihongo.core.security.JwtUtil;
 import org.example.technihongo.dto.DomainRequestDTO;
 import org.example.technihongo.dto.DomainResponseDTO;
 import org.example.technihongo.dto.PageResponseDTO;
+import org.example.technihongo.enums.ActivityType;
+import org.example.technihongo.enums.ContentType;
 import org.example.technihongo.exception.ResourceNotFoundException;
 import org.example.technihongo.response.ApiResponse;
 import org.example.technihongo.services.interfaces.DomainService;
 import org.example.technihongo.services.interfaces.StudentService;
+import org.example.technihongo.services.interfaces.UserActivityLogService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -27,16 +31,46 @@ public class DomainController {
 
     @Autowired
     private StudentService studentService;
+    @Autowired
+    private UserActivityLogService userActivityLogService;
 
     @PostMapping("/create")
-    public ResponseEntity<ApiResponse> createDomain(@RequestBody DomainRequestDTO request) {
+    public ResponseEntity<ApiResponse> createDomain(
+            @RequestHeader("Authorization") String authorizationHeader,
+            HttpServletRequest httpRequest,
+            @RequestBody DomainRequestDTO request) {
         try {
-            DomainResponseDTO response = domainService.createDomain(request);
-            return ResponseEntity.ok(ApiResponse.builder()
-                    .success(true)
-                    .message("Domain created successfully")
-                    .data(response)
-                    .build());
+
+            if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
+                String token = authorizationHeader.substring(7);
+                Integer loginUserId = jwtUtil.extractUserId(token);
+
+                DomainResponseDTO response = domainService.createDomain(request);
+
+                String ipAddress = httpRequest.getRemoteAddr();
+                String userAgent = httpRequest.getHeader("User-Agent");
+                userActivityLogService.trackUserActivityLog(
+                        loginUserId,
+                        ActivityType.CREATE,
+                        ContentType.Domain,
+                        response.getDomainId(),
+                        ipAddress,
+                        userAgent
+                );
+
+                return ResponseEntity.ok(ApiResponse.builder()
+                        .success(true)
+                        .message("Domain created successfully")
+                        .data(response)
+                        .build());
+            }
+            else {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(ApiResponse.builder()
+                                .success(false)
+                                .message("Unauthorized")
+                                .build());
+            }
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(ApiResponse.builder()
@@ -49,14 +83,40 @@ public class DomainController {
     @PatchMapping("/update/{domainId}")
     public ResponseEntity<ApiResponse> updateDomain(
             @PathVariable Integer domainId,
-            @RequestBody DomainRequestDTO request) {
+            @RequestBody DomainRequestDTO request,
+            @RequestHeader("Authorization") String authorizationHeader,
+            HttpServletRequest httpRequest) {
         try {
-            DomainResponseDTO response = domainService.updateDomain(domainId, request);
-            return ResponseEntity.ok(ApiResponse.builder()
-                    .success(true)
-                    .message("Domain updated successfully")
-                    .data(response)
-                    .build());
+            if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
+                String token = authorizationHeader.substring(7);
+                Integer loginUserId = jwtUtil.extractUserId(token);
+
+                DomainResponseDTO response = domainService.updateDomain(domainId, request);
+
+                String ipAddress = httpRequest.getRemoteAddr();
+                String userAgent = httpRequest.getHeader("User-Agent");
+                userActivityLogService.trackUserActivityLog(
+                        loginUserId,
+                        ActivityType.UPDATE,
+                        ContentType.Domain,
+                        response.getDomainId(),
+                        ipAddress,
+                        userAgent
+                );
+
+                return ResponseEntity.ok(ApiResponse.builder()
+                        .success(true)
+                        .message("Domain updated successfully")
+                        .data(response)
+                        .build());
+            }
+            else {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(ApiResponse.builder()
+                                .success(false)
+                                .message("Unauthorized")
+                                .build());
+            }
         } catch (ResourceNotFoundException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(ApiResponse.builder()
@@ -73,13 +133,40 @@ public class DomainController {
     }
 
     @DeleteMapping("/delete/{domainId}")
-    public ResponseEntity<ApiResponse> deleteDomain(@PathVariable Integer domainId) {
+    public ResponseEntity<ApiResponse> deleteDomain(
+            @PathVariable Integer domainId,
+            @RequestHeader("Authorization") String authorizationHeader,
+            HttpServletRequest httpRequest) {
         try {
-            domainService.deleteDomain(domainId);
-            return ResponseEntity.ok(ApiResponse.builder()
-                    .success(true)
-                    .message("Domain deleted successfully")
-                    .build());
+            if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
+                String token = authorizationHeader.substring(7);
+                Integer loginUserId = jwtUtil.extractUserId(token);
+
+                domainService.deleteDomain(domainId);
+
+                String ipAddress = httpRequest.getRemoteAddr();
+                String userAgent = httpRequest.getHeader("User-Agent");
+                userActivityLogService.trackUserActivityLog(
+                        loginUserId,
+                        ActivityType.DELETE,
+                        ContentType.Domain,
+                        domainId,
+                        ipAddress,
+                        userAgent
+                );
+
+                return ResponseEntity.ok(ApiResponse.builder()
+                        .success(true)
+                        .message("Domain deleted successfully")
+                        .build());
+            }
+            else {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(ApiResponse.builder()
+                                .success(false)
+                                .message("Unauthorized")
+                                .build());
+            }
         } catch (ResourceNotFoundException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(ApiResponse.builder()

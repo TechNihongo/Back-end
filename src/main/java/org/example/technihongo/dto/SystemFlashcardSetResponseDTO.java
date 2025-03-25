@@ -10,6 +10,7 @@ import java.util.List;
 @Setter
 
 public class SystemFlashcardSetResponseDTO {
+    private Integer systemSetId;
     private Integer contentManagerId;
     private String title;
     private String description;

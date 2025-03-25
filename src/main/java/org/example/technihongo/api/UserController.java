@@ -10,6 +10,7 @@ import org.example.technihongo.core.security.TokenBlacklist;
 import org.example.technihongo.dto.*;
 import org.example.technihongo.entities.User;
 import org.example.technihongo.enums.ActivityType;
+import org.example.technihongo.enums.ContentType;
 import org.example.technihongo.enums.TokenType;
 import org.example.technihongo.response.ApiResponse;
 import org.example.technihongo.services.interfaces.*;
@@ -187,7 +188,8 @@ public class UserController {
                     .message("Logged out successfully.")
                     .build());
         } else {
-            return ResponseEntity.ok(ApiResponse.builder()
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ApiResponse.builder()
                     .success(false)
                     .message("Invalid Authorization header.")
                     .build());
@@ -195,21 +197,48 @@ public class UserController {
     }
 
     @GetMapping("/getUser/{userId}")
-    public ResponseEntity<ApiResponse> getUserById(@PathVariable Integer userId) {
+    public ResponseEntity<ApiResponse> getUserById(
+            @PathVariable Integer userId,
+            @RequestHeader("Authorization") String authorizationHeader,
+            HttpServletRequest httpRequest) {
         try {
-            User user = userService.getUserById(userId);
-            if (user == null) {
-                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+            if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
+                String token = authorizationHeader.substring(7);
+                Integer loginUserId = jwtUtil.extractUserId(token);
+
+                User user = userService.getUserById(userId);
+                if (user == null) {
+                    return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                            .body(ApiResponse.builder()
+                                    .success(false)
+                                    .message("User not found with id: " + userId)
+                                    .build());
+                }
+
+                String ipAddress = httpRequest.getRemoteAddr();
+                String userAgent = httpRequest.getHeader("User-Agent");
+                userActivityLogService.trackUserActivityLog(
+                        loginUserId,
+                        ActivityType.VIEW,
+                        ContentType.User,
+                        userId,
+                        ipAddress,
+                        userAgent
+                );
+
+                return ResponseEntity.ok(ApiResponse.builder()
+                        .success(true)
+                        .message("User retrieved successfully")
+                        .data(user)
+                        .build());
+            }
+            else {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                         .body(ApiResponse.builder()
                                 .success(false)
-                                .message("User not found with id: " + userId)
+                                .message("Unauthorized")
                                 .build());
             }
-            return ResponseEntity.ok(ApiResponse.builder()
-                    .success(true)
-                    .message("User retrieved successfully")
-                    .data(user)
-                    .build());
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(ApiResponse.builder()
@@ -220,15 +249,15 @@ public class UserController {
     }
 
     @GetMapping("/all")
-    public ResponseEntity<ApiResponse> getAllUser() throws Exception {
+    public ResponseEntity<ApiResponse> getAllUser(){
         try{
             List<User> userList = userService.userList();
-            if(userList.isEmpty()){
+            if (userList.isEmpty()) {
                 return ResponseEntity.ok(ApiResponse.builder()
                         .success(false)
                         .message("List user is empty!")
                         .build());
-            }else{
+            } else {
                 return ResponseEntity.ok(ApiResponse.builder()
                         .success(true)
                         .message("Get All User")
@@ -280,26 +309,50 @@ public class UserController {
     }
     @GetMapping("/paginated")
     public ResponseEntity<ApiResponse> getAllUsersPaginated(
+            @RequestHeader("Authorization") String authorizationHeader,
+            HttpServletRequest httpRequest,
             @RequestParam(defaultValue = "0") int pageNo,
             @RequestParam(defaultValue = "10") int pageSize,
             @RequestParam(defaultValue = "userId") String sortBy,
             @RequestParam(defaultValue = "asc") String sortDir,
             @RequestParam(defaultValue = "") Integer roleId) {
-
         try {
-            PageResponseDTO<User> pageResponse = userService.userListPaginated(roleId, pageNo, pageSize, sortBy, sortDir);
+            if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
+                String token = authorizationHeader.substring(7);
+                Integer loginUserId = jwtUtil.extractUserId(token);
 
-            if(pageResponse.getContent().isEmpty()){
-                return ResponseEntity.ok(ApiResponse.builder()
-                        .success(false)
-                        .message("List user is empty!")
-                        .build());
-            } else {
-                return ResponseEntity.ok(ApiResponse.builder()
-                        .success(true)
-                        .message("Users retrieved successfully")
-                        .data(pageResponse)
-                        .build());
+                PageResponseDTO<User> pageResponse = userService.userListPaginated(roleId, pageNo, pageSize, sortBy, sortDir);
+
+                String ipAddress = httpRequest.getRemoteAddr();
+                String userAgent = httpRequest.getHeader("User-Agent");
+                userActivityLogService.trackUserActivityLog(
+                        loginUserId,
+                        ActivityType.VIEW,
+                        ContentType.User,
+                        null,
+                        ipAddress,
+                        userAgent
+                );
+
+                if (pageResponse.getContent().isEmpty()) {
+                    return ResponseEntity.ok(ApiResponse.builder()
+                            .success(false)
+                            .message("List user is empty!")
+                            .build());
+                } else {
+                    return ResponseEntity.ok(ApiResponse.builder()
+                            .success(true)
+                            .message("Users retrieved successfully")
+                            .data(pageResponse)
+                            .build());
+                }
+            }
+            else {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(ApiResponse.builder()
+                                .success(false)
+                                .message("Unauthorized")
+                                .build());
             }
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
@@ -456,19 +509,43 @@ public class UserController {
         }
     }
 
-    @PostMapping("/content-manager/{adminId}")
+    @PostMapping("/content-manager")
     public ResponseEntity<ApiResponse> createContentManager(
-            @PathVariable("adminId") Integer adminId,
+            @RequestHeader("Authorization") String authorizationHeader,
+            HttpServletRequest httpRequest,
+//            @PathVariable("adminId") Integer adminId,
             @RequestBody ContentManagerDTO contentManagerDTO) {
         try {
-            User newContentManager = userService.createContentManager(contentManagerDTO, adminId);
+            if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
+                String token = authorizationHeader.substring(7);
+                Integer adminId = jwtUtil.extractUserId(token);
 
-            return ResponseEntity.ok(ApiResponse.builder()
-                    .success(true)
-                    .message("Content Manager created successfully!")
-                    .data(newContentManager)
-                    .build());
+                User newContentManager = userService.createContentManager(contentManagerDTO, adminId);
 
+                String ipAddress = httpRequest.getRemoteAddr();
+                String userAgent = httpRequest.getHeader("User-Agent");
+                userActivityLogService.trackUserActivityLog(
+                        adminId,
+                        ActivityType.CREATE,
+                        ContentType.User,
+                        newContentManager.getUserId(),
+                        ipAddress,
+                        userAgent
+                );
+
+                return ResponseEntity.ok(ApiResponse.builder()
+                        .success(true)
+                        .message("Content Manager created successfully!")
+                        .data(newContentManager)
+                        .build());
+            }
+            else {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(ApiResponse.builder()
+                                .success(false)
+                                .message("Unauthorized")
+                                .build());
+            }
         } catch (RuntimeException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ApiResponse.builder()
                     .success(false)

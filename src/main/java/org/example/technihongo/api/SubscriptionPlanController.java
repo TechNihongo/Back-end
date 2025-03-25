@@ -1,12 +1,17 @@
 package org.example.technihongo.api;
 
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
+import org.example.technihongo.core.security.JwtUtil;
 import org.example.technihongo.dto.SubscriptionDTO;
 import org.example.technihongo.dto.UpdateSubscriptionDTO;
 import org.example.technihongo.entities.SubscriptionPlan;
+import org.example.technihongo.enums.ActivityType;
+import org.example.technihongo.enums.ContentType;
 import org.example.technihongo.exception.ResourceNotFoundException;
 import org.example.technihongo.response.ApiResponse;
 import org.example.technihongo.services.interfaces.SubscriptionPlanService;
+import org.example.technihongo.services.interfaces.UserActivityLogService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -21,11 +26,30 @@ import java.util.List;
 public class SubscriptionPlanController {
     @Autowired
     private SubscriptionPlanService subscriptionPlanService;
+    @Autowired
+    private JwtUtil jwtUtil;
+    @Autowired
+    private UserActivityLogService userActivityLogService;
 
     @PostMapping("/create")
-    public ResponseEntity<ApiResponse> createSubscriptionPlan(@RequestBody SubscriptionDTO subscriptionDTO) {
+    public ResponseEntity<ApiResponse> createSubscriptionPlan(
+            @RequestBody SubscriptionDTO subscriptionDTO,
+            @RequestHeader("Authorization") String authorizationHeader,
+            HttpServletRequest httpRequest) {
         try {
             SubscriptionPlan created = subscriptionPlanService.createSubscriptionPlan(subscriptionDTO);
+
+            String ipAddress = httpRequest.getRemoteAddr();
+            String userAgent = httpRequest.getHeader("User-Agent");
+            userActivityLogService.trackUserActivityLog(
+                    extractUserId(authorizationHeader),
+                    ActivityType.CREATE,
+                    ContentType.SubscriptionPlan,
+                    created.getSubPlanId(),
+                    ipAddress,
+                    userAgent
+            );
+
             return ResponseEntity.ok(ApiResponse.builder()
                     .success(true)
                     .message("Subscription plan created successfully")
@@ -42,9 +66,23 @@ public class SubscriptionPlanController {
     @PatchMapping("/update/{id}")
     public ResponseEntity<ApiResponse> updateSubscriptionPlan(
             @PathVariable Integer id,
-            @RequestBody UpdateSubscriptionDTO updateDTO) {
+            @RequestBody UpdateSubscriptionDTO updateDTO,
+            @RequestHeader("Authorization") String authorizationHeader,
+            HttpServletRequest httpRequest) {
         try {
             SubscriptionPlan updated = subscriptionPlanService.updateSubscriptionPlan(id, updateDTO);
+
+            String ipAddress = httpRequest.getRemoteAddr();
+            String userAgent = httpRequest.getHeader("User-Agent");
+            userActivityLogService.trackUserActivityLog(
+                    extractUserId(authorizationHeader),
+                    ActivityType.UPDATE,
+                    ContentType.SubscriptionPlan,
+                    id,
+                    ipAddress,
+                    userAgent
+            );
+
             return ResponseEntity.ok(ApiResponse.builder()
                     .success(true)
                     .message("Subscription plan updated successfully")
@@ -59,9 +97,24 @@ public class SubscriptionPlanController {
         }
     }
     @DeleteMapping("/delete/{id}")
-    public ResponseEntity<ApiResponse> deleteSubscriptionPlan(@PathVariable Integer id) {
+    public ResponseEntity<ApiResponse> deleteSubscriptionPlan(
+            @PathVariable Integer id,
+            @RequestHeader("Authorization") String authorizationHeader,
+            HttpServletRequest httpRequest) {
         try {
             subscriptionPlanService.deleteSubscriptionPlan(id);
+
+            String ipAddress = httpRequest.getRemoteAddr();
+            String userAgent = httpRequest.getHeader("User-Agent");
+            userActivityLogService.trackUserActivityLog(
+                    extractUserId(authorizationHeader),
+                    ActivityType.DELETE,
+                    ContentType.SubscriptionPlan,
+                    id,
+                    ipAddress,
+                    userAgent
+            );
+
             return ResponseEntity.ok(ApiResponse.builder()
                     .success(true)
                     .message("Subscription plan deleted successfully")
@@ -95,5 +148,13 @@ public class SubscriptionPlanController {
                     .data(subscriptionList)
                     .build());
         }
+    }
+
+    private Integer extractUserId(String authorizationHeader) {
+        if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
+            String token = authorizationHeader.substring(7);
+            return jwtUtil.extractUserId(token);
+        }
+        throw new IllegalArgumentException("Authorization header is missing or invalid.");
     }
 }

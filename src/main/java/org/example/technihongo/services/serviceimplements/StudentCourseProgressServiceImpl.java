@@ -3,10 +3,13 @@ package org.example.technihongo.services.serviceimplements;
 import lombok.RequiredArgsConstructor;
 import org.example.technihongo.dto.CourseStatisticsDTO;
 import org.example.technihongo.entities.*;
+import org.example.technihongo.enums.ActivityType;
 import org.example.technihongo.enums.CompletionStatus;
+import org.example.technihongo.enums.ContentType;
 import org.example.technihongo.enums.StudyPlanStatus;
 import org.example.technihongo.repositories.*;
 import org.example.technihongo.services.interfaces.StudentCourseProgressService;
+import org.example.technihongo.services.interfaces.UserActivityLogService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
@@ -37,6 +40,10 @@ public class StudentCourseProgressServiceImpl implements StudentCourseProgressSe
     private LessonRepository lessonRepository;
     @Autowired
     private StudentLearningStatisticsRepository statisticsRepository;
+    @Autowired
+    private UserRepository userRepository;
+    @Autowired
+    private UserActivityLogService userActivityLogService;
 
     @Override
     public StudentCourseProgress getStudentCourseProgress(Integer studentId, Integer courseId) {
@@ -211,6 +218,8 @@ public class StudentCourseProgressServiceImpl implements StudentCourseProgressSe
             StudentLearningStatistics statistics = statisticsRepository.findByStudentStudentId(studentId).get();
             statistics.setTotalCompletedCourses(statistics.getTotalCompletedCourses() + 1);
             statisticsRepository.save(statistics);
+
+            userActivityLogService.trackUserActivityLog(userRepository.findByStudentStudentId(studentId).getUserId(), ActivityType.COMPLETE, ContentType.Course, courseId, null, null);
         }
 
         studentCourseProgressRepository.save(progress);

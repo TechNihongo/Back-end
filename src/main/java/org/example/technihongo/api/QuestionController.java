@@ -1,9 +1,14 @@
 package org.example.technihongo.api;
 
+import jakarta.servlet.http.HttpServletRequest;
+import org.example.technihongo.core.security.JwtUtil;
 import org.example.technihongo.dto.*;
 import org.example.technihongo.entities.Question;
+import org.example.technihongo.enums.ActivityType;
+import org.example.technihongo.enums.ContentType;
 import org.example.technihongo.response.ApiResponse;
 import org.example.technihongo.services.interfaces.QuestionService;
+import org.example.technihongo.services.interfaces.UserActivityLogService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -18,6 +23,10 @@ import java.util.List;
 public class QuestionController {
     @Autowired
     private QuestionService questionService;
+    @Autowired
+    private UserActivityLogService userActivityLogService;
+    @Autowired
+    private JwtUtil jwtUtil;
 
     @GetMapping("/all")
     public ResponseEntity<ApiResponse> getAllQuestions() throws Exception {
@@ -119,15 +128,41 @@ public class QuestionController {
     }
 
     @PostMapping("/options/create")
-    public ResponseEntity<ApiResponse> createQuestionWithOptions(@RequestBody QuestionWithOptionsDTO questionWithOptionsDTO){
+    public ResponseEntity<ApiResponse> createQuestionWithOptions(
+            @RequestBody QuestionWithOptionsDTO questionWithOptionsDTO,
+            @RequestHeader("Authorization") String authorizationHeader,
+            HttpServletRequest httpRequest){
         try {
-            QuestionWithOptionsResponseDTO question = questionService.createQuestionWithOptions(questionWithOptionsDTO);
-            return ResponseEntity.ok(ApiResponse.builder()
-                    .success(true)
-                    .message("Question created successfully!")
-                    .data(question)
-                    .build());
+            if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
+                String token = authorizationHeader.substring(7);
+                Integer loginUserId = jwtUtil.extractUserId(token);
 
+                QuestionWithOptionsResponseDTO question = questionService.createQuestionWithOptions(questionWithOptionsDTO);
+
+                String ipAddress = httpRequest.getRemoteAddr();
+                String userAgent = httpRequest.getHeader("User-Agent");
+                userActivityLogService.trackUserActivityLog(
+                        loginUserId,
+                        ActivityType.CREATE,
+                        ContentType.Question,
+                        question.getQuestion().getQuestionId(),
+                        ipAddress,
+                        userAgent
+                );
+
+                return ResponseEntity.ok(ApiResponse.builder()
+                        .success(true)
+                        .message("Question created successfully!")
+                        .data(question)
+                        .build());
+            }
+            else {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(ApiResponse.builder()
+                                .success(false)
+                                .message("Unauthorized")
+                                .build());
+            }
         } catch (RuntimeException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(ApiResponse.builder()
@@ -144,15 +179,42 @@ public class QuestionController {
     }
 
     @PatchMapping("/options/update/{id}")
-    public ResponseEntity<ApiResponse> updateQuestionWithOptions(@PathVariable Integer id,
-                                                      @RequestBody QuestionWithOptionsDTO questionWithOptionsDTO) {
+    public ResponseEntity<ApiResponse> updateQuestionWithOptions(
+            @PathVariable Integer id,
+            @RequestBody QuestionWithOptionsDTO questionWithOptionsDTO,
+            @RequestHeader("Authorization") String authorizationHeader,
+            HttpServletRequest httpRequest){
         try{
-            QuestionWithOptionsResponseDTO question =  questionService.updateQuestionWithOptions(id, questionWithOptionsDTO);
-            return ResponseEntity.ok(ApiResponse.builder()
-                    .success(true)
-                    .message("Question updated successfully")
-                    .data(question)
-                    .build());
+            if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
+                String token = authorizationHeader.substring(7);
+                Integer loginUserId = jwtUtil.extractUserId(token);
+
+                QuestionWithOptionsResponseDTO question = questionService.updateQuestionWithOptions(id, questionWithOptionsDTO);
+
+                String ipAddress = httpRequest.getRemoteAddr();
+                String userAgent = httpRequest.getHeader("User-Agent");
+                userActivityLogService.trackUserActivityLog(
+                        loginUserId,
+                        ActivityType.UPDATE,
+                        ContentType.Question,
+                        id,
+                        ipAddress,
+                        userAgent
+                );
+
+                return ResponseEntity.ok(ApiResponse.builder()
+                        .success(true)
+                        .message("Question updated successfully")
+                        .data(question)
+                        .build());
+            }
+            else {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(ApiResponse.builder()
+                                .success(false)
+                                .message("Unauthorized")
+                                .build());
+            }
         } catch (RuntimeException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(ApiResponse.builder()

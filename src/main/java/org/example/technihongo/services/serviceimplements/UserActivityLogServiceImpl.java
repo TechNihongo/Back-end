@@ -157,13 +157,16 @@ public class UserActivityLogServiceImpl implements UserActivityLogService {
             }
         }
 
-        StringBuilder desc = new StringBuilder("Người dùng đã thực hiện hành động");
-        desc.append(activityType.toString().toLowerCase().replace("_", " "));
+        StringBuilder desc = new StringBuilder("Người dùng đã thực hiện hành động ");
+        desc.append(activityType.toString().toUpperCase().replace("_", " "));
         if (contentType != null && contentId != null) {
             desc.append(" trên ")
-                    .append(contentType.toString().toLowerCase())
+                    .append(contentType)
                     .append(" với ID: ")
                     .append(contentId);
+        }
+        else if (contentType != null) {
+            desc.append(" trên ").append(contentType);
         }
         desc.append(" lúc ").append(timeStr);
         return desc.toString();

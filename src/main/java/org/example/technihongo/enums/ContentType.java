@@ -7,5 +7,5 @@ public enum ContentType {
     PathCourse, PaymentTransaction, Question, Student, User, StudentAchievement,
     StudentCourseRating, StudentFavorite, StudentFolder, StudentSubscription,
     StudentViolation, StudyPlan, StudentDailyLearningLog, UserActivityLog,
-    StudentLearningStatistics
+    StudentLearningStatistics, SubscriptionPlan
 }

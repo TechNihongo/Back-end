@@ -2,9 +2,12 @@ package org.example.technihongo.services.serviceimplements;
 
 import org.example.technihongo.dto.FlashcardSetProgressDTO;
 import org.example.technihongo.entities.*;
+import org.example.technihongo.enums.ActivityType;
 import org.example.technihongo.enums.CompletionStatus;
+import org.example.technihongo.enums.ContentType;
 import org.example.technihongo.repositories.*;
 import org.example.technihongo.services.interfaces.StudentFlashcardSetProgressService;
+import org.example.technihongo.services.interfaces.UserActivityLogService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -32,6 +35,10 @@ public class StudentFlashcardSetProgressServiceImpl implements StudentFlashcardS
     private FlashcardRepository flashcardRepo;
     @Autowired
     private StudentDailyLearningLogRepository dailyLogRepository;
+    @Autowired
+    private UserRepository userRepository;
+    @Autowired
+    private UserActivityLogService userActivityLogService;
 
     @Override
     public List<FlashcardSetProgressDTO> getAllStudentAndSystemSetProgress(Integer studentId) {
@@ -138,6 +145,13 @@ public class StudentFlashcardSetProgressServiceImpl implements StudentFlashcardS
                 StudentDailyLearningLog dailyLog = dailyLogRepository.findByStudentStudentIdAndLogDate(studentId, LocalDate.now()).get();
                 dailyLog.setCompletedFlashcardSets(dailyLog.getCompletedFlashcardSets() + 1);
                 dailyLogRepository.save(dailyLog);
+
+                if(isSystemSet) {
+                    userActivityLogService.trackUserActivityLog(userRepository.findByStudentStudentId(studentId).getUserId(), ActivityType.COMPLETE, ContentType.SystemFlashcardSet, setId, null, null);
+                }
+                else {
+                    userActivityLogService.trackUserActivityLog(userRepository.findByStudentStudentId(studentId).getUserId(), ActivityType.COMPLETE, ContentType.StudentFlashcardSet, setId, null, null);
+                }
             }
 
             // Cập nhật currentFlashcardId theo tham số truyền vào

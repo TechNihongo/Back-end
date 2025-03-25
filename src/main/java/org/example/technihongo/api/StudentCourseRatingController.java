@@ -1,14 +1,18 @@
 package org.example.technihongo.api;
 
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.example.technihongo.core.security.JwtUtil;
 import org.example.technihongo.dto.StudentCourseRatingDTO;
 import org.example.technihongo.dto.StudentCourseRatingRequest;
+import org.example.technihongo.enums.ActivityType;
+import org.example.technihongo.enums.ContentType;
 import org.example.technihongo.exception.ResourceNotFoundException;
 import org.example.technihongo.exception.UnauthorizedAccessException;
 import org.example.technihongo.response.ApiResponse;
 import org.example.technihongo.services.interfaces.StudentCourseRatingService;
 import org.example.technihongo.services.interfaces.StudentService;
+import org.example.technihongo.services.interfaces.UserActivityLogService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -28,14 +32,29 @@ public class StudentCourseRatingController {
 
     @Autowired
     private StudentService studentService;
+    @Autowired
+    private UserActivityLogService userActivityLogService;
 
     @PostMapping("/createRating")
     public ResponseEntity<ApiResponse> createRating(
             @RequestHeader("Authorization") String authorizationHeader,
+            HttpServletRequest httpRequest,
             @Valid @RequestBody StudentCourseRatingRequest request) {
         try {
             Integer studentId = extractStudentId(authorizationHeader);
             StudentCourseRatingDTO response = studentCourseRatingService.createRating(studentId, request);
+
+            String ipAddress = httpRequest.getRemoteAddr();
+            String userAgent = httpRequest.getHeader("User-Agent");
+            userActivityLogService.trackUserActivityLog(
+                    extractUserId(authorizationHeader),
+                    ActivityType.CREATE,
+                    ContentType.StudentCourseRating,
+                    response.getRatingId(),
+                    ipAddress,
+                    userAgent
+            );
+
             return ResponseEntity.status(HttpStatus.CREATED)
                     .body(ApiResponse.builder()
                             .success(true)
@@ -114,11 +133,24 @@ public class StudentCourseRatingController {
     @PatchMapping("/update/{ratingId}")
     public ResponseEntity<ApiResponse> updateRating(
             @RequestHeader("Authorization") String authorizationHeader,
+            HttpServletRequest httpRequest,
             @PathVariable Integer ratingId,
             @Valid @RequestBody StudentCourseRatingRequest request) {
         try {
             Integer studentId = extractStudentId(authorizationHeader);
             StudentCourseRatingDTO response = studentCourseRatingService.updateRating(ratingId, studentId, request);
+
+            String ipAddress = httpRequest.getRemoteAddr();
+            String userAgent = httpRequest.getHeader("User-Agent");
+            userActivityLogService.trackUserActivityLog(
+                    extractUserId(authorizationHeader),
+                    ActivityType.UPDATE,
+                    ContentType.StudentCourseRating,
+                    ratingId,
+                    ipAddress,
+                    userAgent
+            );
+
             return ResponseEntity.ok(ApiResponse.builder()
                     .success(true)
                     .message("Rating updated successfully")
@@ -154,6 +186,7 @@ public class StudentCourseRatingController {
     @DeleteMapping("/delete/{ratingId}")
     public ResponseEntity<ApiResponse> deleteRating(
             @RequestHeader("Authorization") String authorizationHeader,
+            HttpServletRequest httpRequest,
             @PathVariable Integer ratingId) {
         try {
             Integer studentId = extractStudentId(authorizationHeader);
@@ -163,6 +196,18 @@ public class StudentCourseRatingController {
             }
 
             studentCourseRatingService.deleteRating(ratingId);
+
+            String ipAddress = httpRequest.getRemoteAddr();
+            String userAgent = httpRequest.getHeader("User-Agent");
+            userActivityLogService.trackUserActivityLog(
+                    extractUserId(authorizationHeader),
+                    ActivityType.DELETE,
+                    ContentType.StudentCourseRating,
+                    ratingId,
+                    ipAddress,
+                    userAgent
+            );
+
             return ResponseEntity.ok(ApiResponse.builder()
                     .success(true)
                     .message("Rating deleted successfully")
@@ -286,11 +331,19 @@ public class StudentCourseRatingController {
                             .build());
         }
     }
-    private Integer extractStudentId(String authorizationHeader) throws Exception {
+    private Integer extractStudentId(String authorizationHeader) {
         if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
             String token = authorizationHeader.substring(7);
             Integer userId = jwtUtil.extractUserId(token);
             return studentService.getStudentIdByUserId(userId);
+        }
+        throw new IllegalArgumentException("Authorization header is missing or invalid.");
+    }
+
+    private Integer extractUserId(String authorizationHeader) {
+        if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
+            String token = authorizationHeader.substring(7);
+            return jwtUtil.extractUserId(token);
         }
         throw new IllegalArgumentException("Authorization header is missing or invalid.");
     }

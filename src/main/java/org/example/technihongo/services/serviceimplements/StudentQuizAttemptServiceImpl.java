@@ -2,8 +2,11 @@ package org.example.technihongo.services.serviceimplements;
 
 import org.example.technihongo.dto.*;
 import org.example.technihongo.entities.*;
+import org.example.technihongo.enums.ActivityType;
+import org.example.technihongo.enums.ContentType;
 import org.example.technihongo.repositories.*;
 import org.example.technihongo.services.interfaces.StudentQuizAttemptService;
+import org.example.technihongo.services.interfaces.UserActivityLogService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -36,6 +39,10 @@ public class StudentQuizAttemptServiceImpl implements StudentQuizAttemptService 
     private StudentDailyLearningLogRepository dailyLogRepository;
     @Autowired
     private StudentLearningStatisticsRepository statisticsRepository;
+    @Autowired
+    private UserRepository userRepository;
+    @Autowired
+    private UserActivityLogService userActivityLogService;
 
     private static final int MAX_ATTEMPTS = 3;
     private static final long WAIT_TIME_MINUTES = 30;
@@ -292,21 +299,27 @@ public class StudentQuizAttemptServiceImpl implements StudentQuizAttemptService 
         attempt.setIsCompleted(true);
         attempt = studentQuizAttemptRepository.save(attempt);
 
-        Optional<StudentDailyLearningLog> dailyLogOpt = dailyLogRepository
-                .findByStudentStudentIdAndLogDate(attempt.getStudent().getStudentId(), LocalDate.now());
-        if (dailyLogOpt.isPresent()) {
-            StudentDailyLearningLog dailyLog = dailyLogOpt.get();
-            dailyLog.setCompletedQuizzes(dailyLog.getCompletedQuizzes() + 1);
-            dailyLogRepository.save(dailyLog);
+        if(studentQuizAttemptRepository.countByStudentStudentIdAndQuizQuizIdAndIsPassedAndIsCompleted(attempt.getStudent().getStudentId(), quiz.getQuizId(), true, true) == 1) {
+            Optional<StudentDailyLearningLog> dailyLogOpt = dailyLogRepository
+                    .findByStudentStudentIdAndLogDate(attempt.getStudent().getStudentId(), LocalDate.now());
+            if (dailyLogOpt.isPresent()) {
+                StudentDailyLearningLog dailyLog = dailyLogOpt.get();
+                dailyLog.setCompletedQuizzes(dailyLog.getCompletedQuizzes() + 1);
+                dailyLogRepository.save(dailyLog);
+            }
+
+            Optional<StudentLearningStatistics> statsOpt = statisticsRepository
+                    .findByStudentStudentId(attempt.getStudent().getStudentId());
+            if (statsOpt.isPresent()) {
+                StudentLearningStatistics statistics = statsOpt.get();
+                statistics.setTotalCompletedQuizzes(statistics.getTotalCompletedQuizzes() + 1);
+                statisticsRepository.save(statistics);
+            }
         }
 
-        Optional<StudentLearningStatistics> statsOpt = statisticsRepository
-                .findByStudentStudentId(attempt.getStudent().getStudentId());
-        if (statsOpt.isPresent()) {
-            StudentLearningStatistics statistics = statsOpt.get();
-            statistics.setTotalCompletedQuizzes(statistics.getTotalCompletedQuizzes() + 1);
-            statisticsRepository.save(statistics);
-        }
+        userActivityLogService.trackUserActivityLog(
+                userRepository.findByStudentStudentId(attempt.getStudent().getStudentId()).getUserId(),
+                ActivityType.COMPLETE, ContentType.Quiz, quiz.getQuizId(), null, null);
 
         for (QuizAnswerDTO answerDTO : request.getAnswers()) {
             QuestionAnswerOption selectedOption = questionAnswerOptionRepository.findByOptionId(answerDTO.getSelectedOptionId());

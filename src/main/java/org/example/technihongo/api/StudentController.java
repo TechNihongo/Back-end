@@ -1,15 +1,20 @@
 package org.example.technihongo.api;
 
 
+import jakarta.servlet.http.HttpServletRequest;
+import org.example.technihongo.core.security.JwtUtil;
 import org.example.technihongo.dto.DailyGoalRequest;
 import org.example.technihongo.dto.DifficultyLevelRequest;
 import org.example.technihongo.dto.ProfileDTO;
 import org.example.technihongo.dto.UpdateProfileDTO;
+import org.example.technihongo.enums.ActivityType;
+import org.example.technihongo.enums.ContentType;
 import org.example.technihongo.enums.DifficultyLevelEnum;
 import org.example.technihongo.exception.InvalidDifficultyLevelException;
 import org.example.technihongo.exception.ResourceNotFoundException;
 import org.example.technihongo.response.ApiResponse;
 import org.example.technihongo.services.interfaces.StudentService;
+import org.example.technihongo.services.interfaces.UserActivityLogService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -23,6 +28,10 @@ public class StudentController {
 
     @Autowired
     private StudentService studentService;
+    @Autowired
+    private JwtUtil jwtUtil;
+    @Autowired
+    private UserActivityLogService userActivityLogService;
 
     @PatchMapping("/{studentId}/daily-goal")
     public ResponseEntity<ApiResponse> setDailyGoal(
@@ -93,13 +102,39 @@ public class StudentController {
     @PatchMapping("/{userId}/profile")
     public ResponseEntity<ApiResponse> updateProfile(
             @PathVariable Integer userId,
-            @RequestBody UpdateProfileDTO request) {
+            @RequestBody UpdateProfileDTO request,
+            @RequestHeader("Authorization") String authorizationHeader,
+            HttpServletRequest httpRequest) {
         try {
-            studentService.updateStudentProfile(userId, request);
-            return ResponseEntity.ok(ApiResponse.builder()
-                    .success(true)
-                    .message("Profile updated successfully")
-                    .build());
+            if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
+                String token = authorizationHeader.substring(7);
+                Integer loginUserId = jwtUtil.extractUserId(token);
+
+                studentService.updateStudentProfile(userId, request);
+
+                String ipAddress = httpRequest.getRemoteAddr();
+                String userAgent = httpRequest.getHeader("User-Agent");
+                userActivityLogService.trackUserActivityLog(
+                        loginUserId,
+                        ActivityType.UPDATE,
+                        ContentType.User,
+                        userId,
+                        ipAddress,
+                        userAgent
+                );
+
+                return ResponseEntity.ok(ApiResponse.builder()
+                        .success(true)
+                        .message("Profile updated successfully")
+                        .build());
+            }
+            else {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(ApiResponse.builder()
+                                .success(false)
+                                .message("Unauthorized")
+                                .build());
+            }
         } catch (ResourceNotFoundException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(ApiResponse.builder()
@@ -138,8 +173,6 @@ public class StudentController {
                             .build());
         }
     }
-
-
 
 
 }

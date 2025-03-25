@@ -1,7 +1,10 @@
 package org.example.technihongo.api;
 
+import jakarta.servlet.http.HttpServletRequest;
 import org.example.technihongo.core.security.JwtUtil;
 import org.example.technihongo.dto.UserActivityLogDTO;
+import org.example.technihongo.enums.ActivityType;
+import org.example.technihongo.enums.ContentType;
 import org.example.technihongo.response.ApiResponse;
 import org.example.technihongo.services.interfaces.UserActivityLogService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -49,6 +52,7 @@ public class UserActivityLogController {
     @GetMapping("/student")
     public ResponseEntity<ApiResponse> getStudentActivityLogs(
             @RequestHeader("Authorization") String authorizationHeader,
+            HttpServletRequest httpRequest,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
         try {
@@ -56,6 +60,18 @@ public class UserActivityLogController {
                 String token = authorizationHeader.substring(7);
                 Integer userId = jwtUtil.extractUserId(token);
                 List<UserActivityLogDTO> logs = userActivityLogService.getStudentActivityLogs(userId, page, size);
+
+                String ipAddress = httpRequest.getRemoteAddr();
+                String userAgent = httpRequest.getHeader("User-Agent");
+                userActivityLogService.trackUserActivityLog(
+                        userId,
+                        ActivityType.VIEW,
+                        ContentType.UserActivityLog,
+                        null,
+                        ipAddress,
+                        userAgent
+                );
+
                 return ResponseEntity.ok(ApiResponse.builder()
                         .success(true)
                         .message("Student activity logs (LOGIN and COMPLETE) retrieved successfully")
