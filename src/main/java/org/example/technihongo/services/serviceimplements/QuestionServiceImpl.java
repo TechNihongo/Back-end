@@ -9,6 +9,7 @@ import org.example.technihongo.entities.Question;
 import org.example.technihongo.entities.QuestionAnswerOption;
 import org.example.technihongo.repositories.QuestionAnswerOptionRepository;
 import org.example.technihongo.repositories.QuestionRepository;
+import org.example.technihongo.repositories.QuizAnswerResponseRepository;
 import org.example.technihongo.services.interfaces.QuestionService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -26,6 +27,8 @@ public class QuestionServiceImpl implements QuestionService {
     private QuestionRepository questionRepository;
     @Autowired
     private QuestionAnswerOptionRepository questionAnswerOptionRepository;
+    @Autowired
+    private QuizAnswerResponseRepository quizAnswerResponseRepository;
 
     @Override
     public List<Question> getQuestionList() {
@@ -66,12 +69,12 @@ public class QuestionServiceImpl implements QuestionService {
         List<QuestionAnswerOptionDTO> options = dto.getOptions();
 
         if (options.size() < 2 || options.size() > 4) {
-            throw new IllegalArgumentException("Each question must have between 2 and 4 answer options.");
+            throw new RuntimeException("Each question must have between 2 and 4 answer options.");
         }
 
         long correctCount = options.stream().filter(QuestionAnswerOptionDTO::getIsCorrect).count();
         if (correctCount != 1) {
-            throw new IllegalArgumentException("Each question must have exactly one correct answer.");
+            throw new RuntimeException("Each question must have exactly one correct answer.");
         }
 
         Question question = Question.builder()
@@ -97,7 +100,7 @@ public class QuestionServiceImpl implements QuestionService {
     @Override
     public QuestionWithOptionsResponseDTO updateQuestionWithOptions(Integer questionId, QuestionWithOptionsDTO dto) {
         Question question = questionRepository.findById(questionId)
-                .orElseThrow(() -> new IllegalArgumentException("Question ID not found."));
+                .orElseThrow(() -> new RuntimeException("Question ID not found."));
 
         question.setQuestionText(dto.getQuestionText());
         question.setExplanation(dto.getExplanation());
@@ -115,12 +118,20 @@ public class QuestionServiceImpl implements QuestionService {
                 .orElseThrow(() -> new IllegalArgumentException("Question ID not found."));
 
         if (options.size() < 2 || options.size() > 4) {
-            throw new IllegalArgumentException("Each question must have between 2 and 4 answer options.");
+            throw new RuntimeException("Each question must have between 2 and 4 answer options.");
         }
 
         long correctCount = options.stream().filter(QuestionAnswerOptionDTO::getIsCorrect).count();
         if (correctCount != 1) {
-            throw new IllegalArgumentException("Each question must have exactly one correct answer.");
+            throw new RuntimeException("Each question must have exactly one correct answer.");
+        }
+
+        List<QuestionAnswerOption> existingOptions = questionAnswerOptionRepository.findByQuestion_QuestionId(questionId);
+
+        for (QuestionAnswerOption option : existingOptions) {
+            if (quizAnswerResponseRepository.existsBySelectedOption_OptionId(option.getOptionId())) {
+                throw new RuntimeException("Cannot update options because they are referenced by QuizAnswerResponse.");
+            }
         }
 
         questionAnswerOptionRepository.deleteByQuestion_QuestionId(question.getQuestionId());

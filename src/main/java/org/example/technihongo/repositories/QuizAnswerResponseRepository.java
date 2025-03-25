@@ -7,4 +7,5 @@ import java.util.List;
 
 public interface QuizAnswerResponseRepository extends JpaRepository<QuizAnswerResponse, Integer> {
     List<QuizAnswerResponse> findByStudentQuizAttempt_AttemptId(Integer attemptId);
+    boolean existsBySelectedOption_OptionId(Integer optionId);
 }
