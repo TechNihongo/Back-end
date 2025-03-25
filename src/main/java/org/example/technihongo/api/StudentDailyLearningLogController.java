@@ -1,12 +1,17 @@
 package org.example.technihongo.api;
 
+import jakarta.servlet.http.HttpServletRequest;
 import org.example.technihongo.core.security.JwtUtil;
 import org.example.technihongo.dto.CoursePublicDTO;
 import org.example.technihongo.entities.Course;
 import org.example.technihongo.entities.StudentDailyLearningLog;
+import org.example.technihongo.enums.ActivityType;
+import org.example.technihongo.enums.ContentType;
 import org.example.technihongo.response.ApiResponse;
 import org.example.technihongo.services.interfaces.StudentDailyLearningLogService;
 import org.example.technihongo.services.interfaces.StudentService;
+import org.example.technihongo.services.interfaces.UserActivityLogService;
+import org.example.technihongo.services.serviceimplements.UserActivityLogServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -23,6 +28,8 @@ public class StudentDailyLearningLogController {
     private JwtUtil jwtUtil;
     @Autowired
     private StudentService studentService;
+    @Autowired
+    private UserActivityLogService userActivityLogService;
 
     @PostMapping("/track")
     public ResponseEntity<ApiResponse> trackStudentDailyLearningLog(
@@ -64,7 +71,8 @@ public class StudentDailyLearningLogController {
 
     @GetMapping("/view")
     public ResponseEntity<ApiResponse> getStudentDailyLearningLog(
-            @RequestHeader("Authorization") String authorizationHeader){
+            @RequestHeader("Authorization") String authorizationHeader,
+            HttpServletRequest httpRequest){
         try{
             if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
                 String token = authorizationHeader.substring(7);
@@ -72,6 +80,18 @@ public class StudentDailyLearningLogController {
                 Integer studentId = studentService.getStudentIdByUserId(userId);
 
                 StudentDailyLearningLog log = studentDailyLearningLogService.getStudentDailyLearningLog(studentId);
+
+                String ipAddress = httpRequest.getRemoteAddr();
+                String userAgent = httpRequest.getHeader("User-Agent");
+                userActivityLogService.trackUserActivityLog(
+                        userId,
+                        ActivityType.VIEW,
+                        ContentType.StudentDailyLearningLog,
+                        log.getLogId(),
+                        ipAddress,
+                        userAgent
+                );
+
                 return ResponseEntity.ok(ApiResponse.builder()
                         .success(false)
                         .data(log)

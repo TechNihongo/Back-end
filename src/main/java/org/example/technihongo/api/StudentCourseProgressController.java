@@ -1,11 +1,15 @@
 package org.example.technihongo.api;
 
+import jakarta.servlet.http.HttpServletRequest;
 import org.example.technihongo.core.security.JwtUtil;
 import org.example.technihongo.dto.CourseStatisticsDTO;
 import org.example.technihongo.entities.StudentCourseProgress;
+import org.example.technihongo.enums.ActivityType;
+import org.example.technihongo.enums.ContentType;
 import org.example.technihongo.response.ApiResponse;
 import org.example.technihongo.services.interfaces.StudentCourseProgressService;
 import org.example.technihongo.services.interfaces.StudentService;
+import org.example.technihongo.services.interfaces.UserActivityLogService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -22,6 +26,8 @@ public class StudentCourseProgressController {
     private JwtUtil jwtUtil;
     @Autowired
     private StudentService studentService;
+    @Autowired
+    private UserActivityLogService userActivityLogService;
 
     @GetMapping("/view/{studentId}")
     public ResponseEntity<ApiResponse> getStudentCourseProgress(
@@ -141,6 +147,7 @@ public class StudentCourseProgressController {
     @PostMapping("/enroll")
     public ResponseEntity<ApiResponse> enrollCourse(
             @RequestHeader("Authorization") String authorizationHeader,
+            HttpServletRequest httpRequest,
             @RequestParam Integer courseId) {
         try {
             if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
@@ -149,6 +156,17 @@ public class StudentCourseProgressController {
                 Integer studentId = studentService.getStudentIdByUserId(userId);
 
                 courseProgressService.enrollCourse(studentId, courseId);
+
+                String ipAddress = httpRequest.getRemoteAddr();
+                String userAgent = httpRequest.getHeader("User-Agent");
+                userActivityLogService.trackUserActivityLog(
+                        userId,
+                        ActivityType.ENROLL,
+                        ContentType.Course,
+                        courseId,
+                        ipAddress,
+                        userAgent
+                );
 
                 return ResponseEntity.ok(ApiResponse.builder()
                         .success(true)

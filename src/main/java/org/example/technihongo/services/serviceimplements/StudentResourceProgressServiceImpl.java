@@ -4,12 +4,12 @@ import org.example.technihongo.entities.LearningResource;
 import org.example.technihongo.entities.Student;
 import org.example.technihongo.entities.StudentDailyLearningLog;
 import org.example.technihongo.entities.StudentResourceProgress;
+import org.example.technihongo.enums.ActivityType;
 import org.example.technihongo.enums.CompletionStatus;
-import org.example.technihongo.repositories.LearningResourceRepository;
-import org.example.technihongo.repositories.StudentDailyLearningLogRepository;
-import org.example.technihongo.repositories.StudentRepository;
-import org.example.technihongo.repositories.StudentResourceProgressRepository;
+import org.example.technihongo.enums.ContentType;
+import org.example.technihongo.repositories.*;
 import org.example.technihongo.services.interfaces.StudentResourceProgressService;
+import org.example.technihongo.services.interfaces.UserActivityLogService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -30,6 +30,10 @@ public class StudentResourceProgressServiceImpl implements StudentResourceProgre
     private LearningResourceRepository learningResourceRepository;
     @Autowired
     private StudentDailyLearningLogRepository dailyLogRepository;
+    @Autowired
+    private UserRepository userRepository;
+    @Autowired
+    private UserActivityLogService userActivityLogService;
 
     @Override
     public void trackLearningResourceProgress(Integer studentId, Integer resourceId, String notes) {
@@ -61,6 +65,8 @@ public class StudentResourceProgressServiceImpl implements StudentResourceProgre
                 StudentDailyLearningLog dailyLog = dailyLogRepository.findByStudentStudentIdAndLogDate(studentId, LocalDate.now()).get();
                 dailyLog.setCompletedResources(dailyLog.getCompletedResources() + 1);
                 dailyLogRepository.save(dailyLog);
+                userActivityLogService.trackUserActivityLog(userRepository.findByStudentStudentId(studentId).getUserId(),
+                        ActivityType.COMPLETE, ContentType.LearningResource, resourceId, null, null);
             }
         }
 

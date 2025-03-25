@@ -1,12 +1,16 @@
 package org.example.technihongo.api;
 
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.example.technihongo.core.security.JwtUtil;
 import org.example.technihongo.dto.*;
 import org.example.technihongo.entities.Course;
 import org.example.technihongo.entities.LearningPath;
+import org.example.technihongo.enums.ActivityType;
+import org.example.technihongo.enums.ContentType;
 import org.example.technihongo.response.ApiResponse;
 import org.example.technihongo.services.interfaces.LearningPathService;
+import org.example.technihongo.services.interfaces.UserActivityLogService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -22,16 +26,31 @@ public class LearningPathController {
     private LearningPathService learningPathService;
     @Autowired
     private JwtUtil jwtUtil;
+    @Autowired
+    private UserActivityLogService userActivityLogService;
 
     @GetMapping("/all")
     public ResponseEntity<ApiResponse> getAllLearningPaths(
             @RequestHeader("Authorization") String authorizationHeader,
+            HttpServletRequest httpRequest,
             @RequestParam(defaultValue = "") String keyword,
-            @RequestParam(defaultValue = "") Integer domainId) throws Exception {
+            @RequestParam(defaultValue = "") Integer domainId) {
         try{
             if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
                 String token = authorizationHeader.substring(7);
                 int roleId = jwtUtil.extractUserRoleId(token);
+                Integer userId = jwtUtil.extractUserId(token);
+
+                String ipAddress = httpRequest.getRemoteAddr();
+                String userAgent = httpRequest.getHeader("User-Agent");
+                userActivityLogService.trackUserActivityLog(
+                        userId,
+                        ActivityType.VIEW,
+                        ContentType.LearningPath,
+                        null,
+                        ipAddress,
+                        userAgent
+                );
 
                 if (roleId == 1 || roleId == 2) {
                     List<LearningPath> learningPaths = learningPathService.getAllLearningPaths(keyword, domainId);
@@ -80,8 +99,9 @@ public class LearningPathController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<ApiResponse> viewLearningPath(@PathVariable Integer id,
-                                                  @RequestHeader("Authorization") String authorizationHeader) throws Exception {
+    public ResponseEntity<ApiResponse> viewLearningPath(
+            @PathVariable Integer id,
+            @RequestHeader("Authorization") String authorizationHeader){
         try{
             if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
                 String token = authorizationHeader.substring(7);
@@ -135,14 +155,28 @@ public class LearningPathController {
     }
 
     @PostMapping("/create")
-    public ResponseEntity<ApiResponse> createLearningPath(@RequestBody CreateLearningPathDTO createLearningPathDTO,
-                                                    @RequestHeader("Authorization") String authorizationHeader) {
+    public ResponseEntity<ApiResponse> createLearningPath(
+            @RequestBody CreateLearningPathDTO createLearningPathDTO,
+            @RequestHeader("Authorization") String authorizationHeader,
+            HttpServletRequest httpRequest) {
         try {
             if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
                 String token = authorizationHeader.substring(7);
                 Integer userId = jwtUtil.extractUserId(token);
 
                 LearningPath learningPath = learningPathService.createLearningPath(userId, createLearningPathDTO);
+
+                String ipAddress = httpRequest.getRemoteAddr();
+                String userAgent = httpRequest.getHeader("User-Agent");
+                userActivityLogService.trackUserActivityLog(
+                        userId,
+                        ActivityType.CREATE,
+                        ContentType.LearningPath,
+                        learningPath.getPathId(),
+                        ipAddress,
+                        userAgent
+                );
+
                 return ResponseEntity.ok(ApiResponse.builder()
                         .success(true)
                         .message("LearningPath created successfully!")
@@ -173,14 +207,41 @@ public class LearningPathController {
     }
 
     @PatchMapping("/update/{pathId}")
-    public ResponseEntity<ApiResponse> updateLearningPath(@PathVariable Integer pathId,
-                                                    @RequestBody UpdateLearningPathDTO updateLearningPathDTO) {
+    public ResponseEntity<ApiResponse> updateLearningPath(
+            @PathVariable Integer pathId,
+            @RequestBody UpdateLearningPathDTO updateLearningPathDTO,
+            @RequestHeader("Authorization") String authorizationHeader,
+            HttpServletRequest httpRequest) {
         try{
-            learningPathService.updateLearningPath(pathId, updateLearningPathDTO);
-            return ResponseEntity.ok(ApiResponse.builder()
-                    .success(true)
-                    .message("LearningPath updated successfully")
-                    .build());
+            if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
+                String token = authorizationHeader.substring(7);
+                Integer loginUserId = jwtUtil.extractUserId(token);
+
+                learningPathService.updateLearningPath(pathId, updateLearningPathDTO);
+
+                String ipAddress = httpRequest.getRemoteAddr();
+                String userAgent = httpRequest.getHeader("User-Agent");
+                userActivityLogService.trackUserActivityLog(
+                        loginUserId,
+                        ActivityType.UPDATE,
+                        ContentType.LearningPath,
+                        pathId,
+                        ipAddress,
+                        userAgent
+                );
+
+                return ResponseEntity.ok(ApiResponse.builder()
+                        .success(true)
+                        .message("LearningPath updated successfully")
+                        .build());
+            }
+            else {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(ApiResponse.builder()
+                                .success(false)
+                                .message("Unauthorized")
+                                .build());
+            }
         } catch (RuntimeException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(ApiResponse.builder()
@@ -252,13 +313,40 @@ public class LearningPathController {
     }
 
     @DeleteMapping("/delete/{id}")
-    public ResponseEntity<ApiResponse> deleteLearningPath(@PathVariable Integer id) {
+    public ResponseEntity<ApiResponse> deleteLearningPath(
+            @PathVariable Integer id,
+            @RequestHeader("Authorization") String authorizationHeader,
+            HttpServletRequest httpRequest) {
         try{
-            learningPathService.deleteLearningPath(id);
-            return ResponseEntity.ok(ApiResponse.builder()
-                    .success(true)
-                    .message("LearningPath removed successfully!")
-                    .build());
+            if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
+                String token = authorizationHeader.substring(7);
+                Integer loginUserId = jwtUtil.extractUserId(token);
+
+                learningPathService.deleteLearningPath(id);
+
+                String ipAddress = httpRequest.getRemoteAddr();
+                String userAgent = httpRequest.getHeader("User-Agent");
+                userActivityLogService.trackUserActivityLog(
+                        loginUserId,
+                        ActivityType.DELETE,
+                        ContentType.LearningPath,
+                        id,
+                        ipAddress,
+                        userAgent
+                );
+
+                return ResponseEntity.ok(ApiResponse.builder()
+                        .success(true)
+                        .message("LearningPath removed successfully!")
+                        .build());
+            }
+            else {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(ApiResponse.builder()
+                                .success(false)
+                                .message("Unauthorized")
+                                .build());
+            }
         } catch (RuntimeException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(ApiResponse.builder()

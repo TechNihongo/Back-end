@@ -1,14 +1,18 @@
 package org.example.technihongo.api;
 
+import jakarta.servlet.http.HttpServletRequest;
 import org.example.technihongo.core.security.JwtUtil;
 import org.example.technihongo.dto.SystemFlashcardSetRequestDTO;
 import org.example.technihongo.dto.SystemFlashcardSetResponseDTO;
+import org.example.technihongo.enums.ActivityType;
+import org.example.technihongo.enums.ContentType;
 import org.example.technihongo.exception.ResourceNotFoundException;
 import org.example.technihongo.exception.UnauthorizedAccessException;
 import org.example.technihongo.response.ApiResponse;
 import org.example.technihongo.services.interfaces.StudentFlashcardSetProgressService;
 import org.example.technihongo.services.interfaces.StudentService;
 import org.example.technihongo.services.interfaces.SystemFlashcardSetService;
+import org.example.technihongo.services.interfaces.UserActivityLogService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -29,14 +33,29 @@ public class SystemFlashcardSetController {
     private StudentService studentService;
     @Autowired
     private StudentFlashcardSetProgressService studentFlashcardSetProgressService;
+    @Autowired
+    private UserActivityLogService userActivityLogService;
 
     @PostMapping("/create")
     public ResponseEntity<ApiResponse> create(
             @RequestHeader("Authorization") String authorizationHeader,
+            HttpServletRequest httpRequest,
             @Valid @RequestBody SystemFlashcardSetRequestDTO requestDTO) {
         try {
             Integer userId = extractUserId(authorizationHeader);
             SystemFlashcardSetResponseDTO response = systemFlashcardSetService.create(userId, requestDTO);
+
+            String ipAddress = httpRequest.getRemoteAddr();
+            String userAgent = httpRequest.getHeader("User-Agent");
+            userActivityLogService.trackUserActivityLog(
+                    userId,
+                    ActivityType.CREATE,
+                    ContentType.SystemFlashcardSet,
+                    response.getSystemSetId(),
+                    ipAddress,
+                    userAgent
+            );
+
             return ResponseEntity.status(HttpStatus.CREATED)
                     .body(ApiResponse.builder()
                             .success(true)
@@ -67,11 +86,24 @@ public class SystemFlashcardSetController {
     @PatchMapping("/update/{flashcardSetId}")
     public ResponseEntity<ApiResponse> update(
             @RequestHeader("Authorization") String authorizationHeader,
+            HttpServletRequest httpRequest,
             @PathVariable Integer flashcardSetId,
             @Valid @RequestBody SystemFlashcardSetRequestDTO requestDTO) {
         try {
             Integer userId = extractUserId(authorizationHeader);
             SystemFlashcardSetResponseDTO response = systemFlashcardSetService.update(userId, flashcardSetId, requestDTO);
+
+            String ipAddress = httpRequest.getRemoteAddr();
+            String userAgent = httpRequest.getHeader("User-Agent");
+            userActivityLogService.trackUserActivityLog(
+                    userId,
+                    ActivityType.UPDATE,
+                    ContentType.SystemFlashcardSet,
+                    response.getSystemSetId(),
+                    ipAddress,
+                    userAgent
+            );
+
             return ResponseEntity.ok(ApiResponse.builder()
                     .success(true)
                     .message("System Flashcard Set updated successfully")
@@ -101,10 +133,23 @@ public class SystemFlashcardSetController {
     @DeleteMapping("/delete/{flashcardSetId}")
     public ResponseEntity<ApiResponse> delete(
             @RequestHeader("Authorization") String authorizationHeader,
+            HttpServletRequest httpRequest,
             @PathVariable Integer flashcardSetId) {
         try {
             Integer userId = extractUserId(authorizationHeader);
             systemFlashcardSetService.deleteSystemFlashcardSet(userId, flashcardSetId);
+
+            String ipAddress = httpRequest.getRemoteAddr();
+            String userAgent = httpRequest.getHeader("User-Agent");
+            userActivityLogService.trackUserActivityLog(
+                    userId,
+                    ActivityType.DELETE,
+                    ContentType.SystemFlashcardSet,
+                    flashcardSetId,
+                    ipAddress,
+                    userAgent
+            );
+
             return ResponseEntity.ok(ApiResponse.builder()
                     .success(true)
                     .message("System Flashcard Set marked as deleted successfully")

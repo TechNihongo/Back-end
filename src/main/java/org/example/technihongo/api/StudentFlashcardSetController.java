@@ -1,16 +1,20 @@
 package org.example.technihongo.api;
 
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.example.technihongo.core.security.JwtUtil;
 import org.example.technihongo.dto.CreateFlashcardSetFromResourceDTO;
 import org.example.technihongo.dto.FlashcardSetRequestDTO;
 import org.example.technihongo.dto.FlashcardSetResponseDTO;
+import org.example.technihongo.enums.ActivityType;
+import org.example.technihongo.enums.ContentType;
 import org.example.technihongo.exception.ResourceNotFoundException;
 import org.example.technihongo.exception.UnauthorizedAccessException;
 import org.example.technihongo.response.ApiResponse;
 import org.example.technihongo.services.interfaces.StudentFlashcardSetProgressService;
 import org.example.technihongo.services.interfaces.StudentFlashcardSetService;
 import org.example.technihongo.services.interfaces.StudentService;
+import org.example.technihongo.services.interfaces.UserActivityLogService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -30,14 +34,29 @@ public class StudentFlashcardSetController {
     private StudentService studentService;
     @Autowired
     private StudentFlashcardSetProgressService studentFlashcardSetProgressService;
+    @Autowired
+    private UserActivityLogService userActivityLogService;
 
     @PostMapping("/create")
     public ResponseEntity<ApiResponse> createFlashcardSet(
             @RequestHeader("Authorization") String authorizationHeader,
+            HttpServletRequest httpRequest,
             @Valid @RequestBody FlashcardSetRequestDTO request) {
         try {
             Integer studentId = extractStudentId(authorizationHeader);
             FlashcardSetResponseDTO response = studentFlashcardSetService.createFlashcardSet(studentId, request);
+
+            String ipAddress = httpRequest.getRemoteAddr();
+            String userAgent = httpRequest.getHeader("User-Agent");
+            userActivityLogService.trackUserActivityLog(
+                    extractUserId(authorizationHeader),
+                    ActivityType.CREATE,
+                    ContentType.StudentFlashcardSet,
+                    response.getStudentSetId(),
+                    ipAddress,
+                    userAgent
+            );
+
             return ResponseEntity.status(HttpStatus.CREATED)
                     .body(ApiResponse.builder()
                             .success(true)
@@ -68,11 +87,24 @@ public class StudentFlashcardSetController {
     @PatchMapping("/{setId}/update")
     public ResponseEntity<ApiResponse> updateFlashcardSet(
             @RequestHeader("Authorization") String authorizationHeader,
+            HttpServletRequest httpRequest,
             @PathVariable("setId") Integer flashcardSetId,
             @Valid @RequestBody FlashcardSetRequestDTO request) {
         try {
             Integer studentId = extractStudentId(authorizationHeader);
             FlashcardSetResponseDTO response = studentFlashcardSetService.updateFlashcardSet(studentId, flashcardSetId, request);
+
+            String ipAddress = httpRequest.getRemoteAddr();
+            String userAgent = httpRequest.getHeader("User-Agent");
+            userActivityLogService.trackUserActivityLog(
+                    extractUserId(authorizationHeader),
+                    ActivityType.UPDATE,
+                    ContentType.StudentFlashcardSet,
+                    flashcardSetId,
+                    ipAddress,
+                    userAgent
+            );
+
             return ResponseEntity.ok(ApiResponse.builder()
                     .success(true)
                     .message("Flashcard set updated successfully")
@@ -102,10 +134,23 @@ public class StudentFlashcardSetController {
     @DeleteMapping("/delete/{setId}")
     public ResponseEntity<ApiResponse> deleteFlashcardSet(
             @RequestHeader("Authorization") String authorizationHeader,
+            HttpServletRequest httpRequest,
             @PathVariable("setId") Integer flashcardSetId) {
         try {
             Integer studentId = extractStudentId(authorizationHeader);
             studentFlashcardSetService.deleteFlashcardSet(studentId, flashcardSetId);
+
+            String ipAddress = httpRequest.getRemoteAddr();
+            String userAgent = httpRequest.getHeader("User-Agent");
+            userActivityLogService.trackUserActivityLog(
+                    extractUserId(authorizationHeader),
+                    ActivityType.DELETE,
+                    ContentType.StudentFlashcardSet,
+                    flashcardSetId,
+                    ipAddress,
+                    userAgent
+            );
+
             return ResponseEntity.ok(ApiResponse.builder()
                     .success(true)
                     .message("Flashcard set marked as deleted successfully")
@@ -304,10 +349,23 @@ public class StudentFlashcardSetController {
     @PostMapping("/from-resource")
     public ResponseEntity<ApiResponse> createFlashcardSetFromResource(
             @RequestHeader("Authorization") String authorizationHeader,
+            HttpServletRequest httpRequest,
             @Valid @RequestBody CreateFlashcardSetFromResourceDTO request) {
         try {
             Integer studentId = extractStudentId(authorizationHeader);
             FlashcardSetResponseDTO responseDTO = studentFlashcardSetService.createFlashcardSetFromResource(studentId, request);
+
+            String ipAddress = httpRequest.getRemoteAddr();
+            String userAgent = httpRequest.getHeader("User-Agent");
+            userActivityLogService.trackUserActivityLog(
+                    extractUserId(authorizationHeader),
+                    ActivityType.CREATE,
+                    ContentType.StudentFlashcardSet,
+                    responseDTO.getStudentSetId(),
+                    ipAddress,
+                    userAgent
+            );
+
             return ResponseEntity.status(HttpStatus.CREATED)
                     .body(ApiResponse.builder()
                             .success(true)
@@ -335,7 +393,6 @@ public class StudentFlashcardSetController {
         }
     }
 
-    // Helper method to extract studentId from JWT
     private Integer extractStudentId(String authorizationHeader) throws Exception {
         if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
             String token = authorizationHeader.substring(7);
@@ -343,5 +400,13 @@ public class StudentFlashcardSetController {
             return studentService.getStudentIdByUserId(userId);
         }
         throw new Exception("Authorization failed!");
+    }
+
+    private Integer extractUserId(String authorizationHeader) {
+        if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
+            String token = authorizationHeader.substring(7);
+            return jwtUtil.extractUserId(token);
+        }
+        throw new IllegalArgumentException("Authorization header is missing or invalid.");
     }
 }

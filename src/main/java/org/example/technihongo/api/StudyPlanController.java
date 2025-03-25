@@ -1,12 +1,16 @@
 package org.example.technihongo.api;
 
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.example.technihongo.core.security.JwtUtil;
 import org.example.technihongo.dto.CreateStudyPlanDTO;
 import org.example.technihongo.dto.UpdateStudyPlanDTO;
 import org.example.technihongo.entities.StudyPlan;
+import org.example.technihongo.enums.ActivityType;
+import org.example.technihongo.enums.ContentType;
 import org.example.technihongo.response.ApiResponse;
 import org.example.technihongo.services.interfaces.StudyPlanService;
+import org.example.technihongo.services.interfaces.UserActivityLogService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -23,6 +27,8 @@ public class StudyPlanController {
     private StudyPlanService studyPlanService;
     @Autowired
     private JwtUtil jwtUtil;
+    @Autowired
+    private UserActivityLogService userActivityLogService;
 
     @GetMapping("/course/{courseId}")
     public ResponseEntity<ApiResponse> getAllStudyPlansByCourseId(@RequestHeader("Authorization") String authorizationHeader,
@@ -136,13 +142,28 @@ public class StudyPlanController {
 
 
     @PostMapping("/create")
-    public ResponseEntity<ApiResponse> createStudyPlan(@RequestBody CreateStudyPlanDTO createStudyPlanDTO) {
+    public ResponseEntity<ApiResponse> createStudyPlan(
+            @RequestBody CreateStudyPlanDTO createStudyPlanDTO,
+            @RequestHeader("Authorization") String authorizationHeader,
+            HttpServletRequest httpRequest) {
         try {
-                StudyPlan StudyPlan = studyPlanService.createStudyPlan(createStudyPlanDTO);
+                StudyPlan studyPlan = studyPlanService.createStudyPlan(createStudyPlanDTO);
+
+                String ipAddress = httpRequest.getRemoteAddr();
+                String userAgent = httpRequest.getHeader("User-Agent");
+                userActivityLogService.trackUserActivityLog(
+                        extractUserId(authorizationHeader),
+                        ActivityType.CREATE,
+                        ContentType.StudyPlan,
+                        studyPlan.getStudyPlanId(),
+                        ipAddress,
+                        userAgent
+                );
+
                 return ResponseEntity.ok(ApiResponse.builder()
                         .success(true)
                         .message("StudyPlan created successfully!")
-                        .data(StudyPlan)
+                        .data(studyPlan)
                         .build());
         } catch (RuntimeException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
@@ -160,10 +181,25 @@ public class StudyPlanController {
     }
 
     @PatchMapping("/update/{id}")
-    public ResponseEntity<ApiResponse> updateStudyPlan(@PathVariable Integer id,
-                                                    @RequestBody UpdateStudyPlanDTO updateStudyPlanDTO) {
+    public ResponseEntity<ApiResponse> updateStudyPlan(
+            @PathVariable Integer id,
+            @RequestBody UpdateStudyPlanDTO updateStudyPlanDTO,
+            @RequestHeader("Authorization") String authorizationHeader,
+            HttpServletRequest httpRequest) {
         try{
             studyPlanService.updateStudyPlan(id, updateStudyPlanDTO);
+
+            String ipAddress = httpRequest.getRemoteAddr();
+            String userAgent = httpRequest.getHeader("User-Agent");
+            userActivityLogService.trackUserActivityLog(
+                    extractUserId(authorizationHeader),
+                    ActivityType.UPDATE,
+                    ContentType.StudyPlan,
+                    id,
+                    ipAddress,
+                    userAgent
+            );
+
             return ResponseEntity.ok(ApiResponse.builder()
                     .success(true)
                     .message("StudyPlan updated successfully!")
@@ -184,9 +220,24 @@ public class StudyPlanController {
     }
 
     @DeleteMapping("/delete/{id}")
-    public ResponseEntity<ApiResponse> deleteStudyPlan(@PathVariable Integer id) {
+    public ResponseEntity<ApiResponse> deleteStudyPlan(
+            @PathVariable Integer id,
+            @RequestHeader("Authorization") String authorizationHeader,
+            HttpServletRequest httpRequest) {
         try{
             studyPlanService.deleteStudyPlan(id);
+
+            String ipAddress = httpRequest.getRemoteAddr();
+            String userAgent = httpRequest.getHeader("User-Agent");
+            userActivityLogService.trackUserActivityLog(
+                    extractUserId(authorizationHeader),
+                    ActivityType.DELETE,
+                    ContentType.StudyPlan,
+                    id,
+                    ipAddress,
+                    userAgent
+            );
+
             return ResponseEntity.ok(ApiResponse.builder()
                     .success(true)
                     .message("StudyPlan deleted successfully!")
@@ -204,5 +255,13 @@ public class StudyPlanController {
                             .message("Internal Server Error: " + e.getMessage())
                             .build());
         }
+    }
+
+    private Integer extractUserId(String authorizationHeader) {
+        if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
+            String token = authorizationHeader.substring(7);
+            return jwtUtil.extractUserId(token);
+        }
+        throw new IllegalArgumentException("Authorization header is missing or invalid.");
     }
 }

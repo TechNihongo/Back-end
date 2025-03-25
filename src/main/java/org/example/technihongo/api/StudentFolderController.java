@@ -1,8 +1,14 @@
 package org.example.technihongo.api;
 
+import jakarta.servlet.http.HttpServletRequest;
+import org.example.technihongo.core.security.JwtUtil;
 import org.example.technihongo.dto.StudentFolderDTO;
+import org.example.technihongo.entities.UserActivityLog;
+import org.example.technihongo.enums.ActivityType;
+import org.example.technihongo.enums.ContentType;
 import org.example.technihongo.response.ApiResponse;
 import org.example.technihongo.services.interfaces.StudentFolderService;
+import org.example.technihongo.services.interfaces.UserActivityLogService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -15,11 +21,30 @@ import java.util.List;
 public class StudentFolderController {
     @Autowired
     private StudentFolderService studentFolderService;
+    @Autowired
+    private JwtUtil jwtUtil;
+    @Autowired
+    private UserActivityLogService userActivityLogService;
 
     @PostMapping("/create")
-    public ResponseEntity<ApiResponse> createStudentFolder(@RequestBody StudentFolderDTO folderDTO) {
+    public ResponseEntity<ApiResponse> createStudentFolder(
+            @RequestBody StudentFolderDTO folderDTO,
+            @RequestHeader("Authorization") String authorizationHeader,
+            HttpServletRequest httpRequest) {
         try {
             StudentFolderDTO createdFolder = studentFolderService.createStudentFolder(folderDTO);
+
+            String ipAddress = httpRequest.getRemoteAddr();
+            String userAgent = httpRequest.getHeader("User-Agent");
+            userActivityLogService.trackUserActivityLog(
+                    extractUserId(authorizationHeader),
+                    ActivityType.CREATE,
+                    ContentType.StudentFolder,
+                    createdFolder.getFolderId(),
+                    ipAddress,
+                    userAgent
+            );
+
             return ResponseEntity.ok(ApiResponse.builder()
                     .success(true)
                     .message("Student folder created successfully")
@@ -37,9 +62,23 @@ public class StudentFolderController {
     @PatchMapping("/update/{folderId}")
     public ResponseEntity<ApiResponse> updateStudentFolder(
             @PathVariable Integer folderId,
-            @RequestBody StudentFolderDTO folderDTO) {
+            @RequestBody StudentFolderDTO folderDTO,
+            @RequestHeader("Authorization") String authorizationHeader,
+            HttpServletRequest httpRequest) {
         try {
             StudentFolderDTO updatedFolder = studentFolderService.updateStudentFolder(folderId, folderDTO);
+
+            String ipAddress = httpRequest.getRemoteAddr();
+            String userAgent = httpRequest.getHeader("User-Agent");
+            userActivityLogService.trackUserActivityLog(
+                    extractUserId(authorizationHeader),
+                    ActivityType.UPDATE,
+                    ContentType.StudentFolder,
+                    folderId,
+                    ipAddress,
+                    userAgent
+            );
+
             return ResponseEntity.ok(ApiResponse.builder()
                     .success(true)
                     .message("Student folder updated successfully")
@@ -55,9 +94,24 @@ public class StudentFolderController {
     }
 
     @DeleteMapping("/deleteFolder/{folderId}")
-    public ResponseEntity<ApiResponse> deleteStudentFolder(@PathVariable Integer folderId) {
+    public ResponseEntity<ApiResponse> deleteStudentFolder(
+            @PathVariable Integer folderId,
+            @RequestHeader("Authorization") String authorizationHeader,
+            HttpServletRequest httpRequest) {
         try {
             studentFolderService.deleteStudentFolder(folderId);
+
+            String ipAddress = httpRequest.getRemoteAddr();
+            String userAgent = httpRequest.getHeader("User-Agent");
+            userActivityLogService.trackUserActivityLog(
+                    extractUserId(authorizationHeader),
+                    ActivityType.DELETE,
+                    ContentType.StudentFolder,
+                    folderId,
+                    ipAddress,
+                    userAgent
+            );
+
             return ResponseEntity.ok(ApiResponse.builder()
                     .success(true)
                     .message("Student folder deleted successfully")
@@ -94,6 +148,14 @@ public class StudentFolderController {
                             .message("Internal Server Error: " + e.getMessage())
                             .build());
         }
+    }
+
+    private Integer extractUserId(String authorizationHeader) {
+        if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
+            String token = authorizationHeader.substring(7);
+            return jwtUtil.extractUserId(token);
+        }
+        throw new IllegalArgumentException("Authorization header is missing or invalid.");
     }
 }
 

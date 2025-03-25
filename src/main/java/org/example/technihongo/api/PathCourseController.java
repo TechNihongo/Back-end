@@ -1,14 +1,18 @@
 package org.example.technihongo.api;
 
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.example.technihongo.core.security.JwtUtil;
 import org.example.technihongo.dto.CreatePathCourseDTO;
 import org.example.technihongo.dto.PageResponseDTO;
 import org.example.technihongo.dto.UpdatePathCourseOrderDTO;
 import org.example.technihongo.entities.PathCourse;
+import org.example.technihongo.enums.ActivityType;
+import org.example.technihongo.enums.ContentType;
 import org.example.technihongo.response.ApiResponse;
 import org.example.technihongo.services.interfaces.LearningPathService;
 import org.example.technihongo.services.interfaces.PathCourseService;
+import org.example.technihongo.services.interfaces.UserActivityLogService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -26,6 +30,8 @@ public class PathCourseController {
     private LearningPathService learningPathService;
     @Autowired
     private JwtUtil jwtUtil;
+    @Autowired
+    private UserActivityLogService userActivityLogService;
 
     @GetMapping("/learning-path/{pathId}")
     public ResponseEntity<ApiResponse> getPathCourseListByLearningPathId(
@@ -124,16 +130,42 @@ public class PathCourseController {
     }
 
     @PostMapping("/create")
-    public ResponseEntity<ApiResponse> createPathCourse(@RequestBody CreatePathCourseDTO createPathCourseDTO){
+    public ResponseEntity<ApiResponse> createPathCourse(
+            @RequestBody CreatePathCourseDTO createPathCourseDTO,
+            @RequestHeader("Authorization") String authorizationHeader,
+            HttpServletRequest httpRequest){
         try {
-            PathCourse pathCourse = pathCourseService.createPathCourse(createPathCourseDTO);
-            learningPathService.updateTotalCourses(createPathCourseDTO.getPathId());
-            return ResponseEntity.ok(ApiResponse.builder()
-                    .success(true)
-                    .message("PathCourse created successfully!")
-                    .data(pathCourse)
-                    .build());
+            if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
+                String token = authorizationHeader.substring(7);
+                Integer loginUserId = jwtUtil.extractUserId(token);
 
+                PathCourse pathCourse = pathCourseService.createPathCourse(createPathCourseDTO);
+                learningPathService.updateTotalCourses(createPathCourseDTO.getPathId());
+
+                String ipAddress = httpRequest.getRemoteAddr();
+                String userAgent = httpRequest.getHeader("User-Agent");
+                userActivityLogService.trackUserActivityLog(
+                        loginUserId,
+                        ActivityType.CREATE,
+                        ContentType.PathCourse,
+                        pathCourse.getPathCourseId(),
+                        ipAddress,
+                        userAgent
+                );
+
+                return ResponseEntity.ok(ApiResponse.builder()
+                        .success(true)
+                        .message("PathCourse created successfully!")
+                        .data(pathCourse)
+                        .build());
+            }
+            else {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(ApiResponse.builder()
+                                .success(false)
+                                .message("Unauthorized")
+                                .build());
+            }
         } catch (RuntimeException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(ApiResponse.builder()
@@ -174,16 +206,42 @@ public class PathCourseController {
     }
 
     @DeleteMapping("/delete/{id}")
-    public ResponseEntity<ApiResponse> deletePathCourse(@PathVariable Integer id) {
+    public ResponseEntity<ApiResponse> deletePathCourse(
+            @PathVariable Integer id,
+            @RequestHeader("Authorization") String authorizationHeader,
+            HttpServletRequest httpRequest){
         try{
-            Integer pathId = pathCourseService.getPathCourseById(id).getLearningPath().getPathId();
-            pathCourseService.deletePathCourse(id);
-            learningPathService.updateTotalCourses(pathId);
+            if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
+                String token = authorizationHeader.substring(7);
+                Integer loginUserId = jwtUtil.extractUserId(token);
 
-            return ResponseEntity.ok(ApiResponse.builder()
-                    .success(true)
-                    .message("PathCourse removed successfully!")
-                    .build());
+                Integer pathId = pathCourseService.getPathCourseById(id).getLearningPath().getPathId();
+                pathCourseService.deletePathCourse(id);
+                learningPathService.updateTotalCourses(pathId);
+
+                String ipAddress = httpRequest.getRemoteAddr();
+                String userAgent = httpRequest.getHeader("User-Agent");
+                userActivityLogService.trackUserActivityLog(
+                        loginUserId,
+                        ActivityType.REMOVE,
+                        ContentType.PathCourse,
+                        id,
+                        ipAddress,
+                        userAgent
+                );
+
+                return ResponseEntity.ok(ApiResponse.builder()
+                        .success(true)
+                        .message("PathCourse removed successfully!")
+                        .build());
+            }
+            else {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(ApiResponse.builder()
+                                .success(false)
+                                .message("Unauthorized")
+                                .build());
+            }
         } catch (RuntimeException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(ApiResponse.builder()
