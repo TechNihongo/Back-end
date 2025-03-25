@@ -1,14 +1,18 @@
 package org.example.technihongo.api;
 
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.example.technihongo.core.security.JwtUtil;
 import org.example.technihongo.dto.LearningResourceDTO;
 import org.example.technihongo.dto.LearningResourceStatusDTO;
 import org.example.technihongo.entities.LearningResource;;
+import org.example.technihongo.enums.ActivityType;
+import org.example.technihongo.enums.ContentType;
 import org.example.technihongo.response.ApiResponse;
 import org.example.technihongo.services.interfaces.LearningResourceService;
 import org.example.technihongo.services.interfaces.StudentResourceProgressService;
 import org.example.technihongo.services.interfaces.StudentService;
+import org.example.technihongo.services.interfaces.UserActivityLogService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -28,9 +32,11 @@ public class LearningResourceController {
     private StudentService studentService;
     @Autowired
     private StudentResourceProgressService studentResourceProgressService;
+    @Autowired
+    private UserActivityLogService userActivityLogService;
 
     @GetMapping("/all")
-    public ResponseEntity<ApiResponse> getAllLearningResources() throws Exception {
+    public ResponseEntity<ApiResponse> getAllLearningResources() {
         try{
             List<LearningResource> learningResourceList = learningResourceService.getAllLearningResources();
             if (learningResourceList.isEmpty()) {
@@ -55,8 +61,10 @@ public class LearningResourceController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<ApiResponse> viewLearningResource(@PathVariable Integer id,
-                                                @RequestHeader("Authorization") String authorizationHeader) throws Exception {
+    public ResponseEntity<ApiResponse> viewLearningResource(
+            @PathVariable Integer id,
+            @RequestHeader("Authorization") String authorizationHeader,
+            HttpServletRequest httpRequest) {
         try{
             if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
                 String token = authorizationHeader.substring(7);
@@ -64,8 +72,20 @@ public class LearningResourceController {
                 Integer userId = jwtUtil.extractUserId(token);
                 Integer studentId = studentService.getStudentIdByUserId(userId);
 
+                String ipAddress = httpRequest.getRemoteAddr();
+                String userAgent = httpRequest.getHeader("User-Agent");
+                userActivityLogService.trackUserActivityLog(
+                        userId,
+                        ActivityType.VIEW,
+                        ContentType.LearningResource,
+                        id,
+                        ipAddress,
+                        userAgent
+                );
+
                 if (roleId == 1 || roleId == 2) {
                     LearningResource learningResource = learningResourceService.getLearningResourceById(id);
+
                     return ResponseEntity.ok(ApiResponse.builder()
                             .success(true)
                             .message("Get LearningResource")
@@ -110,13 +130,26 @@ public class LearningResourceController {
 
     @PostMapping("/create")
     public ResponseEntity<ApiResponse> createLearningResource(@RequestBody LearningResourceDTO learningResourceDTO,
-                                                  @RequestHeader("Authorization") String authorizationHeader) {
+                                                  @RequestHeader("Authorization") String authorizationHeader,
+                                                              HttpServletRequest httpRequest) {
         try {
             if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
                 String token = authorizationHeader.substring(7);
                 Integer userId = jwtUtil.extractUserId(token);
 
                 LearningResource learningResource = learningResourceService.createLearningResource(userId, learningResourceDTO);
+
+                String ipAddress = httpRequest.getRemoteAddr();
+                String userAgent = httpRequest.getHeader("User-Agent");
+                userActivityLogService.trackUserActivityLog(
+                        userId,
+                        ActivityType.CREATE,
+                        ContentType.LearningResource,
+                        learningResource.getResourceId(),
+                        ipAddress,
+                        userAgent
+                );
+
                 return ResponseEntity.ok(ApiResponse.builder()
                         .success(true)
                         .message("LearningResource created successfully!")
@@ -147,14 +180,41 @@ public class LearningResourceController {
     }
 
     @PatchMapping("/update/{id}")
-    public ResponseEntity<ApiResponse> updateLearningResource(@PathVariable Integer id,
-                                                  @RequestBody LearningResourceDTO learningResourceDTO) {
+    public ResponseEntity<ApiResponse> updateLearningResource(
+            @PathVariable Integer id,
+            @RequestBody LearningResourceDTO learningResourceDTO,
+            @RequestHeader("Authorization") String authorizationHeader,
+            HttpServletRequest httpRequest) {
         try{
-            learningResourceService.updateLearningResource(id, learningResourceDTO);
-            return ResponseEntity.ok(ApiResponse.builder()
-                    .success(true)
-                    .message("LearningResource updated successfully")
-                    .build());
+            if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
+                String token = authorizationHeader.substring(7);
+                Integer loginUserId = jwtUtil.extractUserId(token);
+
+                learningResourceService.updateLearningResource(id, learningResourceDTO);
+
+                String ipAddress = httpRequest.getRemoteAddr();
+                String userAgent = httpRequest.getHeader("User-Agent");
+                userActivityLogService.trackUserActivityLog(
+                        loginUserId,
+                        ActivityType.UPDATE,
+                        ContentType.LearningResource,
+                        id,
+                        ipAddress,
+                        userAgent
+                );
+
+                return ResponseEntity.ok(ApiResponse.builder()
+                        .success(true)
+                        .message("LearningResource updated successfully")
+                        .build());
+            }
+            else {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(ApiResponse.builder()
+                                .success(false)
+                                .message("Unauthorized")
+                                .build());
+            }
         } catch (RuntimeException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(ApiResponse.builder()
@@ -195,13 +255,39 @@ public class LearningResourceController {
     }
 
     @DeleteMapping("/delete/{id}")
-    public ResponseEntity<ApiResponse> deleteLearningResource(@PathVariable Integer id) {
+    public ResponseEntity<ApiResponse> deleteLearningResource(
+            @PathVariable Integer id,
+            @RequestHeader("Authorization") String authorizationHeader,
+            HttpServletRequest httpRequest) {
         try{
-            learningResourceService.deleteLearningResource(id);
-            return ResponseEntity.ok(ApiResponse.builder()
-                    .success(true)
-                    .message("LearningResource removed successfully!")
-                    .build());
+            if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
+                String token = authorizationHeader.substring(7);
+                Integer loginUserId = jwtUtil.extractUserId(token);
+
+                String ipAddress = httpRequest.getRemoteAddr();
+                String userAgent = httpRequest.getHeader("User-Agent");
+                userActivityLogService.trackUserActivityLog(
+                        loginUserId,
+                        ActivityType.DELETE,
+                        ContentType.LearningResource,
+                        id,
+                        ipAddress,
+                        userAgent
+                );
+
+                learningResourceService.deleteLearningResource(id);
+                return ResponseEntity.ok(ApiResponse.builder()
+                        .success(true)
+                        .message("LearningResource removed successfully!")
+                        .build());
+            }
+            else {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(ApiResponse.builder()
+                                .success(false)
+                                .message("Unauthorized")
+                                .build());
+            }
         } catch (RuntimeException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(ApiResponse.builder()

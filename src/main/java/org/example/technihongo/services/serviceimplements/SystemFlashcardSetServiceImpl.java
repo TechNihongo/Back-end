@@ -178,6 +178,7 @@ public class SystemFlashcardSetServiceImpl implements SystemFlashcardSetService 
 
     private SystemFlashcardSetResponseDTO convertToSystemFlashcardSetResponseDTO(SystemFlashcardSet flashcardSet) {
         SystemFlashcardSetResponseDTO response = new SystemFlashcardSetResponseDTO();
+        response.setSystemSetId(flashcardSet.getSystemSetId());
         response.setContentManagerId(flashcardSet.getCreator().getUserId());
         response.setTitle(flashcardSet.getTitle());
         response.setDescription(flashcardSet.getDescription());

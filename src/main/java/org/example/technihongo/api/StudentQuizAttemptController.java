@@ -1,11 +1,15 @@
 package org.example.technihongo.api;
 
+import jakarta.servlet.http.HttpServletRequest;
 import org.example.technihongo.core.security.JwtUtil;
 import org.example.technihongo.dto.*;
 import org.example.technihongo.entities.StudentQuizAttempt;
+import org.example.technihongo.enums.ActivityType;
+import org.example.technihongo.enums.ContentType;
 import org.example.technihongo.response.ApiResponse;
 import org.example.technihongo.services.interfaces.StudentQuizAttemptService;
 import org.example.technihongo.services.interfaces.StudentService;
+import org.example.technihongo.services.interfaces.UserActivityLogService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -26,14 +30,29 @@ public class StudentQuizAttemptController {
     private JwtUtil jwtUtil;
     @Autowired
     private StudentService studentService;
+    @Autowired
+    private UserActivityLogService userActivityLogService;
 
     @PostMapping("/startAttempt/{quizId}")
     public ResponseEntity<ApiResponse> startQuiz(
             @RequestHeader("Authorization") String authorizationHeader,
+            HttpServletRequest httpRequest,
             @PathVariable Integer quizId) {
         try {
             Integer studentId = extractStudentId(authorizationHeader);
             StartQuizResponseDTO response = studentQuizAttemptService.startQuiz(studentId, quizId);
+
+            String ipAddress = httpRequest.getRemoteAddr();
+            String userAgent = httpRequest.getHeader("User-Agent");
+            userActivityLogService.trackUserActivityLog(
+                    extractUserId(authorizationHeader),
+                    ActivityType.START_QUIZ,
+                    ContentType.StudentQuizAttempt,
+                    response.getAttemptId(),
+                    ipAddress,
+                    userAgent
+            );
+
             return ResponseEntity.ok(ApiResponse.builder()
                     .success(true)
                     .message("Quiz started successfully")
@@ -213,6 +232,14 @@ public class StudentQuizAttemptController {
             String token = authorizationHeader.substring(7);
             Integer userId = jwtUtil.extractUserId(token);
             return studentService.getStudentIdByUserId(userId);
+        }
+        throw new IllegalArgumentException("Authorization header is missing or invalid.");
+    }
+
+    private Integer extractUserId(String authorizationHeader) {
+        if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
+            String token = authorizationHeader.substring(7);
+            return jwtUtil.extractUserId(token);
         }
         throw new IllegalArgumentException("Authorization header is missing or invalid.");
     }

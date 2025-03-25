@@ -1,13 +1,18 @@
 package org.example.technihongo.api;
 
 
+import jakarta.servlet.http.HttpServletRequest;
+import org.example.technihongo.core.security.JwtUtil;
 import org.example.technihongo.dto.EnrollStudyPlanRequest;
 import org.example.technihongo.dto.StudentStudyPlanDTO;
 import org.example.technihongo.dto.StudyPlanDTO;
 import org.example.technihongo.dto.SwitchStudyPlanRequestDTO;
+import org.example.technihongo.enums.ActivityType;
+import org.example.technihongo.enums.ContentType;
 import org.example.technihongo.exception.ResourceNotFoundException;
 import org.example.technihongo.response.ApiResponse;
 import org.example.technihongo.services.interfaces.StudentStudyPlanService;
+import org.example.technihongo.services.interfaces.UserActivityLogService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -20,11 +25,30 @@ import java.util.List;
 public class StudentStudyPlanController {
     @Autowired
     private StudentStudyPlanService studentStudyPlanService;
+    @Autowired
+    private JwtUtil jwtUtil;
+    @Autowired
+    private UserActivityLogService userActivityLogService;
 
     @PostMapping("/enroll")
-    public ResponseEntity<ApiResponse> enrollStudentInStudyPlan(@RequestBody EnrollStudyPlanRequest request) {
+    public ResponseEntity<ApiResponse> enrollStudentInStudyPlan(
+            @RequestBody EnrollStudyPlanRequest request,
+            @RequestHeader("Authorization") String authorizationHeader,
+            HttpServletRequest httpRequest) {
         try {
             StudentStudyPlanDTO enrolledPlan = studentStudyPlanService.enrollStudentInStudyPlan(request);
+
+            String ipAddress = httpRequest.getRemoteAddr();
+            String userAgent = httpRequest.getHeader("User-Agent");
+            userActivityLogService.trackUserActivityLog(
+                    extractUserId(authorizationHeader),
+                    ActivityType.ENROLL,
+                    ContentType.StudentStudyPlan,
+                    enrolledPlan.getStudentPlanId(),
+                    ipAddress,
+                    userAgent
+            );
+
             return ResponseEntity.ok(ApiResponse.builder()
                     .success(true)
                     .message("Student successfully enrolled in study plan")
@@ -40,9 +64,24 @@ public class StudentStudyPlanController {
     }
 
     @PostMapping("/switchStudyPlan")
-    public ResponseEntity<ApiResponse> switchStudyPlan(@RequestBody SwitchStudyPlanRequestDTO request) {
+    public ResponseEntity<ApiResponse> switchStudyPlan(
+            @RequestBody SwitchStudyPlanRequestDTO request,
+            @RequestHeader("Authorization") String authorizationHeader,
+            HttpServletRequest httpRequest) {
         try {
             StudentStudyPlanDTO newPlan = studentStudyPlanService.switchStudyPlan(request);
+
+            String ipAddress = httpRequest.getRemoteAddr();
+            String userAgent = httpRequest.getHeader("User-Agent");
+            userActivityLogService.trackUserActivityLog(
+                    extractUserId(authorizationHeader),
+                    ActivityType.SWITCH,
+                    ContentType.StudentStudyPlan,
+                    newPlan.getStudentPlanId(),
+                    ipAddress,
+                    userAgent
+            );
+
             return ResponseEntity.ok(ApiResponse.builder()
                     .success(true)
                     .message("Study plan successfully switched")
@@ -135,5 +174,13 @@ public class StudentStudyPlanController {
                             .message("Internal Server Error: " + e.getMessage())
                             .build());
         }
+    }
+
+    private Integer extractUserId(String authorizationHeader) {
+        if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
+            String token = authorizationHeader.substring(7);
+            return jwtUtil.extractUserId(token);
+        }
+        throw new IllegalArgumentException("Authorization header is missing or invalid.");
     }
 }
