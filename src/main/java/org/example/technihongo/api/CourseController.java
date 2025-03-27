@@ -367,30 +367,17 @@ public class CourseController {
     @GetMapping("/all/paginated")
     public ResponseEntity<ApiResponse> getAllCoursesPaginated(
             @RequestHeader("Authorization") String authorizationHeader,
-            HttpServletRequest httpRequest,
             @RequestParam(defaultValue = "0") int pageNo,
             @RequestParam(defaultValue = "10") int pageSize,
             @RequestParam(defaultValue = "courseId") String sortBy,
             @RequestParam(defaultValue = "asc") String sortDir,
             @RequestParam(defaultValue = "") String keyword,
             @RequestParam(defaultValue = "") Integer domainId,
-            @RequestParam(defaultValue = "") Integer difficultyLevelId) throws Exception {
+            @RequestParam(defaultValue = "") Integer difficultyLevelId){
         try{
             if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
                 String token = authorizationHeader.substring(7);
                 int roleId = jwtUtil.extractUserRoleId(token);
-                int userId = jwtUtil.extractUserId(token);
-
-                String ipAddress = httpRequest.getRemoteAddr();
-                String userAgent = httpRequest.getHeader("User-Agent");
-                userActivityLogService.trackUserActivityLog(
-                        userId,
-                        ActivityType.VIEW,
-                        ContentType.Course,
-                        null,
-                        ipAddress,
-                        userAgent
-                );
 
                 if (roleId == 1 || roleId == 2) {
                     PageResponseDTO<Course> courseList = courseService.courseListPaginated(keyword, domainId, difficultyLevelId, pageNo, pageSize, sortBy, sortDir);
