@@ -32,25 +32,12 @@ public class LearningPathController {
     @GetMapping("/all")
     public ResponseEntity<ApiResponse> getAllLearningPaths(
             @RequestHeader("Authorization") String authorizationHeader,
-            HttpServletRequest httpRequest,
             @RequestParam(defaultValue = "") String keyword,
             @RequestParam(defaultValue = "") Integer domainId) {
         try{
             if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
                 String token = authorizationHeader.substring(7);
                 int roleId = jwtUtil.extractUserRoleId(token);
-                Integer userId = jwtUtil.extractUserId(token);
-
-                String ipAddress = httpRequest.getRemoteAddr();
-                String userAgent = httpRequest.getHeader("User-Agent");
-                userActivityLogService.trackUserActivityLog(
-                        userId,
-                        ActivityType.VIEW,
-                        ContentType.LearningPath,
-                        null,
-                        ipAddress,
-                        userAgent
-                );
 
                 if (roleId == 1 || roleId == 2) {
                     List<LearningPath> learningPaths = learningPathService.getAllLearningPaths(keyword, domainId);
