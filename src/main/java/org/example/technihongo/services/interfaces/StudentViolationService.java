@@ -1,10 +1,15 @@
 package org.example.technihongo.services.interfaces;
 
-import org.example.technihongo.dto.StudentViolationDTO;
+import org.example.technihongo.dto.HandleViolationRequestDTO;
+import org.example.technihongo.dto.PageResponseDTO;
+import org.example.technihongo.dto.ReportViolationRequestDTO;
+import org.example.technihongo.entities.StudentViolation;
 
 import java.util.List;
 
 public interface StudentViolationService {
-    List<StudentViolationDTO> getAllStudentViolations(String classifyBy, String status,
-                                                      int pageNo, int pageSize, String sortBy, String sortDir);
+    PageResponseDTO<StudentViolation> getAllStudentViolations(String classifyBy, String status,
+                                                              int pageNo, int pageSize, String sortBy, String sortDir);
+    StudentViolation reportViolation(Integer reportedBy, ReportViolationRequestDTO request);
+    StudentViolation handleViolation(Integer violationId, Integer handledBy, HandleViolationRequestDTO request);
 }

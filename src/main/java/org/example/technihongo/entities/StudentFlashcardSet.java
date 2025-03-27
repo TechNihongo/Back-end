@@ -5,6 +5,7 @@ import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
@@ -62,9 +63,11 @@ public class StudentFlashcardSet {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
-    @OneToMany(mappedBy = "studentFlashCardSet", cascade = CascadeType.ALL)
+    @JsonIgnore
+    @OneToMany(mappedBy = "studentFlashCardSet", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     private Set<Flashcard> flashcards = new HashSet<>();
 
-    @OneToMany(mappedBy = "studentFlashcardSet", cascade = CascadeType.ALL)
+    @JsonIgnore
+    @OneToMany(mappedBy = "studentFlashcardSet", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     private Set<StudentFlashcardSetProgress> progresses = new HashSet<>();
 }
