@@ -8,6 +8,7 @@ import java.util.List;
 @Getter
 @Setter
 public class FlashcardSetResponseDTO {
+    private Integer studentId;
     private Integer studentSetId;
     private String title;
     private String description;
