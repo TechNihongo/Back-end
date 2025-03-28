@@ -16,5 +16,5 @@ public interface QuestionService {
     void updateQuestion(Integer questionId, CreateUpdateQuestionDTO createUpdateQuestionDTO);
     QuestionWithOptionsResponseDTO createQuestionWithOptions(QuestionWithOptionsDTO dto);
     QuestionWithOptionsResponseDTO updateQuestionWithOptions(Integer questionId, QuestionWithOptionsDTO dto);
-    List<QuestionAnswerOption> updateOptions(Integer questionId, List<QuestionAnswerOptionDTO> options);
+    List<QuestionAnswerOption> updateOptions(Integer questionId, String questionType, List<QuestionAnswerOptionDTO> options);
 }

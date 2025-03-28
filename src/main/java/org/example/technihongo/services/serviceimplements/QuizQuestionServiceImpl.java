@@ -3,6 +3,7 @@ package org.example.technihongo.services.serviceimplements;
 import lombok.RequiredArgsConstructor;
 import org.example.technihongo.dto.*;
 import org.example.technihongo.entities.*;
+import org.example.technihongo.enums.QuestionType;
 import org.example.technihongo.repositories.QuestionAnswerOptionRepository;
 import org.example.technihongo.repositories.QuestionRepository;
 import org.example.technihongo.repositories.QuizQuestionRepository;
@@ -143,12 +144,25 @@ public class QuizQuestionServiceImpl implements QuizQuestionService {
         if (options.size() < 2 || options.size() > 4) {
             throw new RuntimeException("Each question must have between 2 and 4 answer options.");
         }
-        long correctCount = options.stream().filter(QuestionAnswerOptionDTO::getIsCorrect).count();
-        if (correctCount != 1) {
-            throw new RuntimeException("Each question must have exactly one correct answer.");
+
+        if(dto.getQuestionType().equalsIgnoreCase(String.valueOf(QuestionType.Single_choice))) {
+            long correctCount = options.stream().filter(QuestionAnswerOptionDTO::getIsCorrect).count();
+            if (correctCount != 1) {
+                throw new RuntimeException("Each single-choice question must have exactly one correct answer.");
+            }
+        }
+        else if(dto.getQuestionType().equalsIgnoreCase(String.valueOf(QuestionType.Multiple_choice))) {
+            long correctCount = options.stream().filter(QuestionAnswerOptionDTO::getIsCorrect).count();
+            if (correctCount <= 1) {
+                throw new RuntimeException("Each multiple-choice question must have more than one correct answer.");
+            }
+        }
+        else {
+            throw new RuntimeException("Invalid question type!");
         }
 
         Question question = Question.builder()
+                .questionType(QuestionType.valueOf(dto.getQuestionType()))
                 .questionText(dto.getQuestionText())
                 .explanation(dto.getExplanation())
                 .url(dto.getUrl())
