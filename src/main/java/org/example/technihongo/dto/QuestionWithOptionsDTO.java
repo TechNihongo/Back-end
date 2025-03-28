@@ -10,6 +10,7 @@ import java.util.List;
 @AllArgsConstructor
 @NoArgsConstructor
 public class QuestionWithOptionsDTO {
+    private String questionType;
     private String questionText;
     private String explanation;
     private String url;
