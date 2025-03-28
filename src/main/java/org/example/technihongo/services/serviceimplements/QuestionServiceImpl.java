@@ -7,6 +7,7 @@ import org.example.technihongo.dto.QuestionAnswerOptionDTO;
 import org.example.technihongo.dto.QuestionWithOptionsResponseDTO;
 import org.example.technihongo.entities.Question;
 import org.example.technihongo.entities.QuestionAnswerOption;
+import org.example.technihongo.enums.QuestionType;
 import org.example.technihongo.repositories.QuestionAnswerOptionRepository;
 import org.example.technihongo.repositories.QuestionRepository;
 import org.example.technihongo.repositories.QuizAnswerResponseRepository;
@@ -102,18 +103,19 @@ public class QuestionServiceImpl implements QuestionService {
         Question question = questionRepository.findById(questionId)
                 .orElseThrow(() -> new RuntimeException("Question ID not found."));
 
+        question.setQuestionType(QuestionType.valueOf(dto.getQuestionType()));
         question.setQuestionText(dto.getQuestionText());
         question.setExplanation(dto.getExplanation());
         question.setUrl(dto.getUrl());
 
-        List<QuestionAnswerOption> options = updateOptions(questionId, dto.getOptions());
+        List<QuestionAnswerOption> options = updateOptions(questionId, dto.getQuestionType(), dto.getOptions());
         Question savedQuestion = questionRepository.save(question);
         return new QuestionWithOptionsResponseDTO(savedQuestion, options);
     }
 
     @Transactional
     @Override
-    public List<QuestionAnswerOption> updateOptions(Integer questionId, List<QuestionAnswerOptionDTO> options) {
+    public List<QuestionAnswerOption> updateOptions(Integer questionId, String questionType, List<QuestionAnswerOptionDTO> options) {
         Question question = questionRepository.findById(questionId)
                 .orElseThrow(() -> new IllegalArgumentException("Question ID not found."));
 
@@ -121,9 +123,20 @@ public class QuestionServiceImpl implements QuestionService {
             throw new RuntimeException("Each question must have between 2 and 4 answer options.");
         }
 
-        long correctCount = options.stream().filter(QuestionAnswerOptionDTO::getIsCorrect).count();
-        if (correctCount != 1) {
-            throw new RuntimeException("Each question must have exactly one correct answer.");
+        if(questionType.equalsIgnoreCase(String.valueOf(QuestionType.Single_choice))) {
+            long correctCount = options.stream().filter(QuestionAnswerOptionDTO::getIsCorrect).count();
+            if (correctCount != 1) {
+                throw new RuntimeException("Each single-choice question must have exactly one correct answer.");
+            }
+        }
+        else if(questionType.equalsIgnoreCase(String.valueOf(QuestionType.Multiple_choice))) {
+            long correctCount = options.stream().filter(QuestionAnswerOptionDTO::getIsCorrect).count();
+            if (correctCount <= 1) {
+                throw new RuntimeException("Each multiple-choice question must have more than one correct answer.");
+            }
+        }
+        else {
+            throw new RuntimeException("Invalid question type!");
         }
 
         List<QuestionAnswerOption> existingOptions = questionAnswerOptionRepository.findByQuestion_QuestionId(questionId);

@@ -63,7 +63,8 @@ public class LessonResourceServiceImpl implements LessonResourceService {
     public LessonResource getActiveLessonResourceById(Integer lessonResourceId) {
         return lessonResourceRepository.findById(lessonResourceId)
                 .filter(LessonResource::isActive)
-                .orElseThrow(() -> new RuntimeException("LessonResource ID not found"));    }
+                .orElseThrow(() -> new RuntimeException("LessonResource ID not found"));
+    }
 
     @Override
     public LessonResource createLessonResource(CreateLessonResourceDTO createLessonResourceDTO) {

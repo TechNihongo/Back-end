@@ -13,6 +13,7 @@ import java.util.List;
 @NoArgsConstructor
 public class CreateQuizQuestionWithNewQuestionDTO {
     private Integer quizId;
+    private String questionType;
     private String questionText;
     private String explanation;
     private String url;
