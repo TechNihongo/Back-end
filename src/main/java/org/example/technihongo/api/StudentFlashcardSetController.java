@@ -24,7 +24,7 @@ import java.util.Collections;
 import java.util.List;
 
 @RestController
-@RequestMapping("api/student-flashcard-set")
+@RequestMapping("/api/student-flashcard-set")
 public class StudentFlashcardSetController {
     @Autowired
     private StudentFlashcardSetService studentFlashcardSetService;
