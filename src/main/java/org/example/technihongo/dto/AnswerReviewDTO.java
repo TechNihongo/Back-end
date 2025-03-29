@@ -1,6 +1,9 @@
 package org.example.technihongo.dto;
 
 import lombok.*;
+import org.example.technihongo.entities.QuestionAnswerOption;
+
+import java.util.List;
 
 @Getter
 @Setter
@@ -9,9 +12,9 @@ import lombok.*;
 @NoArgsConstructor
 public class AnswerReviewDTO {
     private Integer questionId;
+    private String questionType;
     private String questionText;
-    private Integer selectedOptionId;
-    private String selectedOptionText;
+    private List<QuestionAnswerOptionDTO2> selectedOptions;
     private Boolean isCorrect;
     private String explanation;
 }
