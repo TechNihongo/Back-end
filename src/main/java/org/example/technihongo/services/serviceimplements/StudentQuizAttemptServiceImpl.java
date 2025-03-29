@@ -4,6 +4,7 @@ import org.example.technihongo.dto.*;
 import org.example.technihongo.entities.*;
 import org.example.technihongo.enums.ActivityType;
 import org.example.technihongo.enums.ContentType;
+import org.example.technihongo.enums.QuestionType;
 import org.example.technihongo.repositories.*;
 import org.example.technihongo.services.interfaces.StudentQuizAttemptService;
 import org.example.technihongo.services.interfaces.UserActivityLogService;
@@ -17,10 +18,7 @@ import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -43,6 +41,8 @@ public class StudentQuizAttemptServiceImpl implements StudentQuizAttemptService 
     private UserRepository userRepository;
     @Autowired
     private UserActivityLogService userActivityLogService;
+    @Autowired
+    private QuizQuestionRepository quizQuestionRepository;
 
     private static final int MAX_ATTEMPTS = 3;
     private static final long WAIT_TIME_MINUTES = 30;
@@ -156,28 +156,87 @@ public class StudentQuizAttemptServiceImpl implements StudentQuizAttemptService 
             throw new RuntimeException("This quiz attempt does not belong to the current student.");
         }
 
+        List<QuizQuestion> quizQuestions = quizQuestionRepository.findByQuiz_QuizId(attempt.getQuiz().getQuizId());
+        int totalQuestions = quizQuestions.size();
+
         List<QuizAnswerResponse> responses = quizAnswerResponseRepository.findByStudentQuizAttempt_AttemptId(attemptId);
-        List<AnswerReviewDTO> answerReviews = responses.stream()
-                .map(response -> AnswerReviewDTO.builder()
-                        .questionId(response.getSelectedOption().getQuestion().getQuestionId())
-                        .questionText(response.getSelectedOption().getQuestion().getQuestionText())
-                        .selectedOptionId(response.getSelectedOption().getOptionId())
-                        .selectedOptionText(response.getSelectedOption().getOptionText())
-                        .isCorrect(response.isCorrect())
-                        .explanation(response.getSelectedOption().getQuestion().getExplanation())
-                        .build())
+
+        // Nhóm responses theo questionId
+        Map<Integer, List<QuizAnswerResponse>> responseMap = responses.stream()
+                .collect(Collectors.groupingBy(r -> r.getSelectedOption().getQuestion().getQuestionId()));
+
+        List<AnswerReviewDTO> answerReviews = quizQuestions.stream()
+                .map(quizQuestion -> {
+                    Question question = quizQuestion.getQuestion();
+                    List<QuizAnswerResponse> questionResponses = responseMap.getOrDefault(question.getQuestionId(), Collections.emptyList());
+
+                    if (questionResponses.isEmpty()) {
+                        return AnswerReviewDTO.builder()
+                                .questionId(question.getQuestionId())
+                                .questionText(question.getQuestionText())
+                                .questionType(question.getQuestionType().name())
+                                .selectedOptions(Collections.emptyList())
+                                .isCorrect(false)
+                                .explanation(question.getExplanation())
+                                .build();
+                    }
+
+                    // Lấy danh sách lựa chọn đã chọn
+                    List<QuestionAnswerOptionDTO2> selectedOptionDTOs = questionResponses.stream()
+                            .map(response -> QuestionAnswerOptionDTO2.builder()
+                                    .optionId(response.getSelectedOption().getOptionId())
+                                    .optionText(response.getSelectedOption().getOptionText())
+                                    .isCorrect(response.isCorrect())
+                                    .build())
+                            .collect(Collectors.toList());
+
+                    // Đánh giá toàn bộ câu hỏi
+                    boolean isCorrect;
+                    if (question.getQuestionType().equals(QuestionType.Single_choice)) {
+                        isCorrect = questionResponses.size() == 1 && questionResponses.get(0).isCorrect();
+                    } else { // MULTIPLE_CHOICE
+                        List<QuestionAnswerOption> allOptions = questionAnswerOptionRepository.findByQuestion_QuestionId(question.getQuestionId());
+                        Set<Integer> correctOptionIds = allOptions.stream()
+                                .filter(QuestionAnswerOption::isCorrect)
+                                .map(QuestionAnswerOption::getOptionId)
+                                .collect(Collectors.toSet());
+                        Set<Integer> selectedOptionIds = questionResponses.stream()
+                                .map(r -> r.getSelectedOption().getOptionId())
+                                .collect(Collectors.toSet());
+
+                        // Đúng nếu: chọn tất cả đáp án đúng và không chọn đáp án sai
+                        isCorrect = correctOptionIds.equals(selectedOptionIds);
+                    }
+
+                    return AnswerReviewDTO.builder()
+                            .questionId(question.getQuestionId())
+                            .questionText(question.getQuestionText())
+                            .questionType(question.getQuestionType().name())
+                            .selectedOptions(selectedOptionDTOs)
+                            .isCorrect(isCorrect)
+                            .explanation(question.getExplanation())
+                            .build();
+                })
                 .collect(Collectors.toList());
+
+        int correctAnswers = (int) answerReviews.stream().filter(AnswerReviewDTO::getIsCorrect).count();
+        int unansweredQuestions = (int) answerReviews.stream().filter(r -> r.getSelectedOptions().isEmpty()).count();
+        int incorrectAnswers = totalQuestions - correctAnswers - unansweredQuestions;
 
         return ReviewQuizAttemptDTO.builder()
                 .attemptId(attempt.getAttemptId())
                 .quizId(attempt.getQuiz().getQuizId())
                 .quizTitle(attempt.getQuiz().getTitle())
-                .score(attempt.getScore().multiply(BigDecimal.valueOf(100)))
+                .score(attempt.getScore())
                 .isPassed(attempt.getIsPassed())
                 .timeTaken(attempt.getTimeTaken())
                 .isCompleted(attempt.getIsCompleted())
                 .attemptNumber(attempt.getAttemptNumber())
                 .dateTaken(attempt.getDateTaken())
+                .totalQuestions(totalQuestions)
+                .correctAnswers(correctAnswers)
+                .incorrectAnswers(incorrectAnswers)
+                .unansweredQuestions(unansweredQuestions)
                 .answers(answerReviews)
                 .build();
     }

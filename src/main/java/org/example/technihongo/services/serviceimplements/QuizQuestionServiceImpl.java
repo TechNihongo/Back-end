@@ -13,6 +13,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -189,5 +190,43 @@ public class QuizQuestionServiceImpl implements QuizQuestionService {
                 .quizQuestion(savedQuizQuestion)
                 .options(optionEntities)
                 .build();
+    }
+
+    @Override
+    public List<QuestionWithOptionsDTO2> getAllQuestionsAndOptionsByQuizId(Integer quizId) {
+        quizRepository.findById(quizId)
+                .orElseThrow(() -> new RuntimeException("Quiz not found with ID: " + quizId));
+
+        List<QuizQuestion> quizQuestions = quizQuestionRepository.findByQuiz_QuizId(quizId);
+
+        if (quizQuestions.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        List<QuestionWithOptionsDTO2> result = quizQuestions.stream()
+                .map(quizQuestion -> {
+                    Question question = quizQuestion.getQuestion();
+                    List<QuestionAnswerOption> options = questionAnswerOptionRepository.findByQuestion_QuestionId(question.getQuestionId());
+
+                    List<QuestionAnswerOptionDTO2> optionDTOs = options.stream()
+                            .map(option -> QuestionAnswerOptionDTO2.builder()
+                                    .optionId(option.getOptionId())
+                                    .optionText(option.getOptionText())
+                                    .isCorrect(option.isCorrect())
+                                    .build())
+                            .collect(Collectors.toList());
+
+                    return QuestionWithOptionsDTO2.builder()
+                            .questionId(question.getQuestionId())
+                            .questionType(String.valueOf(question.getQuestionType()))
+                            .questionText(question.getQuestionText())
+                            .explanation(question.getExplanation())
+                            .url(question.getUrl())
+                            .options(optionDTOs)
+                            .build();
+                })
+                .collect(Collectors.toList());
+
+        return result;
     }
 }

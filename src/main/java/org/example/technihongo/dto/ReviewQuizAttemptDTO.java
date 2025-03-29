@@ -22,5 +22,9 @@ public class ReviewQuizAttemptDTO {
     private Boolean isCompleted;
     private Integer attemptNumber;
     private LocalDateTime dateTaken;
+    private Integer totalQuestions;
+    private Integer correctAnswers;
+    private Integer incorrectAnswers;
+    private Integer unansweredQuestions;
     private List<AnswerReviewDTO> answers;
 }
