@@ -1,4 +1,4 @@
-package org.example.technihongo.core.mail;
+package org.example.technihongo.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
