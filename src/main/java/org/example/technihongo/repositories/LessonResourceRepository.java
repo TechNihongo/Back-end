@@ -25,4 +25,8 @@ public interface LessonResourceRepository extends JpaRepository<LessonResource, 
     Page<LessonResource> findByLesson_StudyPlan_StudyPlanIdAndSystemFlashCardSet_TitleContainsIgnoreCase(Integer studyPlanId, String keyword, Pageable pageable);
     Page<LessonResource> findByLesson_StudyPlan_StudyPlanIdAndQuiz_TitleContainsIgnoreCase(Integer studyPlanId, String keyword, Pageable pageable);
     Page<LessonResource> findByLesson_StudyPlan_StudyPlanIdAndLearningResource_TitleContainsIgnoreCaseOrSystemFlashCardSet_TitleContainsIgnoreCaseOrQuiz_TitleContainsIgnoreCase(Integer studyPlanId, String keyword1, String keyword2, String keyword3, Pageable pageable);
+
+    List<LessonResource> findByQuiz_QuizId(Integer quizId);
+    List<LessonResource> findBySystemFlashCardSet_SystemSetId(Integer flashcardSetId);
+    List<LessonResource> findByLearningResource_ResourceId(Integer learningResourceId);
 }

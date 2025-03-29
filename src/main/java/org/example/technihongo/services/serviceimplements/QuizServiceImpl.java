@@ -4,10 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.example.technihongo.dto.CreateQuizDTO;
 import org.example.technihongo.dto.UpdateQuizDTO;
 import org.example.technihongo.dto.UpdateQuizStatusDTO;
-import org.example.technihongo.entities.DifficultyLevel;
-import org.example.technihongo.entities.Quiz;
-import org.example.technihongo.entities.Student;
-import org.example.technihongo.entities.User;
+import org.example.technihongo.entities.*;
 import org.example.technihongo.repositories.*;
 import org.example.technihongo.services.interfaces.QuizService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,14 +33,7 @@ public class QuizServiceImpl implements QuizService {
     @Autowired
     private StudentSubscriptionRepository studentSubscriptionRepository;
     @Autowired
-    private StudentQuizAttemptRepository studentQuizAttemptRepository;
-    @Autowired
-    private QuizAnswerResponseRepository quizAnswerResponseRepository;
-    @Autowired
-    private QuestionAnswerOptionRepository questionAnswerOptionRepository;
-
-    private static final int MAX_ATTEMPTS = 3;
-    private static final long WAIT_TIME_MINUTES = 30;
+    private LessonResourceRepository lessonResourceRepository;
 
 
     @Override
@@ -160,6 +150,12 @@ public class QuizServiceImpl implements QuizService {
         quiz.setDeleted(updateQuizStatusDTO.getIsDeleted());
 
         quizRepository.save(quiz);
+
+        List<LessonResource> lessonResources = lessonResourceRepository.findByQuiz_QuizId(quizId);
+        for (LessonResource lessonResource : lessonResources) {
+            lessonResource.setActive(updateQuizStatusDTO.getIsPublic());
+            lessonResourceRepository.save(lessonResource);
+        }
     }
 
     @Override
