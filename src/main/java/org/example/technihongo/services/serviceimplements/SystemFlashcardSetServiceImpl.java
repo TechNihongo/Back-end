@@ -3,16 +3,10 @@ package org.example.technihongo.services.serviceimplements;
 import org.example.technihongo.dto.FlashcardResponseDTO;
 import org.example.technihongo.dto.SystemFlashcardSetRequestDTO;
 import org.example.technihongo.dto.SystemFlashcardSetResponseDTO;
-import org.example.technihongo.entities.DifficultyLevel;
-import org.example.technihongo.entities.Flashcard;
-import org.example.technihongo.entities.SystemFlashcardSet;
-import org.example.technihongo.entities.User;
+import org.example.technihongo.entities.*;
 import org.example.technihongo.exception.ResourceNotFoundException;
 import org.example.technihongo.exception.UnauthorizedAccessException;
-import org.example.technihongo.repositories.DifficultyLevelRepository;
-import org.example.technihongo.repositories.FlashcardRepository;
-import org.example.technihongo.repositories.SystemFlashcardSetRepository;
-import org.example.technihongo.repositories.UserRepository;
+import org.example.technihongo.repositories.*;
 import org.example.technihongo.services.interfaces.SystemFlashcardSetService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -32,6 +26,8 @@ public class SystemFlashcardSetServiceImpl implements SystemFlashcardSetService 
     private UserRepository userRepository;
     @Autowired
     private DifficultyLevelRepository difficultyLevelRepository;
+    @Autowired
+    private LessonResourceRepository lessonResourceRepository;
 
     @Override
     public SystemFlashcardSetResponseDTO create(Integer userId, SystemFlashcardSetRequestDTO requestDTO) {
@@ -80,8 +76,9 @@ public class SystemFlashcardSetServiceImpl implements SystemFlashcardSetService 
         if (requestDTO.getDescription() != null) {
             flashcardSet.setDescription(requestDTO.getDescription());
         }
-        if (requestDTO.getIsPublic() != null) {
-            flashcardSet.setPublic(requestDTO.getIsPublic());
+        Boolean newIsPublic = requestDTO.getIsPublic();
+        if (newIsPublic != null) {
+            flashcardSet.setPublic(newIsPublic);
         }
         if (requestDTO.getIsPremium() != null) {
             flashcardSet.setPremium(requestDTO.getIsPremium());
@@ -98,6 +95,15 @@ public class SystemFlashcardSetServiceImpl implements SystemFlashcardSetService 
         flashcardSet.setTotalCards(totalCards);
 
         flashcardSet = systemFlashcardSetRepository.save(flashcardSet);
+
+        if (newIsPublic != null) {
+            List<LessonResource> lessonResources = lessonResourceRepository.findBySystemFlashCardSet_SystemSetId(flashcardSetId);
+            for (LessonResource lessonResource : lessonResources) {
+                lessonResource.setActive(newIsPublic);
+                lessonResourceRepository.save(lessonResource);
+            }
+        }
+
         return convertToSystemFlashcardSetResponseDTO(flashcardSet);
     }
 

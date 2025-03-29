@@ -334,22 +334,65 @@ public class StudentQuizAttemptServiceImpl implements StudentQuizAttemptService 
     }
 
     private QuizAttemptResponseDTO processQuizAttempt(StudentQuizAttempt attempt, Quiz quiz, QuizAttemptRequestDTO request) {
+        // Nhóm câu trả lời theo questionId
+        Map<Integer, List<QuizAnswerDTO>> answersByQuestion = request.getAnswers().stream()
+                .collect(Collectors.groupingBy(QuizAnswerDTO::getQuestionId));
+
         int correctAnswers = 0;
-        for (QuizAnswerDTO answer : request.getAnswers()) {
-            QuestionAnswerOption option = questionAnswerOptionRepository.findByOptionId(answer.getSelectedOptionId());
-            if (option == null) {
-                throw new IllegalArgumentException("Option ID " + answer.getSelectedOptionId() + " not found.");
+        int totalQuestions = quiz.getTotalQuestions();
+
+        // Duyệt qua từng câu hỏi trong quiz
+        List<QuizQuestion> quizQuestions = quizQuestionRepository.findByQuiz_QuizId(quiz.getQuizId());
+        for (QuizQuestion quizQuestion : quizQuestions) {
+            Integer questionId = quizQuestion.getQuestion().getQuestionId();
+            List<QuizAnswerDTO> questionAnswers = answersByQuestion.getOrDefault(questionId, Collections.emptyList());
+
+            boolean isQuestionCorrect;
+            if (questionAnswers.isEmpty()) {
+                isQuestionCorrect = false; // Không trả lời
+            } else {
+                Question question = quizQuestion.getQuestion();
+                List<QuestionAnswerOption> allOptions = questionAnswerOptionRepository.findByQuestion_QuestionId(questionId);
+                Set<Integer> correctOptionIds = allOptions.stream()
+                        .filter(QuestionAnswerOption::isCorrect)
+                        .map(QuestionAnswerOption::getOptionId)
+                        .collect(Collectors.toSet());
+                Set<Integer> selectedOptionIds = questionAnswers.stream()
+                        .flatMap(a -> a.getSelectedOptionIds().stream())
+                        .collect(Collectors.toSet());
+
+                if (question.getQuestionType().equals(QuestionType.Single_choice)) {
+                    // SINGLE_CHOICE: Chỉ cần 1 lựa chọn đúng
+                    isQuestionCorrect = selectedOptionIds.size() == 1 && correctOptionIds.containsAll(selectedOptionIds);
+                } else { // MULTIPLE_CHOICE
+                    // MULTIPLE_CHOICE: Phải chọn tất cả đáp án đúng và không chọn sai
+                    isQuestionCorrect = correctOptionIds.equals(selectedOptionIds);
+                }
             }
-            if (option.isCorrect()) {
+
+            if (isQuestionCorrect) {
                 correctAnswers++;
+            }
+
+            // Lưu QuizAnswerResponse cho từng lựa chọn
+            for (QuizAnswerDTO answerDTO : questionAnswers) {
+                for (Integer optionId : answerDTO.getSelectedOptionIds()) {
+                    QuestionAnswerOption selectedOption = questionAnswerOptionRepository.findById(optionId)
+                            .orElseThrow(() -> new IllegalArgumentException("Option ID " + optionId + " not found."));
+                    QuizAnswerResponse response = QuizAnswerResponse.builder()
+                            .studentQuizAttempt(attempt)
+                            .selectedOption(selectedOption)
+                            .isCorrect(selectedOption.isCorrect()) // isCorrect cho từng option
+                            .build();
+                    quizAnswerResponseRepository.save(response);
+                }
             }
         }
 
+        // Tính điểm và cập nhật attempt
         BigDecimal score = BigDecimal.valueOf(correctAnswers)
-                .divide(BigDecimal.valueOf(quiz.getTotalQuestions()), 2, RoundingMode.HALF_UP);
+                .divide(BigDecimal.valueOf(totalQuestions), 2, RoundingMode.HALF_UP);
         boolean isPassed = score.compareTo(quiz.getPassingScore()) >= 0;
-
-
         LocalTime timeTaken = calculateTimeTaken(attempt);
 
         attempt.setScore(score);
@@ -379,16 +422,6 @@ public class StudentQuizAttemptServiceImpl implements StudentQuizAttemptService 
         userActivityLogService.trackUserActivityLog(
                 userRepository.findByStudentStudentId(attempt.getStudent().getStudentId()).getUserId(),
                 ActivityType.COMPLETE, ContentType.Quiz, quiz.getQuizId(), null, null);
-
-        for (QuizAnswerDTO answerDTO : request.getAnswers()) {
-            QuestionAnswerOption selectedOption = questionAnswerOptionRepository.findByOptionId(answerDTO.getSelectedOptionId());
-            QuizAnswerResponse response = QuizAnswerResponse.builder()
-                    .studentQuizAttempt(attempt)
-                    .selectedOption(selectedOption)
-                    .isCorrect(selectedOption.isCorrect())
-                    .build();
-            quizAnswerResponseRepository.save(response);
-        }
 
         return mapToResponseDTO(attempt);
     }

@@ -27,11 +27,6 @@ public class LearningResource {
     @Column(name = "description")
     private String description;
 
-//    @ManyToOne
-//    @NotNull
-//    @JoinColumn(name = "domain_id", referencedColumnName = "domain_id", nullable = false)
-//    private Domain domain;
-
     @ManyToOne
     @NotNull
     @JoinColumn(name = "creator_id", referencedColumnName = "user_id", nullable = false)
@@ -63,5 +58,4 @@ public class LearningResource {
     @UpdateTimestamp
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
-
 }
