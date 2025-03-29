@@ -1,10 +1,7 @@
 package org.example.technihongo.api;
 
 import lombok.RequiredArgsConstructor;
-import org.example.technihongo.dto.CreateQuizQuestionDTO;
-import org.example.technihongo.dto.CreateQuizQuestionWithNewQuestionDTO;
-import org.example.technihongo.dto.QuizQuestionWithNewQuestionResponseDTO;
-import org.example.technihongo.dto.UpdateQuizQuestionOrderDTO;
+import org.example.technihongo.dto.*;
 import org.example.technihongo.entities.QuizQuestion;
 import org.example.technihongo.response.ApiResponse;
 import org.example.technihongo.services.interfaces.QuizQuestionService;
@@ -214,4 +211,35 @@ public class QuizQuestionController {
                             .build());
         }
     }
+    @GetMapping("/questions-options/{quizId}")
+    public ResponseEntity<ApiResponse> getAllQuestionsAndOptionsByQuizId(
+            @PathVariable Integer quizId) {
+        try {
+            List<QuestionWithOptionsDTO2> questions = quizQuestionService.getAllQuestionsAndOptionsByQuizId(quizId);
+            if (questions.isEmpty()) {
+                return ResponseEntity.ok(ApiResponse.builder()
+                        .success(false)
+                        .message("No questions found for this quiz.")
+                        .build());
+            }
+            return ResponseEntity.ok(ApiResponse.builder()
+                    .success(true)
+                    .message("Questions and options retrieved successfully.")
+                    .data(questions)
+                    .build());
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(ApiResponse.builder()
+                            .success(false)
+                            .message(e.getMessage())
+                            .build());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponse.builder()
+                            .success(false)
+                            .message("Internal Server Error: " + e.getMessage())
+                            .build());
+        }
+    }
+
 }

@@ -13,4 +13,5 @@ public interface QuizQuestionService {
     void deleteQuizQuestion(Integer quizQuestionId);
     void setQuizQuestionOrder(Integer quizId, Integer quizQuestionId, Integer newOrder);
     QuizQuestionWithNewQuestionResponseDTO createQuizQuestionWithNewQuestion(CreateQuizQuestionWithNewQuestionDTO dto);
+    List<QuestionWithOptionsDTO2> getAllQuestionsAndOptionsByQuizId(Integer quizId);
 }
