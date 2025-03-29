@@ -3,10 +3,7 @@ package org.example.technihongo.services.serviceimplements;
 import lombok.RequiredArgsConstructor;
 import org.example.technihongo.dto.LearningResourceDTO;
 import org.example.technihongo.dto.LearningResourceStatusDTO;
-import org.example.technihongo.entities.Domain;
-import org.example.technihongo.entities.LearningResource;
-import org.example.technihongo.entities.Student;
-import org.example.technihongo.entities.User;
+import org.example.technihongo.entities.*;
 import org.example.technihongo.repositories.*;
 import org.example.technihongo.services.interfaces.LearningResourceService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,7 +32,6 @@ public class LearningResourceServiceImpl implements LearningResourceService {
     private StudentFlashcardSetRepository studentFlashcardSetRepository;
     @Autowired
     private LessonResourceRepository lessonResourceRepository;
-
 
     @Override
     public List<LearningResource> getAllLearningResources() {
@@ -141,6 +137,12 @@ public class LearningResourceServiceImpl implements LearningResourceService {
         //resource.setPremium(learningResourceStatusDTO.getIsPremium());
         resource.setPublic(learningResourceStatusDTO.getIsPublic());
         learningResourceRepository.save(resource);
+
+        List<LessonResource> lessonResources = lessonResourceRepository.findByLearningResource_ResourceId(learningResourceId);
+        for (LessonResource lessonResource : lessonResources) {
+            lessonResource.setActive(learningResourceStatusDTO.getIsPublic());
+            lessonResourceRepository.save(lessonResource);
+        }
     }
 
     @Override
