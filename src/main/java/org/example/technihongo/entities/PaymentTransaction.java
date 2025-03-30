@@ -32,6 +32,9 @@ public class PaymentTransaction {
     @JoinColumn(name = "method_id", nullable = false)
     private PaymentMethod paymentMethod;
 
+    @Column(name = "external_order_id")
+    private String externalOrderId;
+
     @Column(name = "transaction_amount", precision = 10, scale = 2)
     private BigDecimal transactionAmount;
 
