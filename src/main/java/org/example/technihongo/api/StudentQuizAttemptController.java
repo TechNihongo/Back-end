@@ -21,7 +21,7 @@ import jakarta.validation.Valid;
 import java.util.List;
 
 @RestController
-@RequestMapping("api/student-quiz-attempt")
+@RequestMapping("/api/student-quiz-attempt")
 @Validated
 public class StudentQuizAttemptController {
     @Autowired
@@ -173,6 +173,10 @@ public class StudentQuizAttemptController {
         }
     }
 
+
+    // lấy ra các lần làm quiz (nỗ lực làm bài kiểm tra) của một học sinh
+    //Lần làm bài có điểm cao nhất (top attempt)
+    //3 lần làm bài gần đây nhất (recent attempts)
     @GetMapping("/top-recent/{quizId}")
     public ResponseEntity<ApiResponse> getTopAndRecentQuizAttempts(
             @RequestHeader("Authorization") String authorizationHeader,
