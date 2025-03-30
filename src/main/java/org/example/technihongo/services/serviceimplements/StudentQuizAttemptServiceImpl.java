@@ -114,6 +114,11 @@ public class StudentQuizAttemptServiceImpl implements StudentQuizAttemptService 
         return processQuizAttempt(newAttempt, quiz, request);
     }
 
+
+
+    // lấy ra các lần làm quiz (nỗ lực làm bài kiểm tra) của một học sinh
+    //Lần làm bài có điểm cao nhất (top attempt)
+    //3 lần làm bài gần đây nhất (recent attempts)
     @Override
     public List<StudentQuizAttempt> getTopAndRecentQuizAttempts(Integer studentId, Integer quizId) {
         validateInput(studentId, quizId);
