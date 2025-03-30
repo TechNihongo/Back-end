@@ -70,6 +70,10 @@ public class SystemFlashcardSetServiceImpl implements SystemFlashcardSetService 
             throw new UnauthorizedAccessException("You do not have permission to update this flashcard set.");
         }
 
+        if (requestDTO.getIsPremium() != null && !requestDTO.getIsPremium().equals(flashcardSet.isPremium())) {
+            throw new IllegalArgumentException("Premium status cannot be changed after creation");
+        }
+
         if (requestDTO.getTitle() != null) {
             flashcardSet.setTitle(requestDTO.getTitle());
         }
@@ -79,9 +83,6 @@ public class SystemFlashcardSetServiceImpl implements SystemFlashcardSetService 
         Boolean newIsPublic = requestDTO.getIsPublic();
         if (newIsPublic != null) {
             flashcardSet.setPublic(newIsPublic);
-        }
-        if (requestDTO.getIsPremium() != null) {
-            flashcardSet.setPremium(requestDTO.getIsPremium());
         }
 
         if (requestDTO.getDifficultyLevel() != null) {
