@@ -154,6 +154,48 @@ public class LessonServiceImpl implements LessonService {
         return course.getCourseId();
     }
 
+    @Override
+    public void setLessonOrder(Integer studyPlanId, Integer lessonId, Integer newOrder) {
+        StudyPlan studyPlan = studyPlanRepository.findById(studyPlanId)
+                .orElseThrow(() -> new RuntimeException("StudyPlan ID not found"));
+
+        lessonRepository.findById(lessonId)
+                .orElseThrow(() -> new RuntimeException("Lesson ID not found"));
+
+        if (studyPlan.isActive()) {
+            throw new RuntimeException("Cannot update lesson order because the StudyPlan is active.");
+        }
+
+        if (studentLessonProgressRepository.existsByLesson_LessonId(lessonId)) {
+            throw new RuntimeException("Cannot update lesson order because it has associated StudentLessonProgress.");
+        }
+
+        List<Lesson> lessons = lessonRepository.findByStudyPlan_StudyPlanIdOrderByLessonOrderAsc(studyPlanId);
+        Lesson target = lessons.stream()
+                .filter(l -> l.getLessonId().equals(lessonId))
+                .findFirst()
+                .orElseThrow(() -> new RuntimeException("Lesson not found in this StudyPlan!"));
+
+        int currentOrder = target.getLessonOrder();
+        if (newOrder < 1 || newOrder > lessons.size()) {
+            throw new RuntimeException("Invalid order!");
+        }
+
+        if (newOrder < currentOrder) {
+            lessons.stream()
+                    .filter(l -> l.getLessonOrder() >= newOrder && l.getLessonOrder() < currentOrder)
+                    .forEach(l -> l.setLessonOrder(l.getLessonOrder() + 1));
+        } else if (newOrder > currentOrder) {
+            lessons.stream()
+                    .filter(l -> l.getLessonOrder() <= newOrder && l.getLessonOrder() > currentOrder)
+                    .forEach(l -> l.setLessonOrder(l.getLessonOrder() - 1));
+        }
+
+        target.setLessonOrder(newOrder);
+
+        lessonRepository.saveAll(lessons);
+    }
+
     private PageResponseDTO<Lesson> getPageResponseDTO(Page<Lesson> page) {
         return PageResponseDTO.<Lesson>builder()
                 .content(page.getContent())

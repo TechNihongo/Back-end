@@ -95,7 +95,7 @@ public class QuizController {
                 int userId = jwtUtil.extractUserId(token);
 
                 if (roleId == 1 || roleId == 2) {
-                    Quiz quiz = quizService.getQuizById(quizId);
+                    QuizDTO quiz = quizService.getQuizById(quizId);
                     return ResponseEntity.ok(ApiResponse.builder()
                             .success(true)
                             .message("Get Quiz")
@@ -103,7 +103,7 @@ public class QuizController {
                             .build());
                 }
                 else{
-                    Quiz quiz = quizService.getPublicQuizById(userId, quizId);
+                    QuizDTO quiz = quizService.getPublicQuizById(userId, quizId);
                     return ResponseEntity.ok(ApiResponse.builder()
                             .success(true)
                             .message("Get Quiz")

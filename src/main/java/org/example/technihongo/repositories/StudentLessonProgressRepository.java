@@ -11,4 +11,5 @@ import java.util.Optional;
 public interface StudentLessonProgressRepository extends JpaRepository<StudentLessonProgress, Integer> {
     Optional<StudentLessonProgress> findByStudentStudentIdAndLessonLessonId(Integer studentId, Integer lessonId);
     List<StudentLessonProgress> findByStudentStudentIdAndLesson_StudyPlanStudyPlanId(Integer studentId, Integer studyPlanId);
+    boolean existsByLesson_LessonId(Integer lessonId);
 }
