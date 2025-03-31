@@ -19,4 +19,5 @@ public interface StudentQuizAttemptRepository extends JpaRepository<StudentQuizA
     Optional<StudentQuizAttempt> findByStudentStudentIdAndQuizQuizIdAndIsCompletedFalse(Integer studentId, Integer quizId);
     Optional<StudentQuizAttempt> findByAttemptId(Integer attemptId);
     List<StudentQuizAttempt> findByIsCompletedFalseAndDateTakenBefore(LocalDateTime expiryTime);
+    boolean existsByQuiz_QuizId(Integer quizId);
 }

@@ -1,9 +1,7 @@
 package org.example.technihongo.services.serviceimplements;
 
 import lombok.RequiredArgsConstructor;
-import org.example.technihongo.dto.CreateQuizDTO;
-import org.example.technihongo.dto.UpdateQuizDTO;
-import org.example.technihongo.dto.UpdateQuizStatusDTO;
+import org.example.technihongo.dto.*;
 import org.example.technihongo.entities.*;
 import org.example.technihongo.repositories.*;
 import org.example.technihongo.services.interfaces.QuizService;
@@ -34,6 +32,8 @@ public class QuizServiceImpl implements QuizService {
     private StudentSubscriptionRepository studentSubscriptionRepository;
     @Autowired
     private LessonResourceRepository lessonResourceRepository;
+    @Autowired
+    private StudentQuizAttemptRepository studentQuizAttemptRepository;
 
 
     @Override
@@ -47,16 +47,16 @@ public class QuizServiceImpl implements QuizService {
     }
 
     @Override
-    public Quiz getQuizById(Integer quizId) {
+    public QuizDTO getQuizById(Integer quizId) {
         Quiz quiz = quizRepository.findByQuizId(quizId);
         if(quiz == null || quiz.isDeleted()){
             throw new RuntimeException("Quiz ID not found!");
         }
-        return quiz;
+        return convertToDTO(quiz);
     }
 
     @Override
-    public Quiz getPublicQuizById(Integer userId, Integer quizId) {
+    public QuizDTO getPublicQuizById(Integer userId, Integer quizId) {
         Quiz quiz = quizRepository.findByQuizId(quizId);
         if(quiz == null || quiz.isDeleted() || !quiz.isPublic()){
             throw new RuntimeException("Quiz ID not found!");
@@ -77,7 +77,7 @@ public class QuizServiceImpl implements QuizService {
                 throw new RuntimeException("Student not allowed to view this quiz!");
             }
         }
-        return quiz;
+        return convertToDTO(quiz);
     }
 
     @Override
@@ -176,5 +176,21 @@ public class QuizServiceImpl implements QuizService {
         return quizRepository.findByCreator_UserId(creatorId);
     }
 
-
+    private QuizDTO convertToDTO(Quiz quiz) {
+        QuizDTO quizDTO = new QuizDTO();
+        quizDTO.setQuizId(quiz.getQuizId());
+        quizDTO.setTitle(quiz.getTitle());
+        quizDTO.setDescription(quiz.getDescription());
+        quizDTO.setCreator(quiz.getCreator());
+        quizDTO.setDifficultyLevel(quiz.getDifficultyLevel());
+        quizDTO.setTotalQuestions(quiz.getTotalQuestions());
+        quizDTO.setPassingScore(quiz.getPassingScore());
+        quizDTO.setPublic(quiz.isPublic());
+        quizDTO.setDeleted(quiz.isDeleted());
+        quizDTO.setPremium(quiz.isPremium());
+        quizDTO.setCreatedAt(quiz.getCreatedAt());
+        quizDTO.setUpdatedAt(quiz.getUpdatedAt());
+        quizDTO.setHasAttempt(studentQuizAttemptRepository.existsByQuiz_QuizId(quiz.getQuizId()));
+        return quizDTO;
+    }
 }

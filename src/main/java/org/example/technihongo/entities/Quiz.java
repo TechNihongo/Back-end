@@ -27,7 +27,6 @@ public class Quiz {
     @Column(name = "description", length = 255)
     private String description;
 
-
     @ManyToOne
     @JoinColumn(name = "creator_id", nullable = false, referencedColumnName = "user_id")
     private User creator;
