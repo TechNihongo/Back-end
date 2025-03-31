@@ -400,7 +400,7 @@ public class StudentQuizAttemptServiceImpl implements StudentQuizAttemptService 
         boolean isPassed = score.compareTo(quiz.getPassingScore()) >= 0;
         LocalTime timeTaken = calculateTimeTaken(attempt);
 
-        attempt.setScore(score);
+        attempt.setScore(score.multiply(BigDecimal.valueOf(10)));
         attempt.setIsPassed(isPassed);
         attempt.setTimeTaken(timeTaken);
         attempt.setIsCompleted(true);
@@ -455,14 +455,14 @@ public class StudentQuizAttemptServiceImpl implements StudentQuizAttemptService 
     }
 
     private QuizAttemptResponseDTO mapToResponseDTO(StudentQuizAttempt attempt) {
-        BigDecimal multipliedScore = attempt.getScore()
-                .multiply(BigDecimal.valueOf(100))
-                .setScale(2, RoundingMode.HALF_UP);
+//        BigDecimal multipliedScore = attempt.getScore()
+//                .multiply(BigDecimal.valueOf(100))
+//                .setScale(2, RoundingMode.HALF_UP);
 
         return QuizAttemptResponseDTO.builder()
                 .attemptId(attempt.getAttemptId())
                 .quizId(attempt.getQuiz().getQuizId())
-                .score(multipliedScore)
+                .score(attempt.getScore())
                 .isPassed(attempt.getIsPassed())
                 .timeTaken(LocalTime.ofSecondOfDay(attempt.getTimeTaken().toSecondOfDay()))
                 .isCompleted(attempt.getIsCompleted())
