@@ -1,23 +1,125 @@
 package org.example.technihongo.api;
 
-import org.example.technihongo.dto.PaymentHistoryRequestDTO;
-import org.example.technihongo.dto.PaymentTransactionDTO;
+import lombok.RequiredArgsConstructor;
+import org.example.technihongo.dto.*;
 import org.example.technihongo.enums.TransactionStatus;
 import org.example.technihongo.response.ApiResponse;
 import org.example.technihongo.services.interfaces.PaymentTransactionService;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
-@RequestMapping("/api/payment-history")
+@RequiredArgsConstructor
+@RequestMapping("${spring.application.api-prefix}/payment/momo")
 public class PaymentTransactionController {
 
-    @Autowired
-    private PaymentTransactionService paymentTransactionService;
+    private final PaymentTransactionService paymentTransactionService;
+    private static final Logger log = LoggerFactory.getLogger(PaymentTransactionController.class);
+
+    @PostMapping("/initiate")
+    public ResponseEntity<ApiResponse> initiateMoMoPayment(@RequestBody PaymentRequestDTO requestDTO) {
+        try {
+            PaymentResponseDTO responseDTO = paymentTransactionService.initiateMoMoPayment(requestDTO);
+            return ResponseEntity.ok(ApiResponse.builder()
+                    .success(true)
+                    .message("MoMo payment initiated successfully!")
+                    .data(responseDTO)
+                    .build());
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ApiResponse.builder()
+                    .success(false)
+                    .message("Invalid request: " + e.getMessage())
+                    .build());
+        } catch (IllegalStateException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ApiResponse.builder()
+                    .success(false)
+                    .message("Payment method unavailable: " + e.getMessage())
+                    .build());
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ApiResponse.builder()
+                    .success(false)
+                    .message("Failed to initiate MoMo payment: " + e.getMessage())
+                    .build());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(ApiResponse.builder()
+                    .success(false)
+                    .message("Internal Server Error: " + e.getMessage())
+                    .build());
+        }
+    }
+
+    @GetMapping("/ipn-handler")
+    public ResponseEntity<String> ipnHandler(@RequestParam Map<String, String> request) {
+        try {
+            MomoCallbackDTO callbackDTO = MomoCallbackDTO.builder()
+                    .partnerCode(request.get("partnerCode"))
+                    .orderId(request.get("orderId"))
+                    .requestId(request.get("requestId"))
+                    .amount(request.get("amount"))
+                    .resultCode(request.get("resultCode"))
+                    .message(request.get("message"))
+                    .signature(request.get("signature"))
+                    .orderInfo(request.get("orderInfo"))
+                    .orderType(request.get("orderType"))
+                    .payType(request.get("payType"))
+                    .transId(request.get("transId"))
+                    .responseTime(request.get("responseTime"))
+                    .build();
+            paymentTransactionService.handleMoMoCallback(callbackDTO, request);
+            return ResponseEntity.ok("Callback processed");
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Callback failed: " + e.getMessage());
+        }
+    }
+
+    @GetMapping("/callback")
+    public ResponseEntity<ApiResponse> handleMoMoReturn(@RequestParam Map<String, String> request) {
+        try {
+            log.info("Received MoMo callback: {}", request);
+
+            MomoCallbackDTO callbackDTO = MomoCallbackDTO.builder()
+                    .partnerCode(request.get("partnerCode"))
+                    .orderId(request.get("orderId"))
+                    .requestId(request.get("requestId"))
+                    .amount(request.get("amount"))
+                    .resultCode(request.get("resultCode"))
+                    .message(request.get("message"))
+                    .signature(request.get("signature"))
+                    .orderInfo(request.get("orderInfo"))
+                    .orderType(request.get("orderType"))
+                    .payType(request.get("payType"))
+                    .transId(request.get("transId"))
+                    .responseTime(request.get("responseTime"))
+                    .build();
+
+            paymentTransactionService.handleMoMoCallback(callbackDTO, request);
+            if ("0".equals(callbackDTO.getResultCode())) {
+                return ResponseEntity.ok(ApiResponse.builder()
+                        .success(true)
+                        .message("Payment completed successfully!")
+                        .data(Map.of("orderId", callbackDTO.getOrderId()))
+                        .build());
+            } else {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ApiResponse.builder()
+                        .success(false)
+                        .message("Payment failed: " + callbackDTO.getMessage())
+                        .data(Map.of("orderId", callbackDTO.getOrderId()))
+                        .build());
+            }
+        } catch (Exception e) {
+            log.error("Error processing MoMo callback: {}", e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(ApiResponse.builder()
+                    .success(false)
+                    .message("Error processing callback: " + e.getMessage())
+                    .build());
+        }
+    }
 
     @GetMapping("/student/{studentId}")
     public ResponseEntity<ApiResponse> getPaymentHistoryByStudentId(@PathVariable Integer studentId) {
