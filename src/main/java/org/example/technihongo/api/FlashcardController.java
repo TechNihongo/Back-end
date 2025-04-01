@@ -4,9 +4,10 @@ import jakarta.servlet.http.HttpServletRequest;
 import org.example.technihongo.core.security.JwtUtil;
 import org.example.technihongo.dto.FlashcardRequestDTO;
 import org.example.technihongo.dto.FlashcardResponseDTO;
-import org.example.technihongo.entities.StudentFlashcardProgress;
+import org.example.technihongo.dto.PageResponseDTO;
 import org.example.technihongo.enums.ActivityType;
 import org.example.technihongo.enums.ContentType;
+import org.example.technihongo.exception.ResourceNotFoundException;
 import org.example.technihongo.response.ApiResponse;
 import org.example.technihongo.services.interfaces.FlashcardProgressService;
 import org.example.technihongo.services.interfaces.FlashcardService;
@@ -275,4 +276,113 @@ public class FlashcardController {
                             .build());
         }
     }
+
+    @GetMapping("/studentFlashcardSet/{setId}")
+    public ResponseEntity<ApiResponse> getStudentFlashcards(
+            @RequestHeader("Authorization") String authorizationHeader,
+            @PathVariable Integer setId,
+            @RequestParam(defaultValue = "0") int pageNo,
+            @RequestParam(defaultValue = "10") int pageSize,
+            @RequestParam(defaultValue = "cardOrder") String sortBy,
+            @RequestParam(defaultValue = "ASC") String sortDir) {
+        try {
+            if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
+                String token = authorizationHeader.substring(7);
+                Integer userId = jwtUtil.extractUserId(token);
+                Integer studentId = studentService.getStudentIdByUserId(userId);
+
+                if (studentId == null) {
+                    return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                            .body(ApiResponse.builder()
+                                    .success(false)
+                                    .message("No student profile found for this user")
+                                    .build());
+                }
+
+                PageResponseDTO<FlashcardResponseDTO> responseDTO = flashcardService.getStudentFlashcards(
+                        studentId, setId, pageNo, pageSize, sortBy, sortDir);
+
+                return ResponseEntity.ok(ApiResponse.builder()
+                        .success(true)
+                        .message("Student flashcards retrieved successfully")
+                        .data(responseDTO)
+                        .build());
+            } else {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(ApiResponse.builder()
+                                .success(false)
+                                .message("Unauthorized")
+                                .build());
+            }
+        } catch (ResourceNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(ApiResponse.builder()
+                            .success(false)
+                            .message("Flashcard set not found: " + e.getMessage())
+                            .build());
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(ApiResponse.builder()
+                            .success(false)
+                            .message("Access denied: " + e.getMessage())
+                            .build());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponse.builder()
+                            .success(false)
+                            .message("Internal Server Error: " + e.getMessage())
+                            .build());
+        }
+    }
+
+    @GetMapping("/systemFlashcardSet/{setId}")
+    public ResponseEntity<ApiResponse> getSystemFlashcards(
+            @RequestHeader("Authorization") String authorizationHeader,
+            @PathVariable Integer setId,
+            @RequestParam(defaultValue = "0") int pageNo,
+            @RequestParam(defaultValue = "10") int pageSize,
+            @RequestParam(defaultValue = "cardOrder") String sortBy,
+            @RequestParam(defaultValue = "ASC") String sortDir) {
+        try {
+            if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
+                String token = authorizationHeader.substring(7);
+                Integer userId = jwtUtil.extractUserId(token);
+
+                PageResponseDTO<FlashcardResponseDTO> responseDTO = flashcardService.getSystemFlashcards(
+                        userId, setId, pageNo, pageSize, sortBy, sortDir);
+
+                return ResponseEntity.ok(ApiResponse.builder()
+                        .success(true)
+                        .message("System flashcards retrieved successfully")
+                        .data(responseDTO)
+                        .build());
+            } else {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(ApiResponse.builder()
+                                .success(false)
+                                .message("Unauthorized")
+                                .build());
+            }
+        } catch (ResourceNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(ApiResponse.builder()
+                            .success(false)
+                            .message("Flashcard set not found: " + e.getMessage())
+                            .build());
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(ApiResponse.builder()
+                            .success(false)
+                            .message("Access denied: " + e.getMessage())
+                            .build());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponse.builder()
+                            .success(false)
+                            .message("Internal Server Error: " + e.getMessage())
+                            .build());
+        }
+    }
+
+
 }

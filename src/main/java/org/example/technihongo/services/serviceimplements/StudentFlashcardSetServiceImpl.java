@@ -13,6 +13,10 @@ import org.example.technihongo.repositories.StudentFlashcardSetRepository;
 import org.example.technihongo.repositories.StudentRepository;
 import org.example.technihongo.services.interfaces.StudentFlashcardSetService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
@@ -36,7 +40,7 @@ public class StudentFlashcardSetServiceImpl implements StudentFlashcardSetServic
 
     @Override
     public FlashcardSetResponseDTO createFlashcardSet(Integer studentId, FlashcardSetRequestDTO request) {
-        if(request.getTitle() == null) {
+        if (request.getTitle() == null) {
             throw new IllegalArgumentException("Title is required!");
         }
         Student student = studentRepository.findById(studentId)
@@ -57,7 +61,6 @@ public class StudentFlashcardSetServiceImpl implements StudentFlashcardSetServic
 
     @Override
     public FlashcardSetResponseDTO updateFlashcardSet(Integer studentId, Integer flashcardSetId, FlashcardSetRequestDTO request) {
-
         StudentFlashcardSet flashcardSet = flashcardSetRepository.findById(flashcardSetId)
                 .orElseThrow(() -> new RuntimeException("FlashcardSet not found"));
 
@@ -75,7 +78,9 @@ public class StudentFlashcardSetServiceImpl implements StudentFlashcardSetServic
             flashcardSet.setPublic(request.getIsPublic());
         }
 
-        flashcardSet.setTotalCards(flashcardRepository.findByStudentFlashCardSetStudentSetId(flashcardSetId).size());
+        Pageable pageable = PageRequest.of(0, Integer.MAX_VALUE); // Lấy tất cả để đếm
+        Page<Flashcard> flashcardPage = flashcardRepository.findByStudentFlashCardSetStudentSetId(flashcardSetId, pageable);
+        flashcardSet.setTotalCards((int) flashcardPage.getTotalElements());
 
         flashcardSet = flashcardSetRepository.save(flashcardSet);
         return convertToFlashcardSetResponseDTO(flashcardSet);
@@ -95,9 +100,8 @@ public class StudentFlashcardSetServiceImpl implements StudentFlashcardSetServic
     public FlashcardSetResponseDTO getFlashcardSetById(Integer flashcardSetId) {
         StudentFlashcardSet flashcardSet = flashcardSetRepository.findById(flashcardSetId)
                 .orElseThrow(() -> new RuntimeException("FlashcardSet not found"));
-        return convertToFlashcardSetResponseDTO(flashcardSet);    }
-
-
+        return convertToFlashcardSetResponseDTO(flashcardSet);
+    }
 
     @Override
     public FlashcardSetResponseDTO updateFlashcardSetVisibility(Integer studentId, Integer flashcardSetId, Boolean isPublic) {
@@ -108,10 +112,11 @@ public class StudentFlashcardSetServiceImpl implements StudentFlashcardSetServic
         }
         flashcardSet.setPublic(isPublic);
         flashcardSet = flashcardSetRepository.save(flashcardSet);
-        return convertToFlashcardSetResponseDTO(flashcardSet);    }
+        return convertToFlashcardSetResponseDTO(flashcardSet);
+    }
 
     @Override
-    public FlashcardSetResponseDTO getAllFlashcardsInSet(Integer studentId,Integer flashcardSetId) {
+    public FlashcardSetResponseDTO getAllFlashcardsInSet(Integer studentId, Integer flashcardSetId) {
         StudentFlashcardSet flashcardSet = getActiveFlashcardSet(flashcardSetId);
 
         if (!flashcardSet.getCreator().getStudentId().equals(studentId)) {
@@ -123,8 +128,9 @@ public class StudentFlashcardSetServiceImpl implements StudentFlashcardSetServic
             throw new UnauthorizedAccessException("You do not have permission to access this flashcard set.");
         }
 
-        List<Flashcard> flashcards = flashcardRepository.findByStudentFlashCardSetStudentSetId(flashcardSetId);
-        flashcardSet.setTotalCards(flashcards.size());
+        Pageable pageable = PageRequest.of(0, Integer.MAX_VALUE, Sort.by("cardOrder").ascending());
+        Page<Flashcard> flashcardPage = flashcardRepository.findByStudentFlashCardSetStudentSetId(flashcardSetId, pageable);
+        flashcardSet.setTotalCards((int) flashcardPage.getTotalElements());
 
         FlashcardSetResponseDTO response = new FlashcardSetResponseDTO();
         response.setStudentId(flashcardSet.getCreator().getStudentId());
@@ -132,7 +138,7 @@ public class StudentFlashcardSetServiceImpl implements StudentFlashcardSetServic
         response.setTitle(flashcardSet.getTitle());
         response.setDescription(flashcardSet.getDescription());
         response.setIsPublic(flashcardSet.isPublic());
-        response.setFlashcards(flashcards.stream()
+        response.setFlashcards(flashcardPage.getContent().stream()
                 .map(this::convertToFlashcardResponseDTO)
                 .collect(Collectors.toList()));
 
@@ -150,7 +156,7 @@ public class StudentFlashcardSetServiceImpl implements StudentFlashcardSetServic
 
     @Override
     public List<FlashcardSetResponseDTO> searchTitle(String keyword) {
-        if(keyword == null || keyword.trim().isEmpty()) {
+        if (keyword == null || keyword.trim().isEmpty()) {
             return new ArrayList<>();
         }
         List<StudentFlashcardSet> studentFlashcardSets = flashcardSetRepository.findByTitleContainingIgnoreCase(keyword.trim());
@@ -200,26 +206,27 @@ public class StudentFlashcardSetServiceImpl implements StudentFlashcardSetServic
         return mapToFlashcardSetResponseDTO(savedFlashcardSet, flashcards);
     }
 
-
     private FlashcardResponseDTO convertToFlashcardResponseDTO(Flashcard flashcard) {
         FlashcardResponseDTO response = new FlashcardResponseDTO();
         response.setFlashcardId(flashcard.getFlashCardId());
         response.setJapaneseDefinition(flashcard.getDefinition());
         response.setVietEngTranslation(flashcard.getTranslation());
+        response.setCardOrder(flashcard.getCardOrder());
         response.setImageUrl(flashcard.getImgUrl());
         return response;
     }
 
     private FlashcardSetResponseDTO convertToFlashcardSetResponseDTO(StudentFlashcardSet flashcardSet) {
+        Pageable pageable = PageRequest.of(0, Integer.MAX_VALUE, Sort.by("cardOrder").ascending());
+        Page<Flashcard> flashcardPage = flashcardRepository.findByStudentFlashCardSetStudentSetId(flashcardSet.getStudentSetId(), pageable);
+
         FlashcardSetResponseDTO response = new FlashcardSetResponseDTO();
         response.setStudentId(flashcardSet.getCreator().getStudentId());
         response.setStudentSetId(flashcardSet.getStudentSetId());
         response.setTitle(flashcardSet.getTitle());
         response.setDescription(flashcardSet.getDescription());
         response.setIsPublic(flashcardSet.isPublic());
-
-        List<Flashcard> flashcards = flashcardRepository.findByStudentFlashCardSetStudentSetId(flashcardSet.getStudentSetId());
-        response.setFlashcards(flashcards.stream()
+        response.setFlashcards(flashcardPage.getContent().stream()
                 .map(this::convertToFlashcardResponseDTO)
                 .collect(Collectors.toList()));
 
@@ -267,6 +274,7 @@ public class StudentFlashcardSetServiceImpl implements StudentFlashcardSetServic
         responseDTO.setFlashcardId(flashcard.getFlashCardId());
         responseDTO.setJapaneseDefinition(flashcard.getDefinition());
         responseDTO.setVietEngTranslation(flashcard.getTranslation());
+        responseDTO.setCardOrder(flashcard.getCardOrder());
         responseDTO.setImageUrl(flashcard.getImgUrl());
 
         return responseDTO;
@@ -280,5 +288,4 @@ public class StudentFlashcardSetServiceImpl implements StudentFlashcardSetServic
         }
         return flashcardSet;
     }
-
 }

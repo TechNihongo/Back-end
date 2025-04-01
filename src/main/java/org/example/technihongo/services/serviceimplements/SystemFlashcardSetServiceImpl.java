@@ -9,6 +9,10 @@ import org.example.technihongo.exception.UnauthorizedAccessException;
 import org.example.technihongo.repositories.*;
 import org.example.technihongo.services.interfaces.SystemFlashcardSetService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -85,15 +89,9 @@ public class SystemFlashcardSetServiceImpl implements SystemFlashcardSetService 
             flashcardSet.setPublic(newIsPublic);
         }
 
-//        if (requestDTO.getDifficultyLevel() != null) {
-//            DifficultyLevel difficultyLevel = difficultyLevelRepository.findByTag(requestDTO.getDifficultyLevel());
-//            if (difficultyLevel == null) {
-//                throw new ResourceNotFoundException("DifficultyLevel not found: " + requestDTO.getDifficultyLevel());
-//            }
-//            flashcardSet.setDifficultyLevel(difficultyLevel);
-//        }
-        int totalCards = flashcardRepository.findBySystemFlashCardSetSystemSetId(flashcardSetId).size();
-        flashcardSet.setTotalCards(totalCards);
+        Pageable pageable = PageRequest.of(0, Integer.MAX_VALUE);
+        Page<Flashcard> flashcardPage = flashcardRepository.findBySystemFlashCardSetSystemSetId(flashcardSetId, pageable);
+        flashcardSet.setTotalCards((int) flashcardPage.getTotalElements());
 
         flashcardSet = systemFlashcardSetRepository.save(flashcardSet);
 
@@ -146,8 +144,13 @@ public class SystemFlashcardSetServiceImpl implements SystemFlashcardSetService 
     public SystemFlashcardSetResponseDTO getAllFlashcardsInSet(Integer userId, Integer flashcardSetId) {
         SystemFlashcardSet flashcardSet = getActiveFlashcardSet(flashcardSetId);
 
-        List<Flashcard> flashcards = flashcardRepository.findBySystemFlashCardSetSystemSetId(flashcardSetId);
-        flashcardSet.setTotalCards(flashcards.size());
+        if (!flashcardSet.isPublic() && !flashcardSet.getCreator().getUserId().equals(userId)) {
+            throw new UnauthorizedAccessException("You do not have permission to access this flashcard set.");
+        }
+
+        Pageable pageable = PageRequest.of(0, Integer.MAX_VALUE, Sort.by("cardOrder").ascending());
+        Page<Flashcard> flashcardPage = flashcardRepository.findBySystemFlashCardSetSystemSetId(flashcardSetId, pageable);
+        flashcardSet.setTotalCards((int) flashcardPage.getTotalElements());
         systemFlashcardSetRepository.save(flashcardSet);
 
         SystemFlashcardSetResponseDTO responseDTO = new SystemFlashcardSetResponseDTO();
@@ -157,7 +160,7 @@ public class SystemFlashcardSetServiceImpl implements SystemFlashcardSetService 
         responseDTO.setIsPublic(flashcardSet.isPublic());
         responseDTO.setIsPremium(flashcardSet.isPremium());
         responseDTO.setDifficultyLevel(flashcardSet.getDifficultyLevel() != null ? flashcardSet.getDifficultyLevel().getTag() : null);
-        responseDTO.setFlashcards(flashcards.stream()
+        responseDTO.setFlashcards(flashcardPage.getContent().stream()
                 .map(this::convertToFlashcardResponseDTO)
                 .collect(Collectors.toList()));
 
@@ -179,12 +182,19 @@ public class SystemFlashcardSetServiceImpl implements SystemFlashcardSetService 
         if (flashcardSet.isDeleted()) {
             throw new ResourceNotFoundException("FlashcardSet has been deleted and cannot be accessed.");
         }
-        flashcardSet.setTotalCards(flashcardRepository.findBySystemFlashCardSetSystemSetId(flashcardSetId).size());
+
+        Pageable pageable = PageRequest.of(0, Integer.MAX_VALUE);
+        Page<Flashcard> flashcardPage = flashcardRepository.findBySystemFlashCardSetSystemSetId(flashcardSetId, pageable);
+        flashcardSet.setTotalCards((int) flashcardPage.getTotalElements());
         systemFlashcardSetRepository.save(flashcardSet);
+
         return flashcardSet;
     }
 
     private SystemFlashcardSetResponseDTO convertToSystemFlashcardSetResponseDTO(SystemFlashcardSet flashcardSet) {
+        Pageable pageable = PageRequest.of(0, Integer.MAX_VALUE, Sort.by("cardOrder").ascending());
+        Page<Flashcard> flashcardPage = flashcardRepository.findBySystemFlashCardSetSystemSetId(flashcardSet.getSystemSetId(), pageable);
+
         SystemFlashcardSetResponseDTO response = new SystemFlashcardSetResponseDTO();
         response.setSystemSetId(flashcardSet.getSystemSetId());
         response.setContentManagerId(flashcardSet.getCreator().getUserId());
@@ -193,10 +203,7 @@ public class SystemFlashcardSetServiceImpl implements SystemFlashcardSetService 
         response.setIsPublic(flashcardSet.isPublic());
         response.setIsPremium(flashcardSet.isPremium());
         response.setDifficultyLevel(flashcardSet.getDifficultyLevel() != null ? flashcardSet.getDifficultyLevel().getTag() : null);
-
-        List<Flashcard> flashcards = flashcardRepository.findBySystemFlashCardSetSystemSetId(flashcardSet.getSystemSetId());
-        flashcardSet.setTotalCards(flashcards.size());
-        response.setFlashcards(flashcards.stream()
+        response.setFlashcards(flashcardPage.getContent().stream()
                 .map(this::convertToFlashcardResponseDTO)
                 .collect(Collectors.toList()));
 
@@ -208,6 +215,7 @@ public class SystemFlashcardSetServiceImpl implements SystemFlashcardSetService 
         response.setFlashcardId(flashcard.getFlashCardId());
         response.setJapaneseDefinition(flashcard.getDefinition());
         response.setVietEngTranslation(flashcard.getTranslation());
+        response.setCardOrder(flashcard.getCardOrder());
         response.setImageUrl(flashcard.getImgUrl());
         return response;
     }

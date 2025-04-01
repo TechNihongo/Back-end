@@ -2,6 +2,7 @@ package org.example.technihongo.services.serviceimplements;
 
 import org.example.technihongo.dto.FlashcardRequestDTO;
 import org.example.technihongo.dto.FlashcardResponseDTO;
+import org.example.technihongo.dto.PageResponseDTO;
 import org.example.technihongo.entities.Flashcard;
 import org.example.technihongo.entities.StudentFlashcardSet;
 import org.example.technihongo.entities.SystemFlashcardSet;
@@ -11,6 +12,10 @@ import org.example.technihongo.repositories.StudentFlashcardSetRepository;
 import org.example.technihongo.repositories.SystemFlashcardSetRepository;
 import org.example.technihongo.services.interfaces.FlashcardService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -28,6 +33,46 @@ public class FlashcardServiceImpl implements FlashcardService {
 
     @Autowired
     SystemFlashcardSetRepository systemFlashcardSetRepository;
+
+    @Override
+    public PageResponseDTO<FlashcardResponseDTO> getStudentFlashcards(Integer studentId, Integer flashcardSetId, int pageNo, int pageSize, String sortBy, String sortDir) {
+
+        StudentFlashcardSet flashcardSet = studentFlashcardSetRepository.findById(flashcardSetId)
+                .orElseThrow(() -> new ResourceNotFoundException("Flashcard Set not found with id: " + flashcardSetId));
+
+        if (!flashcardSet.getCreator().getStudentId().equals(studentId)) {
+            throw new IllegalArgumentException("You don't have permission to view this flashcard set");
+        }
+
+        Sort sort = sortDir.equalsIgnoreCase(Sort.Direction.ASC.name())
+                ? Sort.by(sortBy).ascending()
+                : Sort.by(sortBy).descending();
+
+        Pageable pageable = PageRequest.of(pageNo, pageSize, sort);
+        Page<Flashcard> flashcardPage = flashcardRepository.findByStudentFlashCardSetStudentSetId(flashcardSetId, pageable);
+
+        return getPageResponseDTO(flashcardPage);
+    }
+
+    @Override
+    public PageResponseDTO<FlashcardResponseDTO> getSystemFlashcards(Integer userId, Integer flashcardSetId, int pageNo, int pageSize, String sortBy, String sortDir) {
+        SystemFlashcardSet flashcardSet = systemFlashcardSetRepository.findById(flashcardSetId)
+                .orElseThrow(() -> new ResourceNotFoundException("Flashcard Set not found with id: " + flashcardSetId));
+
+        if (!flashcardSet.getCreator().getUserId().equals(userId)) {
+            throw new IllegalArgumentException("You don't have permission to view this flashcard set");
+        }
+
+        Sort sort = sortDir.equalsIgnoreCase(Sort.Direction.ASC.name())
+                ? Sort.by(sortBy).ascending()
+                : Sort.by(sortBy).descending();
+
+        Pageable pageable = PageRequest.of(pageNo, pageSize, sort);
+        Page<Flashcard> flashcardPage = flashcardRepository.findBySystemFlashCardSetSystemSetId(flashcardSetId, pageable);
+
+        return getPageResponseDTO(flashcardPage);
+    }
+
     @Override
     public List<FlashcardResponseDTO> createStudentFlashcards(Integer studentId, Integer flashcardSetId, List<FlashcardRequestDTO> requests) {
         StudentFlashcardSet flashcardSet = studentFlashcardSetRepository.findById(flashcardSetId)
@@ -132,6 +177,21 @@ public class FlashcardServiceImpl implements FlashcardService {
         flashcardRepository.deleteById(flashcardId);
     }
 
+    private PageResponseDTO<FlashcardResponseDTO> getPageResponseDTO(Page<Flashcard> flashcardPage) {
+        List<FlashcardResponseDTO> content = flashcardPage.getContent().stream()
+                .map(this::convertToFlashcardResponseDTO)
+                .collect(Collectors.toList());
+
+        return PageResponseDTO.<FlashcardResponseDTO>builder()
+                .content(content)
+                .pageNo(flashcardPage.getNumber())
+                .pageSize(flashcardPage.getSize())
+                .totalElements(flashcardPage.getTotalElements())
+                .totalPages(flashcardPage.getTotalPages())
+                .last(flashcardPage.isLast())
+                .build();
+    }
+
     @Override
     public FlashcardResponseDTO getFlashcardById(Integer flashcardId) {
         Flashcard flashcard = flashcardRepository.findById(flashcardId)
@@ -144,6 +204,7 @@ public class FlashcardServiceImpl implements FlashcardService {
         response.setJapaneseDefinition(flashcard.getDefinition());
         response.setVietEngTranslation(flashcard.getTranslation());
         response.setImageUrl(flashcard.getImgUrl());
+        response.setCardOrder(flashcard.getCardOrder());
         return response;
     }
 }
