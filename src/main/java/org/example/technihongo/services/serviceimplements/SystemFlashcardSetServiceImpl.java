@@ -85,13 +85,13 @@ public class SystemFlashcardSetServiceImpl implements SystemFlashcardSetService 
             flashcardSet.setPublic(newIsPublic);
         }
 
-        if (requestDTO.getDifficultyLevel() != null) {
-            DifficultyLevel difficultyLevel = difficultyLevelRepository.findByTag(requestDTO.getDifficultyLevel());
-            if (difficultyLevel == null) {
-                throw new ResourceNotFoundException("DifficultyLevel not found: " + requestDTO.getDifficultyLevel());
-            }
-            flashcardSet.setDifficultyLevel(difficultyLevel);
-        }
+//        if (requestDTO.getDifficultyLevel() != null) {
+//            DifficultyLevel difficultyLevel = difficultyLevelRepository.findByTag(requestDTO.getDifficultyLevel());
+//            if (difficultyLevel == null) {
+//                throw new ResourceNotFoundException("DifficultyLevel not found: " + requestDTO.getDifficultyLevel());
+//            }
+//            flashcardSet.setDifficultyLevel(difficultyLevel);
+//        }
         int totalCards = flashcardRepository.findBySystemFlashCardSetSystemSetId(flashcardSetId).size();
         flashcardSet.setTotalCards(totalCards);
 
@@ -156,9 +156,9 @@ public class SystemFlashcardSetServiceImpl implements SystemFlashcardSetService 
         responseDTO.setIsPublic(flashcardSet.isPublic());
         responseDTO.setIsPremium(flashcardSet.isPremium());
         responseDTO.setDifficultyLevel(flashcardSet.getDifficultyLevel() != null ? flashcardSet.getDifficultyLevel().getTag() : null);
-        responseDTO.setFlashcards(flashcards.stream()
-                .map(this::convertToFlashcardResponseDTO)
-                .collect(Collectors.toList()));
+//        responseDTO.setFlashcards(flashcards.stream()
+//                .map(this::convertToFlashcardResponseDTO)
+//                .collect(Collectors.toList()));
 
         return responseDTO;
     }
@@ -193,11 +193,11 @@ public class SystemFlashcardSetServiceImpl implements SystemFlashcardSetService 
         response.setIsPremium(flashcardSet.isPremium());
         response.setDifficultyLevel(flashcardSet.getDifficultyLevel() != null ? flashcardSet.getDifficultyLevel().getTag() : null);
 
-        List<Flashcard> flashcards = flashcardRepository.findBySystemFlashCardSetSystemSetId(flashcardSet.getSystemSetId());
-        flashcardSet.setTotalCards(flashcards.size());
-        response.setFlashcards(flashcards.stream()
-                .map(this::convertToFlashcardResponseDTO)
-                .collect(Collectors.toList()));
+//        List<Flashcard> flashcards = flashcardRepository.findBySystemFlashCardSetSystemSetId(flashcardSet.getSystemSetId());
+//        flashcardSet.setTotalCards(flashcards.size());
+//        response.setFlashcards(flashcards.stream()
+//                .map(this::convertToFlashcardResponseDTO)
+//                .collect(Collectors.toList()));
 
         return response;
     }

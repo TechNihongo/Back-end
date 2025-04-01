@@ -181,7 +181,6 @@ public class SystemFlashcardSetController {
             @PathVariable Integer flashcardSetId) {
         try {
             Integer userId = extractUserId(authorizationHeader);
-            // Sử dụng getAllFlashcardsInSet để lấy đầy đủ thông tin và kiểm tra quyền truy cập
             SystemFlashcardSetResponseDTO response = systemFlashcardSetService.getAllFlashcardsInSet(userId, flashcardSetId);
 
             // Hàm track progress cho Student
