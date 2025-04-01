@@ -28,9 +28,9 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http.csrf(csrf -> csrf.disable())
-                .addFilterBefore(corsFilter, UsernamePasswordAuthenticationFilter.class) // Add the CorsFilter before other filters
+                .addFilterBefore(corsFilter, UsernamePasswordAuthenticationFilter.class)
                 .authorizeRequests(authorize -> authorize
-                                .requestMatchers("/**").permitAll()
+                                .requestMatchers("/api/v1/payment/momo/callback", "/api/v1/payment/momo/ipn-handler","/**").permitAll()
 
 
                         .anyRequest().authenticated()

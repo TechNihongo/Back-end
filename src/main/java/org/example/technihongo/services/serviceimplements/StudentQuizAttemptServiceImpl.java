@@ -455,14 +455,14 @@ public class StudentQuizAttemptServiceImpl implements StudentQuizAttemptService 
     }
 
     private QuizAttemptResponseDTO mapToResponseDTO(StudentQuizAttempt attempt) {
-//        BigDecimal multipliedScore = attempt.getScore()
-//                .multiply(BigDecimal.valueOf(100))
-//                .setScale(2, RoundingMode.HALF_UP);
+        BigDecimal multipliedScore = attempt.getScore()
+                .multiply(BigDecimal.valueOf(100))
+                .setScale(2, RoundingMode.HALF_UP);
 
         return QuizAttemptResponseDTO.builder()
                 .attemptId(attempt.getAttemptId())
                 .quizId(attempt.getQuiz().getQuizId())
-                .score(attempt.getScore())
+                .score(multipliedScore)
                 .isPassed(attempt.getIsPassed())
                 .timeTaken(LocalTime.ofSecondOfDay(attempt.getTimeTaken().toSecondOfDay()))
                 .isCompleted(attempt.getIsCompleted())
