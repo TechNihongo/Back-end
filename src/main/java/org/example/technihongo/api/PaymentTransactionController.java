@@ -16,13 +16,13 @@ import java.util.Map;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("${spring.application.api-prefix}/payment/momo")
+@RequestMapping("${spring.application.api-prefix}/payment")
 public class PaymentTransactionController {
 
     private final PaymentTransactionService paymentTransactionService;
     private static final Logger log = LoggerFactory.getLogger(PaymentTransactionController.class);
 
-    @PostMapping("/initiate")
+    @PostMapping("/initiateMomo")
     public ResponseEntity<ApiResponse> initiateMoMoPayment(@RequestBody PaymentRequestDTO requestDTO) {
         try {
             PaymentResponseDTO responseDTO = paymentTransactionService.initiateMoMoPayment(requestDTO);

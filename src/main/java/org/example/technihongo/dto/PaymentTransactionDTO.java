@@ -1,6 +1,7 @@
 package org.example.technihongo.dto;
 
 import lombok.*;
+import org.example.technihongo.enums.PaymentMethodType;
 import org.example.technihongo.enums.TransactionStatus;
 
 import java.math.BigDecimal;
@@ -14,7 +15,8 @@ import java.time.LocalDateTime;
 public class PaymentTransactionDTO {
     private Integer transactionId;
     private String subscriptionPlanName;
-    private String paymentMethod;
+    private PaymentMethodType paymentMethod;
+//    private PaymentMethodCode paymentMethodCode;
     private BigDecimal transactionAmount;
     private String currency;
     private TransactionStatus transactionStatus;
