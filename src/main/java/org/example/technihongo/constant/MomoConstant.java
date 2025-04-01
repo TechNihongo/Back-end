@@ -1,13 +1,26 @@
 package org.example.technihongo.constant;
 
 public class MomoConstant {
-    public static final String PARTNER_CODE = "MOMO";
-    public static final String ACCESS_KEY = "F8BBA842ECF85";
-    public static final String SECRET_KEY = "K951B6PE1waDMi640xX08PD3vg6EkVlz";
-    public static final String REDIRECT_URL = "http://localhost:3000/api/v1/callback";
-    public static final String IPN_URL = "http://localhost:3000/api/v1/ipn";
-    public static final String CREATE_ORDER_URL = "https://test-payment.momo.vn/gw_payment/transactionProcessor";
-    public static final String NOTIFY_URL = "http://localhost:3000/api/v1/notify";
-    public static final String REQUEST_TYPE = "captureMoMoWallet";
-    public static final String CHECK_STATUS_TYPE = "transactionStatus";
+    public static final String PARTNER_CODE = "partnerCode";
+    public static final String PARTNER_CLIENT_ID = "partnerClientId";
+    public static final String CALLBACK_TOKEN = "callbackToken";
+    public static final String DESCRIPTION = "description";
+    public static final String ACCESS_KEY = "accessKey";
+    public static final String REQUEST_ID = "requestId";
+    public static final String AMOUNT = "amount";
+    public static final String ORDER_ID = "orderId";
+    public static final String ORDER_INFO = "orderInfo";
+    public static final String REQUEST_TYPE = "requestType";
+    public static final String EXTRA_DATA = "extraData";
+    public static final String MESSAGE = "message";
+    public static final String PAY_URL = "payUrl";
+    public static final String RESULT_CODE = "resultCode";
+    public static final String REDIRECT_URL = "redirectUrl";
+    public static final String IPN_URL = "ipnUrl";
+    public static final String TOKEN = "token";
+    public static final String TRANS_ID = "transId";
+
+
+
+
 }
