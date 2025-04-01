@@ -274,4 +274,29 @@ public class LessonController {
                             .build());
         }
     }
+
+    @PatchMapping("/set-order/{studyPlanId}")
+    public ResponseEntity<ApiResponse> setLessonResourceOrder(@PathVariable Integer studyPlanId,
+                                                              @RequestParam Integer lessonId,
+                                                              @RequestParam Integer newOrder) {
+        try{
+            lessonService.setLessonOrder(studyPlanId, lessonId, newOrder);
+            return ResponseEntity.ok(ApiResponse.builder()
+                    .success(true)
+                    .message("Lessons updated successfully")
+                    .build());
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(ApiResponse.builder()
+                            .success(false)
+                            .message("Failed to update Lessons: " + e.getMessage())
+                            .build());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponse.builder()
+                            .success(false)
+                            .message("Internal Server Error: " + e.getMessage())
+                            .build());
+        }
+    }
 }

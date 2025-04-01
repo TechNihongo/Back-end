@@ -14,7 +14,8 @@ public interface PaymentTransactionRepository extends JpaRepository<PaymentTrans
     List<PaymentTransaction> findBySubscription_Student_StudentId(Integer studentId);
     List<PaymentTransaction> findByTransactionStatus(TransactionStatus status);
     List<PaymentTransaction> findBySubscription_Student_StudentIdAndTransactionStatus(Integer studentId, TransactionStatus status);
-
+    PaymentTransaction findByTransactionId(Integer transactionId);
+  
 
 }
 

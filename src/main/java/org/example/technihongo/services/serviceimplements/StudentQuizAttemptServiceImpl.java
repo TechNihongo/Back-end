@@ -400,7 +400,7 @@ public class StudentQuizAttemptServiceImpl implements StudentQuizAttemptService 
         boolean isPassed = score.compareTo(quiz.getPassingScore()) >= 0;
         LocalTime timeTaken = calculateTimeTaken(attempt);
 
-        attempt.setScore(score);
+        attempt.setScore(score.multiply(BigDecimal.valueOf(10)));
         attempt.setIsPassed(isPassed);
         attempt.setTimeTaken(timeTaken);
         attempt.setIsCompleted(true);
