@@ -84,7 +84,7 @@ public class StudentFlashcardSetController {
         }
     }
 
-    @PatchMapping("/{setId}/update")
+    @PatchMapping("/update/{setId}")
     public ResponseEntity<ApiResponse> updateFlashcardSet(
             @RequestHeader("Authorization") String authorizationHeader,
             HttpServletRequest httpRequest,
