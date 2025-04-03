@@ -185,6 +185,67 @@ public class FlashcardController {
                             .build());
         }
     }
+
+//    @PatchMapping("/updateOrder")
+//    public ResponseEntity<ApiResponse> updateFlashcardOrder(
+//            @RequestHeader("Authorization") String authorizationHeader,
+//            @RequestBody UpdateFlashcardOrderDTO request,
+//            HttpServletRequest httpRequest) {
+//        try {
+//            if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
+//                String token = authorizationHeader.substring(7);
+//                Integer userId = jwtUtil.extractUserId(token);
+//
+//                String ipAddress = httpRequest.getRemoteAddr();
+//                String userAgent = httpRequest.getHeader("User-Agent");
+//                userActivityLogService.trackUserActivityLog(
+//                        userId,
+//                        ActivityType.UPDATE,
+//                        ContentType.Flashcard,
+//                        null,
+//                        ipAddress,
+//                        userAgent
+//                );
+//
+//                flashcardService.updateFlashcardOrder(userId, request);
+//                return ResponseEntity.ok(ApiResponse.builder()
+//                        .success(true)
+//                        .message("Flashcard order updated successfully")
+//                        .build());
+//            } else {
+//                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+//                        .body(ApiResponse.builder()
+//                                .success(false)
+//                                .message("Unauthorized")
+//                                .build());
+//            }
+//        } catch (IllegalArgumentException e) {
+//            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+//                    .body(ApiResponse.builder()
+//                            .success(false)
+//                            .message("Invalid request: " + e.getMessage())
+//                            .build());
+//        } catch (ResourceNotFoundException e) {
+//            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+//                    .body(ApiResponse.builder()
+//                            .success(false)
+//                            .message("Resource not found: " + e.getMessage())
+//                            .build());
+//        } catch (UnauthorizedAccessException e) {
+//            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+//                    .body(ApiResponse.builder()
+//                            .success(false)
+//                            .message("Access denied: " + e.getMessage())
+//                            .build());
+//        } catch (Exception e) {
+//            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+//                    .body(ApiResponse.builder()
+//                            .success(false)
+//                            .message("Internal server error: " + e.getMessage())
+//                            .build());
+//        }
+//    }
+
     @DeleteMapping("/delete/{flashcardId}")
     public ResponseEntity<ApiResponse> deleteFlashcard(
             @PathVariable Integer flashcardId,

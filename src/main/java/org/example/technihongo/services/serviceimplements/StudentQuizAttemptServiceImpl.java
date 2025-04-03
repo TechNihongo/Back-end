@@ -209,7 +209,6 @@ public class StudentQuizAttemptServiceImpl implements StudentQuizAttemptService 
                                 .map(r -> r.getSelectedOption().getOptionId())
                                 .collect(Collectors.toSet());
 
-                        // Đúng nếu: chọn tất cả đáp án đúng và không chọn đáp án sai
                         isCorrect = correctOptionIds.equals(selectedOptionIds);
                     }
 
@@ -339,14 +338,12 @@ public class StudentQuizAttemptServiceImpl implements StudentQuizAttemptService 
     }
 
     private QuizAttemptResponseDTO processQuizAttempt(StudentQuizAttempt attempt, Quiz quiz, QuizAttemptRequestDTO request) {
-        // Nhóm câu trả lời theo questionId
         Map<Integer, List<QuizAnswerDTO>> answersByQuestion = request.getAnswers().stream()
                 .collect(Collectors.groupingBy(QuizAnswerDTO::getQuestionId));
 
         int correctAnswers = 0;
         int totalQuestions = quiz.getTotalQuestions();
 
-        // Duyệt qua từng câu hỏi trong quiz
         List<QuizQuestion> quizQuestions = quizQuestionRepository.findByQuiz_QuizId(quiz.getQuizId());
         for (QuizQuestion quizQuestion : quizQuestions) {
             Integer questionId = quizQuestion.getQuestion().getQuestionId();
@@ -367,10 +364,8 @@ public class StudentQuizAttemptServiceImpl implements StudentQuizAttemptService 
                         .collect(Collectors.toSet());
 
                 if (question.getQuestionType().equals(QuestionType.Single_choice)) {
-                    // SINGLE_CHOICE: Chỉ cần 1 lựa chọn đúng
                     isQuestionCorrect = selectedOptionIds.size() == 1 && correctOptionIds.containsAll(selectedOptionIds);
                 } else { // MULTIPLE_CHOICE
-                    // MULTIPLE_CHOICE: Phải chọn tất cả đáp án đúng và không chọn sai
                     isQuestionCorrect = correctOptionIds.equals(selectedOptionIds);
                 }
             }
@@ -379,7 +374,6 @@ public class StudentQuizAttemptServiceImpl implements StudentQuizAttemptService 
                 correctAnswers++;
             }
 
-            // Lưu QuizAnswerResponse cho từng lựa chọn
             for (QuizAnswerDTO answerDTO : questionAnswers) {
                 for (Integer optionId : answerDTO.getSelectedOptionIds()) {
                     QuestionAnswerOption selectedOption = questionAnswerOptionRepository.findById(optionId)
@@ -394,7 +388,6 @@ public class StudentQuizAttemptServiceImpl implements StudentQuizAttemptService 
             }
         }
 
-        // Tính điểm và cập nhật attempt
         BigDecimal score = BigDecimal.valueOf(correctAnswers)
                 .divide(BigDecimal.valueOf(totalQuestions), 2, RoundingMode.HALF_UP);
         boolean isPassed = score.compareTo(quiz.getPassingScore()) >= 0;

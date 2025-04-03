@@ -6,6 +6,7 @@ import org.example.technihongo.core.security.JwtUtil;
 import org.example.technihongo.dto.CreateFlashcardSetFromResourceDTO;
 import org.example.technihongo.dto.FlashcardSetRequestDTO;
 import org.example.technihongo.dto.FlashcardSetResponseDTO;
+import org.example.technihongo.dto.UpdateFlashcardOrderDTO;
 import org.example.technihongo.enums.ActivityType;
 import org.example.technihongo.enums.ContentType;
 import org.example.technihongo.exception.ResourceNotFoundException;
@@ -121,6 +122,62 @@ public class StudentFlashcardSetController {
                     .body(ApiResponse.builder()
                             .success(false)
                             .message(e.getMessage())
+                            .build());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponse.builder()
+                            .success(false)
+                            .message("Internal Server Error: " + e.getMessage())
+                            .build());
+        }
+    }
+
+    @PatchMapping("/updateOrder/{flashcardSetId}")
+    public ResponseEntity<ApiResponse> updateFlashcardOrder(
+            @RequestHeader("Authorization") String authorizationHeader,
+            @PathVariable Integer flashcardSetId,
+            @Valid @RequestBody UpdateFlashcardOrderDTO requestDTO,
+            HttpServletRequest httpRequest) {
+        try {
+            Integer userId = extractUserId(authorizationHeader);
+            Integer studentId = studentService.getStudentIdByUserId(userId);
+            if (studentId == null) {
+                throw new UnauthorizedAccessException("No student profile found for this user");
+            }
+            studentFlashcardSetService.updateFlashcardOrder(studentId, flashcardSetId, requestDTO);
+            String ipAddress = httpRequest.getRemoteAddr();
+            String userAgent = httpRequest.getHeader("User-Agent");
+            userActivityLogService.trackUserActivityLog(
+                    studentId,
+                    ActivityType.UPDATE,
+                    ContentType.Flashcard,
+                    flashcardSetId,
+                    ipAddress,
+                    userAgent
+            );
+
+            return ResponseEntity.ok(ApiResponse.builder()
+                    .success(true)
+                    .message("Student Flashcard Set order updated successfully")
+                    .data(null)
+                    .build());
+        } catch (UnauthorizedAccessException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(ApiResponse.builder()
+                            .success(false)
+                            .message(e.getMessage())
+                            .build());
+        } catch (ResourceNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(ApiResponse.builder()
+                            .success(false)
+                            .message(e.getMessage())
+                            .build());
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(ApiResponse.builder()
+                            .success(false)
+                            .message("Invalid request: " + e.getMessage())
                             .build());
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)

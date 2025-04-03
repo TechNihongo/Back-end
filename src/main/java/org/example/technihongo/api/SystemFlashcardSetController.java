@@ -1,9 +1,11 @@
 package org.example.technihongo.api;
 
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
 import org.example.technihongo.core.security.JwtUtil;
 import org.example.technihongo.dto.SystemFlashcardSetRequestDTO;
 import org.example.technihongo.dto.SystemFlashcardSetResponseDTO;
+import org.example.technihongo.dto.UpdateFlashcardOrderDTO;
 import org.example.technihongo.enums.ActivityType;
 import org.example.technihongo.enums.ContentType;
 import org.example.technihongo.exception.ResourceNotFoundException;
@@ -18,7 +20,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import jakarta.validation.Valid;
 import java.util.Collections;
 import java.util.List;
 
@@ -120,6 +121,58 @@ public class SystemFlashcardSetController {
                     .body(ApiResponse.builder()
                             .success(false)
                             .message(e.getMessage())
+                            .build());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponse.builder()
+                            .success(false)
+                            .message("Internal Server Error: " + e.getMessage())
+                            .build());
+        }
+    }
+
+    @PatchMapping("/updateOrder/{flashcardSetId}")
+    public ResponseEntity<ApiResponse> updateFlashcardOrder(
+            @RequestHeader("Authorization") String authorizationHeader,
+            @PathVariable Integer flashcardSetId,
+            @Valid @RequestBody UpdateFlashcardOrderDTO requestDTO,
+            HttpServletRequest httpRequest) {
+        try {
+            Integer userId = extractUserId(authorizationHeader);
+
+            systemFlashcardSetService.updateFlashcardOrder(userId, flashcardSetId, requestDTO);
+            String ipAddress = httpRequest.getRemoteAddr();
+            String userAgent = httpRequest.getHeader("User-Agent");
+            userActivityLogService.trackUserActivityLog(
+                    userId,
+                    ActivityType.UPDATE,
+                    ContentType.SystemFlashcardSet,
+                    flashcardSetId,
+                    ipAddress,
+                    userAgent
+            );
+            return ResponseEntity.ok(ApiResponse.builder()
+                    .success(true)
+                    .message("System Flashcard Set order updated successfully")
+                    .data(null)
+                    .build());
+        } catch (UnauthorizedAccessException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(ApiResponse.builder()
+                            .success(false)
+                            .message(e.getMessage())
+                            .build());
+        } catch (ResourceNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(ApiResponse.builder()
+                            .success(false)
+                            .message(e.getMessage())
+                            .build());
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(ApiResponse.builder()
+                            .success(false)
+                            .message("Invalid request: " + e.getMessage())
                             .build());
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)

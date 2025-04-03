@@ -24,6 +24,8 @@ import org.springframework.util.StringUtils;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Service
@@ -101,6 +103,59 @@ public class StudentFlashcardSetServiceImpl implements StudentFlashcardSetServic
         StudentFlashcardSet flashcardSet = flashcardSetRepository.findById(flashcardSetId)
                 .orElseThrow(() -> new RuntimeException("FlashcardSet not found"));
         return convertToFlashcardSetResponseDTO(flashcardSet);
+    }
+
+    @Override
+    public void updateFlashcardOrder(Integer studentId, Integer flashcardSetId, UpdateFlashcardOrderDTO updateFlashcardOrderDTO) {
+        if (studentId == null) {
+            throw new IllegalArgumentException("Student ID cannot be null");
+        }
+        if (flashcardSetId == null) {
+            throw new IllegalArgumentException("Flashcard set ID cannot be null");
+        }
+        if (updateFlashcardOrderDTO == null ||
+                updateFlashcardOrderDTO.getNewFlashcardOrder() == null ||
+                updateFlashcardOrderDTO.getNewFlashcardOrder().isEmpty()) {
+            throw new IllegalArgumentException("New flashcard order cannot be null or empty");
+        }
+
+        StudentFlashcardSet flashcardSet = flashcardSetRepository.findById(flashcardSetId)
+                .orElseThrow(() -> new ResourceNotFoundException("Student Flashcard Set not found with ID: " + flashcardSetId));
+
+        if (flashcardSet.isDeleted()) {
+            throw new ResourceNotFoundException("Student Flashcard Set has been deleted");
+        }
+        if (!flashcardSet.getCreator().getStudentId().equals(studentId)) {
+            throw new UnauthorizedAccessException("You do not have permission to update this student flashcard set");
+        }
+
+        List<Flashcard> flashcards = flashcardRepository.findAllById(updateFlashcardOrderDTO.getNewFlashcardOrder());
+
+        if (flashcards.size() != updateFlashcardOrderDTO.getNewFlashcardOrder().size()) {
+            throw new ResourceNotFoundException("One or more flashcards not found");
+        }
+
+        for (Flashcard flashcard : flashcards) {
+            if (flashcard.getStudentFlashCardSet() == null ||
+                    !flashcard.getStudentFlashCardSet().getStudentSetId().equals(flashcardSetId)) {
+                throw new IllegalArgumentException("Flashcard " + flashcard.getFlashCardId() +
+                        " does not belong to the specified student flashcard set");
+            }
+        }
+
+        Map<Integer, Flashcard> flashcardMap = flashcards.stream()
+                .collect(Collectors.toMap(Flashcard::getFlashCardId, Function.identity()));
+
+        List<Integer> newOrder = updateFlashcardOrderDTO.getNewFlashcardOrder();
+        for (int i = 0; i < newOrder.size(); i++) {
+            Integer flashcardId = newOrder.get(i);
+            Flashcard flashcard = flashcardMap.get(flashcardId);
+            if (flashcard != null) {
+                flashcard.setCardOrder(i + 1);
+            }
+        }
+
+        flashcardRepository.saveAll(flashcards);
     }
 
     @Override
