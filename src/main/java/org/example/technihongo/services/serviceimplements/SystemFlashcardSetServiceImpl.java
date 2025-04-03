@@ -3,6 +3,7 @@ package org.example.technihongo.services.serviceimplements;
 import org.example.technihongo.dto.FlashcardResponseDTO;
 import org.example.technihongo.dto.SystemFlashcardSetRequestDTO;
 import org.example.technihongo.dto.SystemFlashcardSetResponseDTO;
+import org.example.technihongo.dto.UpdateFlashcardOrderDTO;
 import org.example.technihongo.entities.*;
 import org.example.technihongo.exception.ResourceNotFoundException;
 import org.example.technihongo.exception.UnauthorizedAccessException;
@@ -17,6 +18,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Service
@@ -104,6 +107,61 @@ public class SystemFlashcardSetServiceImpl implements SystemFlashcardSetService 
         }
 
         return convertToSystemFlashcardSetResponseDTO(flashcardSet);
+    }
+
+    @Override
+    public void updateFlashcardOrder(Integer userId, Integer flashcardSetId, UpdateFlashcardOrderDTO updateFlashcardOrderDTO) {
+        // Validate input
+        if (userId == null) {
+            throw new IllegalArgumentException("User ID cannot be null");
+        }
+        if (flashcardSetId == null) {
+            throw new IllegalArgumentException("Flashcard set ID cannot be null");
+        }
+        if (updateFlashcardOrderDTO == null ||
+                updateFlashcardOrderDTO.getNewFlashcardOrder() == null ||
+                updateFlashcardOrderDTO.getNewFlashcardOrder().isEmpty()) {
+            throw new IllegalArgumentException("New flashcard order cannot be null or empty");
+        }
+
+        SystemFlashcardSet flashcardSet = systemFlashcardSetRepository.findById(flashcardSetId)
+                .orElseThrow(() -> new ResourceNotFoundException("System Flashcard Set not found with ID: " + flashcardSetId));
+
+        if (flashcardSet.isDeleted()) {
+            throw new ResourceNotFoundException("System Flashcard Set has been deleted");
+        }
+        if (!flashcardSet.getCreator().getUserId().equals(userId)) {
+            throw new UnauthorizedAccessException("You do not have permission to update this system flashcard set");
+        }
+
+        List<Flashcard> flashcards = flashcardRepository.findAllById(updateFlashcardOrderDTO.getNewFlashcardOrder());
+
+        if (flashcards.size() != updateFlashcardOrderDTO.getNewFlashcardOrder().size()) {
+            throw new ResourceNotFoundException("One or more flashcards not found");
+        }
+
+        for (Flashcard flashcard : flashcards) {
+            if (flashcard.getSystemFlashCardSet() == null ||
+                    !flashcard.getSystemFlashCardSet().getSystemSetId().equals(flashcardSetId)) {
+                throw new IllegalArgumentException("Flashcard " + flashcard.getFlashCardId() +
+                        " does not belong to the specified system flashcard set");
+            }
+        }
+
+        Map<Integer, Flashcard> flashcardMap = flashcards.stream()
+                .collect(Collectors.toMap(Flashcard::getFlashCardId, Function.identity()));
+
+        List<Integer> newOrder = updateFlashcardOrderDTO.getNewFlashcardOrder();
+        for (int i = 0; i < newOrder.size(); i++) {
+            Integer flashcardId = newOrder.get(i);
+            Flashcard flashcard = flashcardMap.get(flashcardId);
+            if (flashcard != null) {
+                flashcard.setCardOrder(i + 1);
+            }
+        }
+
+        // Save all updates
+        flashcardRepository.saveAll(flashcards);
     }
 
     @Override
