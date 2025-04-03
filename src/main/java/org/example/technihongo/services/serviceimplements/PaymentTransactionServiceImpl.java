@@ -21,13 +21,14 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Transactional
 public class PaymentTransactionServiceImpl implements PaymentTransactionService {
 
     private static final Logger logger = LoggerFactory.getLogger(PaymentTransactionServiceImpl.class);
 
     private final StudentRepository studentRepository;
     private final SubscriptionPlanRepository subscriptionPlanRepository;
-    private final StudentSubscriptionRepository studentSubscriptionRepository;
+    private final StudentSubscriptionRepository studentSubscriptionServiceImpl;
     private final PaymentTransactionRepository paymentTransactionRepository;
     private final PaymentMethodRepository paymentMethodRepository;
     private final MomoService momoService;
@@ -83,7 +84,7 @@ public class PaymentTransactionServiceImpl implements PaymentTransactionService 
                 .endDate(LocalDateTime.now().plusDays(plan.getDurationDays()))
                 .isActive(false)
                 .build();
-        subscription = studentSubscriptionRepository.save(subscription);
+        subscription = studentSubscriptionServiceImpl.save(subscription);
 
         PaymentMethod momoMethod = paymentMethodRepository.findByCode(PaymentMethodCode.MOMO_QR);
         if (momoMethod == null || !momoMethod.getName().equals(PaymentMethodType.MomoPay) || !momoMethod.isActive()) {
@@ -102,7 +103,7 @@ public class PaymentTransactionServiceImpl implements PaymentTransactionService 
 
 //        String orderId = "TX" + transaction.getTransactionId();
         String orderId = UUID.randomUUID().toString();
-        String orderInfo = "Thanh toan SubscriptionPlan: " + plan.getName();
+        String orderInfo = "Thanh toán SubscriptionPlan: " + plan.getName();
         long amount = plan.getPrice().longValue();
         CreateMomoResponse momoResponse = momoService.createPaymentQR(orderId, orderInfo, amount);
 
@@ -117,13 +118,19 @@ public class PaymentTransactionServiceImpl implements PaymentTransactionService 
                 .build();
     }
 
-    @Transactional
     @Override
     public void handleMoMoCallback(MomoCallbackDTO callbackDTO, Map<String, String> requestParams) {
         logger.info("Handling MoMo callback for orderId: {}", callbackDTO.getOrderId());
 
         PaymentTransaction transaction = paymentTransactionRepository.findByExternalOrderId(callbackDTO.getOrderId())
                 .orElseThrow(() -> new IllegalArgumentException("Transaction not found for orderId: " + callbackDTO.getOrderId()));
+
+        if (transaction.getExpiresAt().isBefore(LocalDateTime.now())) {
+            transaction.setTransactionStatus(TransactionStatus.FAILED);
+            paymentTransactionRepository.save(transaction);
+            logger.warn("Transaction expired before callback for orderId: {}", callbackDTO.getOrderId());
+            return;
+        }
 
         try {
             if (!momoService.verifyCallbackSignature(callbackDTO, requestParams)) {
@@ -133,6 +140,8 @@ public class PaymentTransactionServiceImpl implements PaymentTransactionService 
                 throw new SecurityException("Invalid signature from MoMo callback");
             }
         } catch (Exception e) {
+            transaction.setTransactionStatus(TransactionStatus.FAILED);
+            paymentTransactionRepository.save(transaction);
             logger.error("Error verifying signature: {}", e.getMessage());
             throw new RuntimeException("Signature verification failed", e);
         }
@@ -140,31 +149,30 @@ public class PaymentTransactionServiceImpl implements PaymentTransactionService 
         TransactionStatus newStatus;
         try {
             int resultCode = Integer.parseInt(callbackDTO.getResultCode());
-            switch (resultCode) {
-                case 0:
-                    newStatus = TransactionStatus.COMPLETED;
-                    transaction.setPaymentDate(LocalDateTime.now());
-                    transaction.getSubscription().setIsActive(true);
-                    break;
-                case 1000:
-                case 9000:
-                    newStatus = TransactionStatus.FAILED;
-                    break;
-                default:
-                    newStatus = TransactionStatus.UNKNOWN;
-                    break;
+            if (resultCode == 0) {
+                newStatus = TransactionStatus.COMPLETED;
+                transaction.setPaymentDate(LocalDateTime.now());
+                transaction.getSubscription().setIsActive(true);
+            } else {
+                newStatus = TransactionStatus.FAILED;
+                logger.warn("Payment failed or canceled. ResultCode: {}, Message: {}",
+                        callbackDTO.getResultCode(), callbackDTO.getMessage());
             }
         } catch (NumberFormatException e) {
             newStatus = TransactionStatus.FAILED;
-            logger.error("Invalid resultCode: {}", callbackDTO.getResultCode());
+            logger.error("Invalid resultCode format: {}", callbackDTO.getResultCode());
         }
 
         transaction.setTransactionStatus(newStatus);
         paymentTransactionRepository.save(transaction);
+
         if (newStatus == TransactionStatus.COMPLETED) {
-            studentSubscriptionRepository.save(transaction.getSubscription());
+            studentSubscriptionServiceImpl.save(transaction.getSubscription());
+            logger.info("Subscription activated for transactionId: {}", transaction.getTransactionId());
         }
-        logger.info("MoMo callback handled for transactionId: {}, new status: {}", transaction.getTransactionId(), newStatus);
+
+        logger.info("MoMo callback handled for transactionId: {}, new status: {}",
+                transaction.getTransactionId(), newStatus);
     }
 
     private PaymentTransactionDTO convertToDTO(PaymentTransaction transaction) {
