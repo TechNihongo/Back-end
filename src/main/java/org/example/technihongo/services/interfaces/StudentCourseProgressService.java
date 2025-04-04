@@ -11,4 +11,5 @@ public interface StudentCourseProgressService {
     CourseStatisticsDTO viewCourseStatistics(Integer courseId);
     void enrollCourse(Integer studentId, Integer courseId);
     void trackStudentCourseProgress(Integer studentId, Integer courseId, Integer currentLessonId);
+    Boolean checkStudentCourseEnrollment(Integer studentId, Integer courseId);
 }
