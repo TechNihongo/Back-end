@@ -225,4 +225,13 @@ public class StudentCourseProgressServiceImpl implements StudentCourseProgressSe
         studentCourseProgressRepository.save(progress);
     }
 
+    @Override
+    public Boolean checkStudentCourseEnrollment(Integer studentId, Integer courseId) {
+        studentRepository.findById(studentId)
+                .orElseThrow(() -> new RuntimeException("Student not found with ID: " + studentId));
+        courseRepository.findById(courseId)
+                .orElseThrow(() -> new RuntimeException("Course not found with ID: " + courseId));
+
+        return studentCourseProgressRepository.existsByStudentStudentIdAndCourseCourseId(studentId, courseId);
+    }
 }

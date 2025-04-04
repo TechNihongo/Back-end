@@ -194,4 +194,50 @@ public class StudentCourseProgressController {
                             .build());
         }
     }
+
+    @GetMapping("/check-enroll")
+    public ResponseEntity<ApiResponse> checkStudentCourseEnrollment(
+            @RequestHeader("Authorization") String authorizationHeader,
+            @RequestParam Integer courseId) {
+        try {
+            if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
+                String token = authorizationHeader.substring(7);
+                Integer userId = jwtUtil.extractUserId(token);
+                Integer studentId = studentService.getStudentIdByUserId(userId);
+
+                Boolean enroll = courseProgressService.checkStudentCourseEnrollment(studentId, courseId);
+                if(enroll) {
+                    return ResponseEntity.ok(ApiResponse.builder()
+                            .success(true)
+                            .message("Student has already enrolled in the course!")
+                            .data(true)
+                            .build());
+                } else {
+                    return ResponseEntity.ok(ApiResponse.builder()
+                            .success(true)
+                            .message("Student has NOT yet enrolled in the course!")
+                            .data(false)
+                            .build());
+                }
+            } else {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(ApiResponse.builder()
+                                .success(false)
+                                .message("Unauthorized")
+                                .build());
+            }
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(ApiResponse.builder()
+                            .success(false)
+                            .message("Failed to check student's enrollment: " + e.getMessage())
+                            .build());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponse.builder()
+                            .success(false)
+                            .message("Internal Server Error: " + e.getMessage())
+                            .build());
+        }
+    }
 }
