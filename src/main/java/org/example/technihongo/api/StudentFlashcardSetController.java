@@ -345,6 +345,39 @@ public class StudentFlashcardSetController {
         }
     }
 
+    @GetMapping("/getStudentFlashcardSet/{studentId}")
+    public ResponseEntity<ApiResponse> getPublicFlashcardSetsByStudentId(
+            @PathVariable Integer studentId)
+    {
+        try {
+
+            List<FlashcardSetResponseDTO> response = studentFlashcardSetService.getFlashcardSetsByStudentId(studentId);
+            return ResponseEntity.ok(ApiResponse.builder()
+                    .success(true)
+                    .message("Public flashcard sets retrieved successfully")
+                    .data(response)
+                    .build());
+        } catch (UnauthorizedAccessException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(ApiResponse.builder()
+                            .success(false)
+                            .message(e.getMessage())
+                            .build());
+        } catch (ResourceNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(ApiResponse.builder()
+                            .success(false)
+                            .message(e.getMessage())
+                            .build());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponse.builder()
+                            .success(false)
+                            .message("Internal Server Error: " + e.getMessage())
+                            .build());
+        }
+    }
+
     @GetMapping("/all")
     public ResponseEntity<ApiResponse> getAllStudentFlashcardSet(
             @RequestHeader("Authorization") String authorizationHeader) {

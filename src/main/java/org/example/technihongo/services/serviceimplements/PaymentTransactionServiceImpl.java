@@ -28,7 +28,7 @@ public class PaymentTransactionServiceImpl implements PaymentTransactionService 
 
     private final StudentRepository studentRepository;
     private final SubscriptionPlanRepository subscriptionPlanRepository;
-    private final StudentSubscriptionRepository studentSubscriptionServiceImpl;
+    private final StudentSubscriptionRepository studentSubscriptionRepository;
     private final PaymentTransactionRepository paymentTransactionRepository;
     private final PaymentMethodRepository paymentMethodRepository;
     private final MomoService momoService;
@@ -68,11 +68,10 @@ public class PaymentTransactionServiceImpl implements PaymentTransactionService 
     }
 
     @Override
-    @Transactional
-    public PaymentResponseDTO initiateMoMoPayment(PaymentRequestDTO requestDTO) {
-        logger.info("Initiating MoMo payment for studentId: {}, subPlanId: {}", requestDTO.getStudentId(), requestDTO.getSubPlanId());
+    public PaymentResponseDTO initiateMoMoPayment(Integer studentId, PaymentRequestDTO requestDTO) {
+        logger.info("Initiating MoMo payment for studentId: {}, subPlanId: {}", studentId, requestDTO.getSubPlanId());
 
-        Student student = studentRepository.findById(requestDTO.getStudentId())
+        Student student = studentRepository.findById(studentId)
                 .orElseThrow(() -> new IllegalArgumentException("Student not found"));
         SubscriptionPlan plan = subscriptionPlanRepository.findById(requestDTO.getSubPlanId())
                 .orElseThrow(() -> new IllegalArgumentException("Subscription plan not found"));
@@ -84,7 +83,7 @@ public class PaymentTransactionServiceImpl implements PaymentTransactionService 
                 .endDate(LocalDateTime.now().plusDays(plan.getDurationDays()))
                 .isActive(false)
                 .build();
-        subscription = studentSubscriptionServiceImpl.save(subscription);
+        subscription = studentSubscriptionRepository.save(subscription);
 
         PaymentMethod momoMethod = paymentMethodRepository.findByCode(PaymentMethodCode.MOMO_QR);
         if (momoMethod == null || !momoMethod.getName().equals(PaymentMethodType.MomoPay) || !momoMethod.isActive()) {
@@ -167,7 +166,7 @@ public class PaymentTransactionServiceImpl implements PaymentTransactionService 
         paymentTransactionRepository.save(transaction);
 
         if (newStatus == TransactionStatus.COMPLETED) {
-            studentSubscriptionServiceImpl.save(transaction.getSubscription());
+            studentSubscriptionRepository.save(transaction.getSubscription());
             logger.info("Subscription activated for transactionId: {}", transaction.getTransactionId());
         }
 

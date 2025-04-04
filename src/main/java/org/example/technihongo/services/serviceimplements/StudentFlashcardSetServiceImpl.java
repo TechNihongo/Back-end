@@ -99,10 +99,11 @@ public class StudentFlashcardSetServiceImpl implements StudentFlashcardSetServic
     }
 
     @Override
-    public FlashcardSetResponseDTO getFlashcardSetById(Integer flashcardSetId) {
-        StudentFlashcardSet flashcardSet = flashcardSetRepository.findById(flashcardSetId)
-                .orElseThrow(() -> new RuntimeException("FlashcardSet not found"));
-        return convertToFlashcardSetResponseDTO(flashcardSet);
+    public List<FlashcardSetResponseDTO> getFlashcardSetsByStudentId(Integer studentId) {
+        List<StudentFlashcardSet> flashcardSets = flashcardSetRepository.findByCreatorAndPublicStatus(studentId, true);
+        return flashcardSets.stream()
+                .map(this::convertToFlashcardSetResponseDTO)
+                .collect(Collectors.toList());
     }
 
     @Override

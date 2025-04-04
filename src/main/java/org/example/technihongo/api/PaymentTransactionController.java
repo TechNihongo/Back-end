@@ -1,10 +1,13 @@
 package org.example.technihongo.api;
 
 import lombok.RequiredArgsConstructor;
+import org.example.technihongo.core.security.JwtUtil;
 import org.example.technihongo.dto.*;
 import org.example.technihongo.enums.TransactionStatus;
+import org.example.technihongo.exception.UnauthorizedAccessException;
 import org.example.technihongo.response.ApiResponse;
 import org.example.technihongo.services.interfaces.PaymentTransactionService;
+import org.example.technihongo.services.interfaces.StudentService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -21,11 +24,18 @@ public class PaymentTransactionController {
 
     private final PaymentTransactionService paymentTransactionService;
     private static final Logger log = LoggerFactory.getLogger(PaymentTransactionController.class);
+    private final JwtUtil jwtUtil;
+    private final StudentService studentService;
 
     @PostMapping("/initiateMomo")
-    public ResponseEntity<ApiResponse> initiateMoMoPayment(@RequestBody PaymentRequestDTO requestDTO) {
+    public ResponseEntity<ApiResponse> initiateMoMoPayment(
+            @RequestHeader("Authorization") String authorizationHeader,
+            @RequestBody PaymentRequestDTO requestDTO) {
         try {
-            PaymentResponseDTO responseDTO = paymentTransactionService.initiateMoMoPayment(requestDTO);
+            Integer studentId = extractStudentId(authorizationHeader);
+
+            PaymentResponseDTO responseDTO = paymentTransactionService.initiateMoMoPayment(studentId, requestDTO);
+
             return ResponseEntity.ok(ApiResponse.builder()
                     .success(true)
                     .message("MoMo payment initiated successfully!")
@@ -40,6 +50,11 @@ public class PaymentTransactionController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ApiResponse.builder()
                     .success(false)
                     .message("Payment method unavailable: " + e.getMessage())
+                    .build());
+        } catch (UnauthorizedAccessException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ApiResponse.builder()
+                    .success(false)
+                    .message(e.getMessage())
                     .build());
         } catch (RuntimeException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ApiResponse.builder()
@@ -121,9 +136,11 @@ public class PaymentTransactionController {
         }
     }
 
-    @GetMapping("/student/{studentId}")
-    public ResponseEntity<ApiResponse> getPaymentHistoryByStudentId(@PathVariable Integer studentId) {
+    @GetMapping("/studentTransaction")
+    public ResponseEntity<ApiResponse> getPaymentHistoryByStudentId(
+            @RequestHeader("Authorization") String authorizationHeader) {
         try {
+            Integer studentId = extractStudentId(authorizationHeader);
             List<PaymentTransactionDTO> history = paymentTransactionService.getPaymentHistoryByStudentId(studentId);
             return ResponseEntity.ok(ApiResponse.builder()
                     .success(true)
@@ -176,5 +193,14 @@ public class PaymentTransactionController {
                     .message("Internal Server Error: " + e.getMessage())
                     .build());
         }
+    }
+
+    private Integer extractStudentId(String authorizationHeader) throws Exception {
+        if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
+            String token = authorizationHeader.substring(7);
+            Integer userId = jwtUtil.extractUserId(token);
+            return studentService.getStudentIdByUserId(userId);
+        }
+        throw new Exception("Authorization failed!");
     }
 }

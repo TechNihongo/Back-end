@@ -9,7 +9,7 @@ import java.util.Map;
 public interface PaymentTransactionService {
     List<PaymentTransactionDTO> getPaymentHistoryByStudentId(Integer studentId);
     List<PaymentTransactionDTO> getAllPaymentHistory(PaymentHistoryRequestDTO requestDTO);
-    PaymentResponseDTO initiateMoMoPayment(PaymentRequestDTO requestDTO);
+    PaymentResponseDTO initiateMoMoPayment(Integer studentId, PaymentRequestDTO requestDTO);
 
     @Transactional
     void handleMoMoCallback(MomoCallbackDTO callbackDTO, Map<String, String> requestParams);

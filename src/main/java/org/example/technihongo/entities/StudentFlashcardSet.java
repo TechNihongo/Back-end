@@ -1,16 +1,16 @@
 package org.example.technihongo.entities;
 
 
-import java.time.LocalDateTime;
-import java.util.HashSet;
-import java.util.Set;
-
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
+
+import java.time.LocalDateTime;
+import java.util.HashSet;
+import java.util.Set;
 
 @Entity
 @Table(name = "StudentFlashcardSet")
@@ -47,7 +47,7 @@ public class StudentFlashcardSet {
     private Integer totalViews;
 
     @Column(name = "is_public")
-    private boolean isPublic = false;
+    private boolean isPublic;
 
     @Column(name = "is_violated")
     private boolean isViolated = false;
