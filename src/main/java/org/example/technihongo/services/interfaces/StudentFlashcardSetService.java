@@ -14,6 +14,9 @@ public interface StudentFlashcardSetService {
 
     List<FlashcardSetResponseDTO> getFlashcardSetsByStudentId(Integer studentId);
 
+    List<FlashcardSetResponseDTO> getFlashcardSetsByPublicStatus();
+
+
     void updateFlashcardOrder(Integer studentId,Integer flashcardSetId, UpdateFlashcardOrderDTO updateFlashcardOrderDTO);
 
     FlashcardSetResponseDTO updateFlashcardSetVisibility(Integer studentId, Integer flashcardSetId, Boolean isPublic);
