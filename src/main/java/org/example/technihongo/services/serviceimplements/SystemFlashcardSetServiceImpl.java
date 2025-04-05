@@ -134,33 +134,22 @@ public class SystemFlashcardSetServiceImpl implements SystemFlashcardSetService 
             throw new UnauthorizedAccessException("You do not have permission to update this system flashcard set");
         }
 
-        List<Flashcard> flashcards = flashcardRepository.findAllById(updateFlashcardOrderDTO.getNewFlashcardOrder());
-
-        if (flashcards.size() != updateFlashcardOrderDTO.getNewFlashcardOrder().size()) {
-            throw new ResourceNotFoundException("One or more flashcards not found");
-        }
-
-        for (Flashcard flashcard : flashcards) {
-            if (flashcard.getSystemFlashCardSet() == null ||
-                    !flashcard.getSystemFlashCardSet().getSystemSetId().equals(flashcardSetId)) {
-                throw new IllegalArgumentException("Flashcard " + flashcard.getFlashCardId() +
-                        " does not belong to the specified system flashcard set");
-            }
-        }
+        List<Flashcard> flashcards = flashcardRepository.findBySystemFlashCardSet_SystemSetId(flashcardSetId);
 
         Map<Integer, Flashcard> flashcardMap = flashcards.stream()
-                .collect(Collectors.toMap(Flashcard::getFlashCardId, Function.identity()));
+                .collect(Collectors.toMap(Flashcard::getCardOrder, Function.identity()));
 
         List<Integer> newOrder = updateFlashcardOrderDTO.getNewFlashcardOrder();
         for (int i = 0; i < newOrder.size(); i++) {
-            Integer flashcardId = newOrder.get(i);
-            Flashcard flashcard = flashcardMap.get(flashcardId);
+            Integer cardOrder = newOrder.get(i);
+            Flashcard flashcard = flashcardMap.get(cardOrder);
             if (flashcard != null) {
                 flashcard.setCardOrder(i + 1);
+            } else {
+                throw new ResourceNotFoundException("Flashcard with order " + cardOrder + " not found in the specified system flashcard set");
             }
         }
 
-        // Save all updates
         flashcardRepository.saveAll(flashcards);
     }
 

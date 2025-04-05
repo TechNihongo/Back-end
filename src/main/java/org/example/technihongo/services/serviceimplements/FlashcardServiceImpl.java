@@ -137,9 +137,6 @@ public class FlashcardServiceImpl implements FlashcardService {
 
     }
 
-
-
-
     @Override
     public FlashcardResponseDTO updateFlashcard(Integer userId, Integer flashcardId, FlashcardRequestDTO request) {
         Flashcard flashcard = flashcardRepository.findById(flashcardId)
@@ -174,12 +171,19 @@ public class FlashcardServiceImpl implements FlashcardService {
         } else if (flashcard.getSystemFlashCardSet() != null) {
             hasPermission = flashcard.getSystemFlashCardSet().getCreator().getUserId().equals(userId);
         }
+
         if (!hasPermission) {
-            throw new RuntimeException("You don't have permission to update this flashcard");
+            throw new RuntimeException("You don't have permission to delete this flashcard");
         }
 
-        flashcardRepository.deleteById(flashcardId);
+        try {
+            flashcardRepository.deleteByFlashcardIdNative(flashcardId);
+            System.out.println("Deleted flashcard with ID: " + flashcardId);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to delete flashcard: " + e.getMessage());
+        }
     }
+
 
     private PageResponseDTO<FlashcardResponseDTO> getPageResponseDTO(Page<Flashcard> flashcardPage) {
         List<FlashcardResponseDTO> content = flashcardPage.getContent().stream()
