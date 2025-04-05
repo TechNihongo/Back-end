@@ -97,6 +97,7 @@ public class FlashcardServiceImpl implements FlashcardService {
             flashcard.setCardOrder(currentOrder);
             flashcard.setStudentFlashCardSet(flashcardSet);
             flashcards.add(flashcard);
+            currentOrder++;
         }
 
         List<Flashcard> savedFlashcards = flashcardRepository.saveAll(flashcards);
@@ -126,6 +127,7 @@ public class FlashcardServiceImpl implements FlashcardService {
             flashcard.setCardOrder(currentOrder);
             flashcard.setSystemFlashCardSet(flashcardSet);
             flashcards.add(flashcard);
+            currentOrder++;
         }
 
         List<Flashcard> savedFlashcards = flashcardRepository.saveAll(flashcards);
