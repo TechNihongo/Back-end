@@ -107,6 +107,14 @@ public class StudentFlashcardSetServiceImpl implements StudentFlashcardSetServic
     }
 
     @Override
+    public List<FlashcardSetResponseDTO> getFlashcardSetsByPublicStatus() {
+        List<StudentFlashcardSet> flashcardSets = flashcardSetRepository.findAllPublicSetsOrderByViewsDesc();
+        return flashcardSets.stream()
+                .map(this::convertToFlashcardSetResponseDTO)
+                .collect(Collectors.toList());
+    }
+
+    @Override
     public void updateFlashcardOrder(Integer studentId, Integer flashcardSetId, UpdateFlashcardOrderDTO updateFlashcardOrderDTO) {
         if (studentId == null) {
             throw new IllegalArgumentException("Student ID cannot be null");

@@ -378,6 +378,34 @@ public class StudentFlashcardSetController {
         }
     }
 
+    @GetMapping("/publicFlashcardSet")
+    public ResponseEntity<ApiResponse> getAllPublicFlashcardSets() {
+        try {
+            List<FlashcardSetResponseDTO> flashcardSets = studentFlashcardSetService.getFlashcardSetsByPublicStatus();
+
+            if (flashcardSets.isEmpty()) {
+                return ResponseEntity.ok(ApiResponse.builder()
+                        .success(true)
+                        .message("No public flashcard sets available")
+                        .data(Collections.emptyList())
+                        .build());
+            }
+
+            return ResponseEntity.ok(ApiResponse.builder()
+                    .success(true)
+                    .message("Public flashcard sets retrieved successfully")
+                    .data(flashcardSets)
+                    .build());
+
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponse.builder()
+                            .success(false)
+                            .message("Failed to retrieve public flashcard sets: " + e.getMessage())
+                            .build());
+        }
+    }
+
     @GetMapping("/all")
     public ResponseEntity<ApiResponse> getAllStudentFlashcardSet(
             @RequestHeader("Authorization") String authorizationHeader) {

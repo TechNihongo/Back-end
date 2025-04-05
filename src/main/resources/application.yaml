@@ -38,13 +38,7 @@ payment:
       endpoint: https://test-payment.momo.vn/v2/gateway/api
       create-url: /create
       skip-signature-verification: true
-#      query-url: /query
-#      refund-url: /refund
-#      confirm-url: /confirm
-#      token-pay-url: /tokenization/pay
-#      token-bind-url: /tokenization/bind
-#      token-inquiry-url: /tokenization/cbQuery
-#      token-delete-url: /tokenization/delete
+
 
 
 
@@ -56,3 +50,15 @@ payment:
 #      request-type: captureWallet
 #      endpoint: https://test-payment.momo.vn/v2/gateway/api
 #      create-url: /create
+
+  zaloPay:
+    app-id: 2553
+    key1: PcY4iZIKFCIdgZvA6ueMcMHHUbRLYjPL
+    key2: kLtgPl8HHhfvMuDHPwKfgfsY4Ydm9eIz
+    endpoint: https://sb-openapi.zalopay.vn/v2
+    return-url: http://localhost:3000/api/v1/payment/callback
+#    return-url: https://technihongo-hueze5fkd5g2f7bk.centralindia-01.azurewebsites.net/api/v1/payment/callback
+    ipn-url: http://localhost:3000/api/v1/payment/ipn-handler
+#    ipn-url: https://technihongo-hueze5fkd5g2f7bk.centralindia-01.azurewebsites.net/api/v1/payment/ipn-handler
+    create-url: /create
+    skip-signature-verification: true

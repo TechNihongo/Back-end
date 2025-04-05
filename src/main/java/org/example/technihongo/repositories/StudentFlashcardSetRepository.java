@@ -18,4 +18,10 @@ public interface StudentFlashcardSetRepository extends JpaRepository<StudentFlas
     @Query("SELECT s FROM StudentFlashcardSet s WHERE s.creator.studentId = :studentId AND s.isPublic = :isPublic")
     List<StudentFlashcardSet> findByCreatorAndPublicStatus(
             @Param("studentId") Integer studentId,
-            @Param("isPublic") boolean isPublic);}
+            @Param("isPublic") boolean isPublic);
+
+    @Query("SELECT s FROM StudentFlashcardSet s WHERE s.isPublic = true ORDER BY s.totalViews DESC")
+    List<StudentFlashcardSet> findAllPublicSetsOrderByViewsDesc();
+
+}
+
