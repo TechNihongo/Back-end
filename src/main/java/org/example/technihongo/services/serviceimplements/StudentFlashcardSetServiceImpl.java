@@ -152,13 +152,15 @@ public class StudentFlashcardSetServiceImpl implements StudentFlashcardSetServic
             }
         }
 
-        Map<Integer, Flashcard> flashcardMap = flashcards.stream()
-                .collect(Collectors.toMap(Flashcard::getFlashCardId, Function.identity()));
+        List<Flashcard> studentFlashcardSet = flashcardRepository.findByStudentFlashCardSet_StudentSetId(flashcardSetId);
+
+        Map<Integer, Flashcard> flashcardMap = studentFlashcardSet.stream()
+                .collect(Collectors.toMap(Flashcard::getCardOrder, Function.identity()));
 
         List<Integer> newOrder = updateFlashcardOrderDTO.getNewFlashcardOrder();
         for (int i = 0; i < newOrder.size(); i++) {
-            Integer flashcardId = newOrder.get(i);
-            Flashcard flashcard = flashcardMap.get(flashcardId);
+            Integer cardOrder = newOrder.get(i);
+            Flashcard flashcard = flashcardMap.get(cardOrder);
             if (flashcard != null) {
                 flashcard.setCardOrder(i + 1);
             }
