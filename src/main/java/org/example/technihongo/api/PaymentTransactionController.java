@@ -166,6 +166,11 @@ public class PaymentTransactionController {
 //
     @GetMapping("/studentTransaction")
     public ResponseEntity<ApiResponse> getPaymentHistoryByStudentId(
+            @RequestParam(defaultValue = "0") int pageNo,
+            @RequestParam(defaultValue = "100") int pageSize,
+            @RequestParam(defaultValue = "createdAt") String sortBy,
+            @RequestParam(defaultValue = "desc") String sortDir,
+            @RequestParam(required = false) String transactionStatus,
             HttpServletRequest httpRequest,
             @RequestHeader("Authorization") String authorizationHeader) {
         try {
@@ -173,6 +178,10 @@ public class PaymentTransactionController {
                 String token = authorizationHeader.substring(7);
                 Integer userId = jwtUtil.extractUserId(token);
                 Integer studentId = studentService.getStudentIdByUserId(userId);
+              
+                PageResponseDTO<PaymentTransactionDTO> history = paymentTransactionService.getPaymentHistoryByStudentId(
+                    studentId, pageNo, pageSize, sortBy, sortDir, transactionStatus);
+              
                 String ipAddress = httpRequest.getRemoteAddr();
                 String userAgent = httpRequest.getHeader("User-Agent");
                 userActivityLogService.trackUserActivityLog(
@@ -183,7 +192,7 @@ public class PaymentTransactionController {
                         ipAddress,
                         userAgent
                 );
-                List<PaymentTransactionDTO> history = paymentTransactionService.getPaymentHistoryByStudentId(studentId);
+                
                 return ResponseEntity.ok(ApiResponse.builder()
                         .success(true)
                         .message("Payment history retrieved successfully!")
