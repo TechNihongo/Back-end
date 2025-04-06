@@ -32,18 +32,18 @@ public class StudentFolderServiceImpl implements StudentFolderService {
     private FolderItemService folderItemService;
 
     @Override
-    public StudentFolderDTO createStudentFolder(StudentFolderDTO folderDTO) {
+    public StudentFolderDTO createStudentFolder(Integer studentId,StudentFolderDTO folderDTO) {
 
         if (folderDTO.getName() == null || folderDTO.getName().trim().isEmpty()) {
             throw new IllegalArgumentException("Folder name is required");
         }
 
-        if (folderDTO.getStudentId() == null) {
+        if (studentId == null) {
             throw new IllegalArgumentException("Student ID is required");
         }
 
-        Student student = studentRepository.findById(folderDTO.getStudentId())
-                .orElseThrow(() -> new RuntimeException("Student not found with ID: " + folderDTO.getStudentId()));
+        Student student = studentRepository.findById(studentId)
+                .orElseThrow(() -> new RuntimeException("Student not found with ID: " + studentId));
 
         StudentFolder folder = StudentFolder.builder()
                 .student(student)
@@ -57,7 +57,7 @@ public class StudentFolderServiceImpl implements StudentFolderService {
     }
 
     @Override
-    public StudentFolderDTO updateStudentFolder(Integer folderId, StudentFolderDTO folderDTO) {
+    public StudentFolderDTO updateStudentFolder(Integer studentId,Integer folderId, StudentFolderDTO folderDTO) {
         if (folderId == null) {
             throw new IllegalArgumentException("Folder ID cannot be null");
         }
@@ -73,10 +73,10 @@ public class StudentFolderServiceImpl implements StudentFolderService {
             folder.setDescription(folderDTO.getDescription());
         }
 
-        if (folderDTO.getStudentId() != null &&
-                (folder.getStudent() == null || !folderDTO.getStudentId().equals(folder.getStudent().getStudentId()))) {
-            Student student = studentRepository.findById(folderDTO.getStudentId())
-                    .orElseThrow(() -> new RuntimeException("Student not found with ID: " + folderDTO.getStudentId()));
+        if (studentId != null &&
+                (folder.getStudent() == null || studentId.equals(folder.getStudent().getStudentId()))) {
+            Student student = studentRepository.findById(studentId)
+                    .orElseThrow(() -> new RuntimeException("Student not found with ID: " + studentId));
             folder.setStudent(student);
         }
 
@@ -85,7 +85,7 @@ public class StudentFolderServiceImpl implements StudentFolderService {
     }
 
     @Override
-    public void deleteStudentFolder(Integer folderId) {
+    public void deleteStudentFolder(Integer studentId, Integer folderId) {
         if (folderId == null) {
             throw new IllegalArgumentException("Folder ID cannot be null");
         }
@@ -123,7 +123,6 @@ public class StudentFolderServiceImpl implements StudentFolderService {
     private StudentFolderDTO convertToDTO(StudentFolder folder) {
         StudentFolderDTO dto = new StudentFolderDTO();
         dto.setFolderId(folder.getFolderId());
-        dto.setStudentId(folder.getStudent().getStudentId());
         dto.setName(folder.getName());
         dto.setDescription(folder.getDescription());
         return dto;

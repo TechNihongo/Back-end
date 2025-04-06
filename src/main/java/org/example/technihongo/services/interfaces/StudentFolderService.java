@@ -5,9 +5,9 @@ import org.example.technihongo.dto.StudentFolderDTO;
 import java.util.List;
 
 public interface StudentFolderService {
-    StudentFolderDTO createStudentFolder(StudentFolderDTO folderDTO);
-    StudentFolderDTO updateStudentFolder(Integer folderId, StudentFolderDTO folderDTO);
+    StudentFolderDTO createStudentFolder(Integer studentId, StudentFolderDTO folderDTO);
+    StudentFolderDTO updateStudentFolder(Integer studentId,Integer folderId, StudentFolderDTO folderDTO);
 
-    void deleteStudentFolder(Integer folderId);
+    void deleteStudentFolder(Integer studentId,Integer folderId);
     List<StudentFolderDTO> listAllStudentFolders(Integer studentId);
 }
