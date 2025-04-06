@@ -14,5 +14,7 @@ public interface FolderItemService {
     List<FolderItemDTO> searchItems(Integer studentId, Integer folderId, String searchTerm);
     FolderItemDTO moveItem(Integer studentId, Integer folderItemId, Integer targetFolderId);
 
+    int countFolderItemsInFolder(Integer studentId, Integer folderId);
+
 
 }

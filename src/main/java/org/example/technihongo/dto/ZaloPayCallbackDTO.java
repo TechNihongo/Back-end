@@ -7,7 +7,7 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class RenewSubscriptionRequestDTO {
-
-    private Integer subPlanId;
+public class ZaloPayCallbackDTO {
+    private String data;
+    private String mac;
 }

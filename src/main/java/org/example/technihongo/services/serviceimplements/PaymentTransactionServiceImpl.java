@@ -9,14 +9,18 @@ import org.example.technihongo.enums.TransactionStatus;
 import org.example.technihongo.repositories.*;
 import org.example.technihongo.services.interfaces.MomoService;
 import org.example.technihongo.services.interfaces.PaymentTransactionService;
+import org.example.technihongo.services.interfaces.ZaloPayService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.*;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -32,6 +36,7 @@ public class PaymentTransactionServiceImpl implements PaymentTransactionService 
     private final PaymentTransactionRepository paymentTransactionRepository;
     private final PaymentMethodRepository paymentMethodRepository;
     private final MomoService momoService;
+    private final ZaloPayService zaloPayService;
 
     @Override
     public List<PaymentTransactionDTO> getPaymentHistoryByStudentId(Integer studentId) {
@@ -117,6 +122,54 @@ public class PaymentTransactionServiceImpl implements PaymentTransactionService 
                 .build();
     }
 
+//    @Override
+//    public PaymentResponseDTO initiateZaloPayment(Integer studentId, PaymentRequestDTO requestDTO) {
+//        logger.info("Initiating ZaloPay payment for studentId: {}, subPlanId: {}", studentId, requestDTO.getSubPlanId());
+//
+//        Student student = studentRepository.findById(studentId)
+//                .orElseThrow(() -> new IllegalArgumentException("Student not found"));
+//        SubscriptionPlan plan = subscriptionPlanRepository.findById(requestDTO.getSubPlanId())
+//                .orElseThrow(() -> new IllegalArgumentException("Subscription plan not found"));
+//
+//        StudentSubscription subscription = StudentSubscription.builder()
+//                .student(student)
+//                .subscriptionPlan(plan)
+//                .startDate(LocalDateTime.now())
+//                .endDate(LocalDateTime.now().plusDays(plan.getDurationDays()))
+//                .isActive(false)
+//                .build();
+//        subscription = studentSubscriptionRepository.save(subscription);
+//
+//        PaymentMethod zaloMethod = paymentMethodRepository.findByCode(PaymentMethodCode.ZALOPAY_QR);
+//        if (zaloMethod == null || !zaloMethod.getName().equals(PaymentMethodType.ZaloPay) || !zaloMethod.isActive()) {
+//            throw new IllegalStateException("ZaloPay payment method is not available or inactive");
+//        }
+//
+//        PaymentTransaction transaction = PaymentTransaction.builder()
+//                .subscription(subscription)
+//                .paymentMethod(zaloMethod)
+//                .transactionAmount(plan.getPrice())
+//                .currency("VND")
+//                .transactionStatus(TransactionStatus.PENDING)
+//                .expiresAt(LocalDateTime.now().plusMinutes(15)) // ZaloPay 15 phút
+//                .build();
+//        transaction = paymentTransactionRepository.save(transaction);
+//
+//        String appTransId = new SimpleDateFormat("yyMMdd").format(new Date()) + "_" + transaction.getTransactionId();
+//        String orderInfo = "Thanh toán SubscriptionPlan: " + plan.getName();
+//        CreateZaloResponse zaloResponse = zaloPayService.createOrder(appTransId, orderInfo, plan.getPrice().longValue(), studentId);
+//
+//        transaction.setExternalOrderId(appTransId);
+//        paymentTransactionRepository.save(transaction);
+//
+//        return PaymentResponseDTO.builder()
+//                .transactionId(transaction.getTransactionId())
+//                .orderId(appTransId)
+//                .payUrl(zaloResponse.getOrderUrl())
+//                .qrCodeUrl(zaloResponse.getQrCode())
+//                .build();
+//    }
+
     @Override
     public void handleMoMoCallback(MomoCallbackDTO callbackDTO, Map<String, String> requestParams) {
         logger.info("Handling MoMo callback for orderId: {}", callbackDTO.getOrderId());
@@ -173,6 +226,58 @@ public class PaymentTransactionServiceImpl implements PaymentTransactionService 
         logger.info("MoMo callback handled for transactionId: {}, new status: {}",
                 transaction.getTransactionId(), newStatus);
     }
+
+//    @Override
+//    public void handleZaloCallback(ZaloPayCallbackDTO callbackDTO, Map<String, String> requestParams) {
+//        logger.info("Handling ZaloPay callback for data: {}", callbackDTO.getData());
+//
+//        Map<String, Object> dataMap;
+//        try {
+//            dataMap = new com.fasterxml.jackson.databind.ObjectMapper().readValue(callbackDTO.getData(), Map.class);
+//        } catch (Exception e) {
+//            logger.error("Failed to parse ZaloPay callback data: {}", e.getMessage());
+//            throw new RuntimeException("Invalid ZaloPay callback data", e);
+//        }
+//        String appTransId = (String) dataMap.get("app_trans_id");
+//
+//        PaymentTransaction transaction = paymentTransactionRepository.findByExternalOrderId(appTransId)
+//                .orElseThrow(() -> new IllegalArgumentException("Transaction not found for appTransId: " + appTransId));
+//
+//        if (transaction.getExpiresAt().isBefore(LocalDateTime.now())) {
+//            transaction.setTransactionStatus(TransactionStatus.FAILED);
+//            paymentTransactionRepository.save(transaction);
+//            logger.warn("ZaloPay transaction expired: appTransId={}", appTransId);
+//            return;
+//        }
+//
+//        if (!zaloPayService.verifyCallbackSignature(callbackDTO, requestParams)) {
+//            transaction.setTransactionStatus(TransactionStatus.FAILED);
+//            paymentTransactionRepository.save(transaction);
+//            logger.warn("Invalid ZaloPay signature for transactionId: {}", transaction.getTransactionId());
+//            throw new SecurityException("Invalid signature from ZaloPay callback");
+//        }
+//
+//        int status = (int) dataMap.get("status");
+//        TransactionStatus newStatus;
+//        if (status == 1) {
+//            newStatus = TransactionStatus.COMPLETED;
+//            transaction.setPaymentDate(LocalDateTime.now());
+//            transaction.getSubscription().setIsActive(true);
+//        } else {
+//            newStatus = TransactionStatus.FAILED;
+//            logger.warn("ZaloPay payment failed: status={}", status);
+//        }
+//
+//        transaction.setTransactionStatus(newStatus);
+//        paymentTransactionRepository.save(transaction);
+//
+//        if (newStatus == TransactionStatus.COMPLETED) {
+//            studentSubscriptionRepository.save(transaction.getSubscription());
+//            logger.info("ZaloPay subscription activated for transactionId: {}", transaction.getTransactionId());
+//        }
+//
+//        logger.info("ZaloPay callback handled: transactionId={}, status={}", transaction.getTransactionId(), newStatus);
+//    }
 
     private PaymentTransactionDTO convertToDTO(PaymentTransaction transaction) {
         if (transaction == null) {

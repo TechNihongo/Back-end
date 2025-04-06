@@ -46,12 +46,13 @@ public class StudentSubscriptionServiceImpl implements StudentSubscriptionServic
     private final JavaMailSender mailSender;
 
 
+
     @Override
-    public RenewSubscriptionResponseDTO initiateRenewal(RenewSubscriptionRequestDTO request) {
+    public RenewSubscriptionResponseDTO initiateRenewal(Integer studentId, RenewSubscriptionRequestDTO request) {
         StudentSubscription currentSubscription = subscriptionRepository
-                .findByStudent_StudentIdAndIsActiveTrue(request.getStudentId());;
+                .findByStudent_StudentIdAndIsActiveTrue(studentId);
         if (currentSubscription == null) {
-            throw new RuntimeException("No active subscription found for student ID: " + request.getStudentId());
+            throw new RuntimeException("No active subscription found for student ID: " + studentId);
         }
         SubscriptionPlan plan = subscriptionPlanRepository.findById(request.getSubPlanId())
                 .orElseThrow(() -> new RuntimeException("Subscription plan not found: " + request.getSubPlanId()));
@@ -85,7 +86,7 @@ public class StudentSubscriptionServiceImpl implements StudentSubscriptionServic
     }
 
     @Override
-    public void handleRenewalCallback(MomoCallbackDTO callback, Map<String, String> requestParams) {
+    public void handleRenewalMoMo(MomoCallbackDTO callback, Map<String, String> requestParams) {
 
         String orderId = callback.getOrderId();
         PaymentTransaction transaction = paymentTransactionRepository.findByExternalOrderId(orderId)
@@ -142,7 +143,6 @@ public class StudentSubscriptionServiceImpl implements StudentSubscriptionServic
 
 
     }
-
     @Override
     public List<SubscriptionHistoryDTO> getSubscriptionHistory(Integer studentId) {
         List<StudentSubscription> subscriptions = subscriptionRepository.findAllByStudent_StudentIdOrderByStartDateDesc(studentId);
@@ -207,3 +207,29 @@ public class StudentSubscriptionServiceImpl implements StudentSubscriptionServic
         }
     }
 }
+
+
+
+//    @Override
+//    public RenewSubscriptionResponseDTO renewWithZaloPay(RenewSubscriptionRequestDTO request) {
+//        log.info("Initiating renewal with ZaloPay for studentId: {}, subPlanId: {}", request.getStudentId(), request.getSubPlanId());
+//
+//        StudentSubscription currentSubscription = subscriptionRepository.findByStudent_StudentIdAndIsActiveTrue(request.getStudentId());
+//        if (currentSubscription == null) {
+//            throw new RuntimeException("No active subscription found for student ID: " + request.getStudentId());
+//        }
+//
+//        SubscriptionPlan plan = subscriptionPlanRepository.findById(request.getSubPlanId())
+//                .orElseThrow(() -> new RuntimeException("Subscription plan not found: " + request.getSubPlanId()));
+//
+//        PaymentRequestDTO paymentRequest = PaymentRequestDTO.builder()
+//                .subPlanId(request.getSubPlanId())
+//                .build();
+//
+//        PaymentResponseDTO paymentResponse = paymentTransactionService.initiateZaloPayment(request.getStudentId(), paymentRequest);
+//
+//        return RenewSubscriptionResponseDTO.builder()
+//                .payUrl(paymentResponse.getPayUrl())
+//                .transactionId(paymentResponse.getTransactionId())
+//                .build();
+//    }

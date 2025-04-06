@@ -324,6 +324,44 @@ public class FolderItemController {
         }
     }
 
+    @GetMapping("/count/{folderId}")
+    public ResponseEntity<ApiResponse> countFolderItems(
+            @PathVariable Integer folderId,
+            @RequestHeader("Authorization") String authorizationHeader) {
+        try {
+            if (authorizationHeader == null || !authorizationHeader.startsWith("Bearer ")) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(ApiResponse.builder()
+                                .success(false)
+                                .message("Missing or invalid Authorization header")
+                                .build());
+            }
+
+            String token = authorizationHeader.substring(7);
+            Integer studentId = jwtUtil.extractUserId(token);
+
+            int count = folderItemService.countFolderItemsInFolder(studentId, folderId);
+
+            return ResponseEntity.ok(ApiResponse.builder()
+                    .success(true)
+                    .message("Folder item count retrieved successfully")
+                    .data(count)
+                    .build());
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(ApiResponse.builder()
+                            .success(false)
+                            .message(e.getMessage())
+                            .build());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponse.builder()
+                            .success(false)
+                            .message("Internal Server Error: " + e.getMessage())
+                            .build());
+        }
+    }
+
     @PutMapping("/move/{folderItemId}/{targetFolderId}")
     public ResponseEntity<ApiResponse> moveFolderItem(
             @PathVariable Integer folderItemId,

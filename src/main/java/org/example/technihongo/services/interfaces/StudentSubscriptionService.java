@@ -9,8 +9,9 @@ import java.util.List;
 import java.util.Map;
 
 public interface StudentSubscriptionService {
-    RenewSubscriptionResponseDTO initiateRenewal(RenewSubscriptionRequestDTO request);
-    void handleRenewalCallback(MomoCallbackDTO callback, Map<String, String> requestParams);
+    RenewSubscriptionResponseDTO initiateRenewal(Integer studentId, RenewSubscriptionRequestDTO request);
+    void handleRenewalMoMo(MomoCallbackDTO callback, Map<String, String> requestParams);
+//    RenewSubscriptionResponseDTO renewWithZaloPay(RenewSubscriptionRequestDTO request);
     List<SubscriptionHistoryDTO> getSubscriptionHistory(Integer studentId);
     void sendExpirationReminders();
 

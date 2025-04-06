@@ -12,4 +12,6 @@ public interface FolderItemRepository extends JpaRepository<FolderItem, Integer>
     boolean existsByStudentFolderFolderId(Integer folderId);
     Optional<FolderItem> findByStudentFolderFolderIdAndStudentFlashcardSetStudentSetId(
             Integer folderId, Integer studentSetId);
+
+    long countByStudentFolderFolderId(Integer folderId);
 }

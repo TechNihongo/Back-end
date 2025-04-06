@@ -6,6 +6,7 @@ import org.example.technihongo.entities.StudentFolder;
 import org.example.technihongo.repositories.FolderItemRepository;
 import org.example.technihongo.repositories.StudentFolderRepository;
 import org.example.technihongo.repositories.StudentRepository;
+import org.example.technihongo.services.interfaces.FolderItemService;
 import org.example.technihongo.services.interfaces.StudentFolderService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -26,6 +27,9 @@ public class StudentFolderServiceImpl implements StudentFolderService {
 
     @Autowired
     private FolderItemRepository folderItemRepository;
+
+    @Autowired
+    private FolderItemService folderItemService;
 
     @Override
     public StudentFolderDTO createStudentFolder(StudentFolderDTO folderDTO) {
@@ -89,8 +93,9 @@ public class StudentFolderServiceImpl implements StudentFolderService {
         StudentFolder folder = studentFolderRepository.findById(folderId)
                 .orElseThrow(() -> new RuntimeException("Folder not found with ID: " + folderId));
 
-        if (folderItemRepository.existsByStudentFolderFolderId(folderId)) {
-            throw new IllegalStateException("Cannot delete folder with ID: " + folderId + " because it contains items");
+        int itemCount = folderItemService.countFolderItemsInFolder(folder.getStudent().getStudentId(), folderId);
+        if (itemCount > 0) {
+            throw new IllegalStateException("Cannot delete folder with ID: " + folderId + " because it contains " + itemCount + " item(s)");
         }
 
         folder.setDeleted(true);
@@ -103,7 +108,6 @@ public class StudentFolderServiceImpl implements StudentFolderService {
             throw new IllegalArgumentException("Student ID cannot be null");
         }
 
-        // Kiểm tra xem student có tồn tại không
         if (!studentRepository.existsById(studentId)) {
             throw new RuntimeException("Student not found with ID: " + studentId);
         }

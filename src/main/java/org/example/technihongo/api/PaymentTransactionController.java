@@ -1,13 +1,17 @@
 package org.example.technihongo.api;
 
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.example.technihongo.core.security.JwtUtil;
 import org.example.technihongo.dto.*;
+import org.example.technihongo.enums.ActivityType;
+import org.example.technihongo.enums.ContentType;
 import org.example.technihongo.enums.TransactionStatus;
 import org.example.technihongo.exception.UnauthorizedAccessException;
 import org.example.technihongo.response.ApiResponse;
 import org.example.technihongo.services.interfaces.PaymentTransactionService;
 import org.example.technihongo.services.interfaces.StudentService;
+import org.example.technihongo.services.interfaces.UserActivityLogService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -26,21 +30,43 @@ public class PaymentTransactionController {
     private static final Logger log = LoggerFactory.getLogger(PaymentTransactionController.class);
     private final JwtUtil jwtUtil;
     private final StudentService studentService;
+    private final UserActivityLogService userActivityLogService;
+
 
     @PostMapping("/initiateMomo")
     public ResponseEntity<ApiResponse> initiateMoMoPayment(
             @RequestHeader("Authorization") String authorizationHeader,
+            HttpServletRequest httpRequest,
             @RequestBody PaymentRequestDTO requestDTO) {
         try {
-            Integer studentId = extractStudentId(authorizationHeader);
-
-            PaymentResponseDTO responseDTO = paymentTransactionService.initiateMoMoPayment(studentId, requestDTO);
-
-            return ResponseEntity.ok(ApiResponse.builder()
-                    .success(true)
-                    .message("MoMo payment initiated successfully!")
-                    .data(responseDTO)
-                    .build());
+            if(authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
+                String token = authorizationHeader.substring(7);
+                Integer userId = jwtUtil.extractUserId(token);
+                Integer studentId = studentService.getStudentIdByUserId(userId);
+                String ipAddress = httpRequest.getRemoteAddr();
+                String userAgent = httpRequest.getHeader("User-Agent");
+                userActivityLogService.trackUserActivityLog(
+                        userId,
+                        ActivityType.REGISTER_SUBSCRIPTION,
+                        ContentType.PaymentTransaction,
+                        null,
+                        ipAddress,
+                        userAgent
+                );
+                PaymentResponseDTO responseDTO = paymentTransactionService.initiateMoMoPayment(studentId, requestDTO);
+                return ResponseEntity.ok(ApiResponse.builder()
+                        .success(true)
+                        .message("MoMo payment initiated successfully!")
+                        .data(responseDTO)
+                        .build());
+            }
+            else {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ApiResponse.builder()
+                        .success(false)
+                        .message("Unauthorized access!")
+                        .data(null)
+                        .build());
+            }
         } catch (IllegalArgumentException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ApiResponse.builder()
                     .success(false)
@@ -68,6 +94,7 @@ public class PaymentTransactionController {
                     .build());
         }
     }
+
 
     @GetMapping("/ipn-handler")
     public ResponseEntity<String> ipnHandler(@RequestParam Map<String, String> request) {
@@ -136,6 +163,7 @@ public class PaymentTransactionController {
         }
     }
 
+//
     @GetMapping("/studentTransaction")
     public ResponseEntity<ApiResponse> getPaymentHistoryByStudentId(
             @RequestHeader("Authorization") String authorizationHeader) {
@@ -204,3 +232,47 @@ public class PaymentTransactionController {
         throw new Exception("Authorization failed!");
     }
 }
+
+
+
+////    @PostMapping("/initiateZalo")
+////    public ResponseEntity<ApiResponse> initiateZaloPayment(
+////            @RequestHeader("Authorization") String authorizationHeader,
+////            @RequestBody PaymentRequestDTO requestDTO) {
+////        try {
+////            Integer studentId = extractStudentId(authorizationHeader);
+////
+////            PaymentResponseDTO responseDTO = paymentTransactionService.initiateZaloPayment(studentId, requestDTO);
+////
+////            return ResponseEntity.ok(ApiResponse.builder()
+////                    .success(true)
+////                    .message("Zalo payment initiated successfully!")
+////                    .data(responseDTO)
+////                    .build());
+////        } catch (IllegalArgumentException e) {
+////            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ApiResponse.builder()
+////                    .success(false)
+////                    .message("Invalid request: " + e.getMessage())
+////                    .build());
+////        } catch (IllegalStateException e) {
+////            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ApiResponse.builder()
+////                    .success(false)
+////                    .message("Payment method unavailable: " + e.getMessage())
+////                    .build());
+////        } catch (UnauthorizedAccessException e) {
+////            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ApiResponse.builder()
+////                    .success(false)
+////                    .message(e.getMessage())
+////                    .build());
+////        } catch (RuntimeException e) {
+////            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ApiResponse.builder()
+////                    .success(false)
+////                    .message("Failed to initiate MoMo payment: " + e.getMessage())
+////                    .build());
+////        } catch (Exception e) {
+////            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(ApiResponse.builder()
+////                    .success(false)
+////                    .message("Internal Server Error: " + e.getMessage())
+////                    .build());
+////        }
+////    }
