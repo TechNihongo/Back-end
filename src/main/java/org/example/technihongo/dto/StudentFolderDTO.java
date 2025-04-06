@@ -11,7 +11,6 @@ import lombok.Setter;
 @NoArgsConstructor
 public class StudentFolderDTO {
     private Integer folderId;
-    private Integer studentId;
     private String name;
     private String description;
 }
