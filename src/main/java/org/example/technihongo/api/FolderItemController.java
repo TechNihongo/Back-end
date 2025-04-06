@@ -302,7 +302,8 @@ public class FolderItemController {
                             .data(foundItems)
                             .build());
                 }
-            }  else {
+            }
+            else {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                         .body(ApiResponse.builder()
                                 .success(false)
@@ -365,6 +366,7 @@ public class FolderItemController {
     @PutMapping("/move/{folderItemId}/{targetFolderId}")
     public ResponseEntity<ApiResponse> moveFolderItem(
             @PathVariable Integer folderItemId,
+            HttpServletRequest httpRequest,
             @PathVariable Integer targetFolderId,
             @RequestHeader("Authorization") String authorizationHeader) {
         try {
@@ -373,7 +375,18 @@ public class FolderItemController {
                 Integer userId = jwtUtil.extractUserId(token);
                 Integer studentId = studentService.getStudentIdByUserId(userId);
 
+                String ipAddress = httpRequest.getRemoteAddr();
+                String userAgent = httpRequest.getHeader("User-Agent");
+                userActivityLogService.trackUserActivityLog(
+                        userId,
+                        ActivityType.REMOVE,
+                        ContentType.FolderItem,
+                        folderItemId,
+                        ipAddress,
+                        userAgent
+                );
                 FolderItemDTO movedItem = folderItemService.moveItem(studentId, folderItemId, targetFolderId);
+
 
                 return ResponseEntity.ok(ApiResponse.builder()
                         .success(true)
