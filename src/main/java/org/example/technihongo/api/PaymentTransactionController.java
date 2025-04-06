@@ -166,10 +166,16 @@ public class PaymentTransactionController {
 //
     @GetMapping("/studentTransaction")
     public ResponseEntity<ApiResponse> getPaymentHistoryByStudentId(
-            @RequestHeader("Authorization") String authorizationHeader) {
+            @RequestHeader("Authorization") String authorizationHeader,
+            @RequestParam(defaultValue = "0") int pageNo,
+            @RequestParam(defaultValue = "100") int pageSize,
+            @RequestParam(defaultValue = "createdAt") String sortBy,
+            @RequestParam(defaultValue = "desc") String sortDir,
+            @RequestParam(required = false) String transactionStatus) {
         try {
             Integer studentId = extractStudentId(authorizationHeader);
-            List<PaymentTransactionDTO> history = paymentTransactionService.getPaymentHistoryByStudentId(studentId);
+            PageResponseDTO<PaymentTransactionDTO> history = paymentTransactionService.getPaymentHistoryByStudentId(
+                    studentId, pageNo, pageSize, sortBy, sortDir, transactionStatus);
             return ResponseEntity.ok(ApiResponse.builder()
                     .success(true)
                     .message("Payment history retrieved successfully!")

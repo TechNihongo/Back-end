@@ -2,6 +2,8 @@ package org.example.technihongo.repositories;
 
 import org.example.technihongo.entities.PaymentTransaction;
 import org.example.technihongo.enums.TransactionStatus;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -16,8 +18,10 @@ public interface PaymentTransactionRepository extends JpaRepository<PaymentTrans
     List<PaymentTransaction> findBySubscription_Student_StudentIdAndTransactionStatus(Integer studentId, TransactionStatus status);
     PaymentTransaction findByTransactionId(Integer transactionId);
     Optional<PaymentTransaction> findBySubscription_SubscriptionId(Integer subscriptionId);
-
-
+    Page<PaymentTransaction> findBySubscription_Student_StudentId(
+            Integer studentId, Pageable pageable);
+    Page<PaymentTransaction> findBySubscription_Student_StudentIdAndTransactionStatus(
+            Integer studentId, TransactionStatus transactionStatus, Pageable pageable);
 }
 
 

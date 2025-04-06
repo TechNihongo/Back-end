@@ -12,6 +12,10 @@ import org.example.technihongo.services.interfaces.PaymentTransactionService;
 import org.example.technihongo.services.interfaces.ZaloPayService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -39,12 +43,35 @@ public class PaymentTransactionServiceImpl implements PaymentTransactionService 
     private final ZaloPayService zaloPayService;
 
     @Override
-    public List<PaymentTransactionDTO> getPaymentHistoryByStudentId(Integer studentId) {
-        logger.info("Fetching payment history for studentId: {}", studentId);
-        List<PaymentTransaction> transactions = paymentTransactionRepository.findBySubscription_Student_StudentId(studentId);
-        return transactions.stream()
-                .map(this::convertToDTO)
-                .collect(Collectors.toList());
+    public PageResponseDTO<PaymentTransactionDTO> getPaymentHistoryByStudentId(
+            Integer studentId, int pageNo, int pageSize, String sortBy, String sortDir, String transactionStatus) {
+        logger.info("Fetching payment history for studentId: {} with pageNo: {}, pageSize: {}, sortBy: {}, sortDir: {}, transactionStatus: {}",
+                studentId, pageNo, pageSize, sortBy, sortDir, transactionStatus);
+
+        if (studentId == null) {
+            throw new IllegalArgumentException("Student ID must not be null.");
+        }
+
+        Sort sort = sortDir.equalsIgnoreCase(Sort.Direction.ASC.name())
+                ? Sort.by(sortBy).ascending()
+                : Sort.by(sortBy).descending();
+        Pageable pageable = PageRequest.of(pageNo, pageSize, sort);
+
+        Page<PaymentTransaction> transactions;
+        if (transactionStatus != null && !transactionStatus.trim().isEmpty()) {
+            try {
+                TransactionStatus status = TransactionStatus.valueOf(transactionStatus.toUpperCase());
+                transactions = paymentTransactionRepository.findBySubscription_Student_StudentIdAndTransactionStatus(
+                        studentId, status, pageable);
+            } catch (IllegalArgumentException e) {
+                throw new RuntimeException("Invalid transaction status value. Must be a valid TransactionStatus enum.");
+            }
+        } else {
+            transactions = paymentTransactionRepository.findBySubscription_Student_StudentId(studentId, pageable);
+        }
+
+        Page<PaymentTransactionDTO> transactionDTOPage = transactions.map(this::convertToDTO);
+        return getPageResponseDTO(transactionDTOPage);
     }
 
     @Override
@@ -316,6 +343,17 @@ public class PaymentTransactionServiceImpl implements PaymentTransactionService 
                 .transactionStatus(transactionStatus)
                 .paymentDate(paymentDate)
                 .createdAt(createdAt)
+                .build();
+    }
+
+    private PageResponseDTO<PaymentTransactionDTO> getPageResponseDTO(Page<PaymentTransactionDTO> page) {
+        return PageResponseDTO.<PaymentTransactionDTO>builder()
+                .content(page.getContent())
+                .pageNo(page.getNumber())
+                .pageSize(page.getSize())
+                .totalElements(page.getTotalElements())
+                .totalPages(page.getTotalPages())
+                .last(page.isLast())
                 .build();
     }
 }

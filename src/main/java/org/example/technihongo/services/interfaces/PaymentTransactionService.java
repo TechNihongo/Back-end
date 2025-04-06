@@ -6,7 +6,7 @@ import java.util.List;
 import java.util.Map;
 
 public interface PaymentTransactionService {
-    List<PaymentTransactionDTO> getPaymentHistoryByStudentId(Integer studentId);
+    PageResponseDTO<PaymentTransactionDTO> getPaymentHistoryByStudentId(Integer studentId, int pageNo, int pageSize, String sortBy, String sortDir, String transactionStatus);
     List<PaymentTransactionDTO> getAllPaymentHistory(PaymentHistoryRequestDTO requestDTO);
     PaymentResponseDTO initiateMoMoPayment(Integer studentId, PaymentRequestDTO requestDTO);
 //    PaymentResponseDTO initiateZaloPayment(Integer studentId, PaymentRequestDTO requestDTO);
