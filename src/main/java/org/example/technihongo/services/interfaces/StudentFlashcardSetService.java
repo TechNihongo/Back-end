@@ -12,6 +12,8 @@ public interface StudentFlashcardSetService {
     FlashcardSetResponseDTO updateFlashcardSet(Integer studentId, Integer flashcardSetId, FlashcardSetRequestDTO request);
     void deleteFlashcardSet(Integer studentId, Integer flashcardSetId);
 
+
+
     List<FlashcardSetResponseDTO> getFlashcardSetsByStudentId(Integer studentId);
 
     List<FlashcardSetResponseDTO> getFlashcardSetsByPublicStatus();
@@ -28,5 +30,7 @@ public interface StudentFlashcardSetService {
     List<FlashcardSetResponseDTO> searchTitle(String keyword);
 
     FlashcardSetResponseDTO createFlashcardSetFromResource(Integer studentId, CreateFlashcardSetFromResourceDTO request);
+
+    FlashcardSetResponseDTO cloneStudentFlashcardSet(Integer studentId, Integer studentSetIdToClone);
 
 }

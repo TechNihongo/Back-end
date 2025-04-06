@@ -61,4 +61,4 @@ payment:
     ipn-url: http://localhost:3000/api/v1/payment/ipn-handler
 #    ipn-url: https://technihongo-hueze5fkd5g2f7bk.centralindia-01.azurewebsites.net/api/v1/payment/ipn-handler
     create-url: /create
-    skip-signature-verification: true
+#    skip-signature-verification: true

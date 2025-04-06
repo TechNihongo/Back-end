@@ -511,6 +511,72 @@ public class StudentFlashcardSetController {
         }
     }
 
+    @PostMapping("/clone/{studentSetId}")
+    public ResponseEntity<ApiResponse> cloneFlashcardSet(
+            @PathVariable Integer studentSetId,
+            @RequestHeader("Authorization") String authorizationHeader,
+            HttpServletRequest httpRequest) {
+        try {
+            if (authorizationHeader == null || !authorizationHeader.startsWith("Bearer ")) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(ApiResponse.builder()
+                                .success(false)
+                                .message("Missing or invalid Authorization header")
+                                .build());
+            }
+
+            String token = authorizationHeader.substring(7);
+            Integer userId = jwtUtil.extractUserId(token);
+            Integer studentId = studentService.getStudentIdByUserId(userId);
+            if (studentId == null) {
+                throw new UnauthorizedAccessException("No student profile found for this user");
+            }
+
+            FlashcardSetResponseDTO clonedSet = studentFlashcardSetService.cloneStudentFlashcardSet(studentId, studentSetId);
+
+            String ipAddress = httpRequest.getRemoteAddr();
+            String userAgent = httpRequest.getHeader("User-Agent");
+            userActivityLogService.trackUserActivityLog(
+                    studentId,
+                    ActivityType.CREATE,
+                    ContentType.StudentFlashcardSet,
+                    clonedSet.getStudentSetId(),
+                    ipAddress,
+                    userAgent
+            );
+
+            return ResponseEntity.ok(ApiResponse.builder()
+                    .success(true)
+                    .message("Flashcard set cloned successfully")
+                    .data(clonedSet)
+                    .build());
+        } catch (ResourceNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(ApiResponse.builder()
+                            .success(false)
+                            .message(e.getMessage())
+                            .build());
+        } catch (UnauthorizedAccessException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(ApiResponse.builder()
+                            .success(false)
+                            .message(e.getMessage())
+                            .build());
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(ApiResponse.builder()
+                            .success(false)
+                            .message(e.getMessage())
+                            .build());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponse.builder()
+                            .success(false)
+                            .message("Internal Server Error: " + e.getMessage())
+                            .build());
+        }
+    }
+
     private Integer extractStudentId(String authorizationHeader) throws Exception {
         if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
             String token = authorizationHeader.substring(7);

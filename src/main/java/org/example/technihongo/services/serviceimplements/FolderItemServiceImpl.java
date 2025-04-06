@@ -186,6 +186,27 @@ public class FolderItemServiceImpl implements FolderItemService {
         return convertToDTO(updatedItem);
     }
 
+    @Override
+    public int countFolderItemsInFolder(Integer studentId, Integer folderId) {
+        if (studentId == null) {
+            throw new IllegalArgumentException("Student ID cannot be null");
+        }
+        if (folderId == null) {
+            throw new IllegalArgumentException("Folder ID cannot be null");
+        }
+        StudentFolder folder = studentFolderRepository.findById(folderId)
+                .orElseThrow(() -> new RuntimeException("Student folder not found with ID: " + folderId));
+
+        if (!folder.getStudent().getStudentId().equals(studentId)) {
+            throw new SecurityException("You do not have permission to access this folder");
+        }
+        if (folder.isDeleted()) {
+            throw new IllegalStateException("Cannot count items in a deleted folder");
+        }
+        long count = folderItemRepository.countByStudentFolderFolderId(folderId);
+        return (int) count;
+    }
+
     private FolderItemDTO convertToDTO(FolderItem item) {
         return new FolderItemDTO(
                 item.getFolderItemId(),
