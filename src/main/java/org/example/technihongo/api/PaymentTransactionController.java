@@ -166,15 +166,36 @@ public class PaymentTransactionController {
 //
     @GetMapping("/studentTransaction")
     public ResponseEntity<ApiResponse> getPaymentHistoryByStudentId(
+            HttpServletRequest httpRequest,
             @RequestHeader("Authorization") String authorizationHeader) {
         try {
-            Integer studentId = extractStudentId(authorizationHeader);
-            List<PaymentTransactionDTO> history = paymentTransactionService.getPaymentHistoryByStudentId(studentId);
-            return ResponseEntity.ok(ApiResponse.builder()
-                    .success(true)
-                    .message("Payment history retrieved successfully!")
-                    .data(history)
-                    .build());
+            if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
+                String token = authorizationHeader.substring(7);
+                Integer userId = jwtUtil.extractUserId(token);
+                Integer studentId = studentService.getStudentIdByUserId(userId);
+                String ipAddress = httpRequest.getRemoteAddr();
+                String userAgent = httpRequest.getHeader("User-Agent");
+                userActivityLogService.trackUserActivityLog(
+                        userId,
+                        ActivityType.VIEW,
+                        ContentType.PaymentTransaction,
+                        null,
+                        ipAddress,
+                        userAgent
+                );
+                List<PaymentTransactionDTO> history = paymentTransactionService.getPaymentHistoryByStudentId(studentId);
+                return ResponseEntity.ok(ApiResponse.builder()
+                        .success(true)
+                        .message("Payment history retrieved successfully!")
+                        .data(history)
+                        .build());
+            }  else {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(ApiResponse.builder()
+                                .success(false)
+                                .message("Unauthorized")
+                                .build());
+            }
         } catch (RuntimeException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ApiResponse.builder()
                     .success(false)
