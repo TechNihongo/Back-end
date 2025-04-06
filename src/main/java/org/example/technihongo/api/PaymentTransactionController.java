@@ -166,21 +166,45 @@ public class PaymentTransactionController {
 //
     @GetMapping("/studentTransaction")
     public ResponseEntity<ApiResponse> getPaymentHistoryByStudentId(
-            @RequestHeader("Authorization") String authorizationHeader,
             @RequestParam(defaultValue = "0") int pageNo,
             @RequestParam(defaultValue = "100") int pageSize,
             @RequestParam(defaultValue = "createdAt") String sortBy,
             @RequestParam(defaultValue = "desc") String sortDir,
-            @RequestParam(required = false) String transactionStatus) {
+            @RequestParam(required = false) String transactionStatus,
+            HttpServletRequest httpRequest,
+            @RequestHeader("Authorization") String authorizationHeader) {
         try {
-            Integer studentId = extractStudentId(authorizationHeader);
-            PageResponseDTO<PaymentTransactionDTO> history = paymentTransactionService.getPaymentHistoryByStudentId(
+            if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
+                String token = authorizationHeader.substring(7);
+                Integer userId = jwtUtil.extractUserId(token);
+                Integer studentId = studentService.getStudentIdByUserId(userId);
+              
+                PageResponseDTO<PaymentTransactionDTO> history = paymentTransactionService.getPaymentHistoryByStudentId(
                     studentId, pageNo, pageSize, sortBy, sortDir, transactionStatus);
-            return ResponseEntity.ok(ApiResponse.builder()
-                    .success(true)
-                    .message("Payment history retrieved successfully!")
-                    .data(history)
-                    .build());
+              
+                String ipAddress = httpRequest.getRemoteAddr();
+                String userAgent = httpRequest.getHeader("User-Agent");
+                userActivityLogService.trackUserActivityLog(
+                        userId,
+                        ActivityType.VIEW,
+                        ContentType.PaymentTransaction,
+                        null,
+                        ipAddress,
+                        userAgent
+                );
+                
+                return ResponseEntity.ok(ApiResponse.builder()
+                        .success(true)
+                        .message("Payment history retrieved successfully!")
+                        .data(history)
+                        .build());
+            }  else {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(ApiResponse.builder()
+                                .success(false)
+                                .message("Unauthorized")
+                                .build());
+            }
         } catch (RuntimeException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ApiResponse.builder()
                     .success(false)
