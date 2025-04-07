@@ -30,7 +30,6 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -49,7 +48,6 @@ public class StudentSubscriptionServiceImpl implements StudentSubscriptionServic
     private final PaymentMethodRepository paymentMethodRepository;
     private final MomoService momoService;
     private final JavaMailSender mailSender;
-
 
 
     @Override
@@ -204,40 +202,6 @@ public class StudentSubscriptionServiceImpl implements StudentSubscriptionServic
         }
     }
 
-//    @Override
-//    public List<SubscriptionHistoryDTO> getSubscriptionHistory(Integer studentId) {
-//        List<StudentSubscription> subscriptions = subscriptionRepository.findAllByStudent_StudentIdOrderByStartDateDesc(studentId);
-//        List<SubscriptionHistoryDTO> result = new ArrayList<>();
-//
-//        for (StudentSubscription sub : subscriptions) {
-//            List<PaymentTransaction> transactions = paymentTransactionRepository.findAllBySubscription_SubscriptionId(sub.getSubscriptionId());
-//
-//            if (transactions.isEmpty()) {
-//                result.add(SubscriptionHistoryDTO.builder()
-//                        .subscriptionId(sub.getSubscriptionId())
-//                        .planName(sub.getSubscriptionPlan().getName())
-//                        .startDate(sub.getStartDate())
-//                        .endDate(sub.getEndDate())
-//                        .amount(BigDecimal.ZERO)
-//                        .paymentMethod("N/A")
-//                        .status(sub.getIsActive())
-//                        .build());
-//            } else {
-//                for (PaymentTransaction transaction : transactions) {
-//                    result.add(SubscriptionHistoryDTO.builder()
-//                            .subscriptionId(sub.getSubscriptionId())
-//                            .planName(sub.getSubscriptionPlan().getName())
-//                            .startDate(sub.getStartDate())
-//                            .endDate(sub.getEndDate())
-//                            .amount(transaction.getTransactionAmount())
-//                            .paymentMethod(transaction.getPaymentMethod().getName().name())
-//                            .status(sub.getIsActive())
-//                            .build());
-//                }
-//            }
-//        }
-//        return result;
-//    }
 
     @Override
     @Scheduled(cron = "0 0 9 * * *")
