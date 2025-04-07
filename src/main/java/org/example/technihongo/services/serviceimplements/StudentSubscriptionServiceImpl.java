@@ -26,9 +26,9 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 
 @Service
@@ -146,19 +146,36 @@ public class StudentSubscriptionServiceImpl implements StudentSubscriptionServic
     @Override
     public List<SubscriptionHistoryDTO> getSubscriptionHistory(Integer studentId) {
         List<StudentSubscription> subscriptions = subscriptionRepository.findAllByStudent_StudentIdOrderByStartDateDesc(studentId);
-        return subscriptions.stream().map(sub -> {
-            PaymentTransaction transaction = paymentTransactionRepository.findBySubscription_SubscriptionId(sub.getSubscriptionId())
-                    .orElse(null);
-            return SubscriptionHistoryDTO.builder()
-                    .subscriptionId(sub.getSubscriptionId())
-                    .planName(sub.getSubscriptionPlan().getName())
-                    .startDate(sub.getStartDate())
-                    .endDate(sub.getEndDate())
-                    .amount(transaction != null ? transaction.getTransactionAmount() : BigDecimal.ZERO)
-                    .paymentMethod(transaction != null ? transaction.getPaymentMethod().getName().name() : "N/A")
-                    .status(sub.getIsActive())
-                    .build();
-        }).collect(Collectors.toList());
+        List<SubscriptionHistoryDTO> result = new ArrayList<>();
+
+        for (StudentSubscription sub : subscriptions) {
+            List<PaymentTransaction> transactions = paymentTransactionRepository.findAllBySubscription_SubscriptionId(sub.getSubscriptionId());
+
+            if (transactions.isEmpty()) {
+                result.add(SubscriptionHistoryDTO.builder()
+                        .subscriptionId(sub.getSubscriptionId())
+                        .planName(sub.getSubscriptionPlan().getName())
+                        .startDate(sub.getStartDate())
+                        .endDate(sub.getEndDate())
+                        .amount(BigDecimal.ZERO)
+                        .paymentMethod("N/A")
+                        .status(sub.getIsActive())
+                        .build());
+            } else {
+                for (PaymentTransaction transaction : transactions) {
+                    result.add(SubscriptionHistoryDTO.builder()
+                            .subscriptionId(sub.getSubscriptionId())
+                            .planName(sub.getSubscriptionPlan().getName())
+                            .startDate(sub.getStartDate())
+                            .endDate(sub.getEndDate())
+                            .amount(transaction.getTransactionAmount())
+                            .paymentMethod(transaction.getPaymentMethod().getName().name())
+                            .status(sub.getIsActive())
+                            .build());
+                }
+            }
+        }
+        return result;
     }
 
     @Override
@@ -210,26 +227,3 @@ public class StudentSubscriptionServiceImpl implements StudentSubscriptionServic
 
 
 
-//    @Override
-//    public RenewSubscriptionResponseDTO renewWithZaloPay(RenewSubscriptionRequestDTO request) {
-//        log.info("Initiating renewal with ZaloPay for studentId: {}, subPlanId: {}", request.getStudentId(), request.getSubPlanId());
-//
-//        StudentSubscription currentSubscription = subscriptionRepository.findByStudent_StudentIdAndIsActiveTrue(request.getStudentId());
-//        if (currentSubscription == null) {
-//            throw new RuntimeException("No active subscription found for student ID: " + request.getStudentId());
-//        }
-//
-//        SubscriptionPlan plan = subscriptionPlanRepository.findById(request.getSubPlanId())
-//                .orElseThrow(() -> new RuntimeException("Subscription plan not found: " + request.getSubPlanId()));
-//
-//        PaymentRequestDTO paymentRequest = PaymentRequestDTO.builder()
-//                .subPlanId(request.getSubPlanId())
-//                .build();
-//
-//        PaymentResponseDTO paymentResponse = paymentTransactionService.initiateZaloPayment(request.getStudentId(), paymentRequest);
-//
-//        return RenewSubscriptionResponseDTO.builder()
-//                .payUrl(paymentResponse.getPayUrl())
-//                .transactionId(paymentResponse.getTransactionId())
-//                .build();
-//    }
