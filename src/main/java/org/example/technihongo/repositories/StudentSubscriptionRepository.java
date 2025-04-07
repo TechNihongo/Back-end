@@ -3,6 +3,8 @@ package org.example.technihongo.repositories;
 import org.example.technihongo.entities.PaymentTransaction;
 import org.example.technihongo.entities.StudentSubscription;
 import org.example.technihongo.entities.SubscriptionPlan;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
@@ -21,7 +23,6 @@ public interface StudentSubscriptionRepository extends JpaRepository<StudentSubs
     @Query("SELECT s FROM StudentSubscription s WHERE s.isActive = true AND s.endDate <= :threshold")
     List<StudentSubscription> findSubscriptionsExpiringSoon(LocalDateTime threshold);
 
-
-
     List<StudentSubscription> findAllByIsActiveTrue();
+    Page<StudentSubscription> findAllByStudent_StudentId(Integer studentId, Pageable pageable);
 }

@@ -23,7 +23,8 @@ public class EmailService {
 
     public void sendVerificationEmail(String email, String token) {
         SimpleMailMessage message = new SimpleMailMessage();
-        String link = "http://localhost:3000/api/user/verify-email?token=" + token;
+        //String link = "http://localhost:3000/api/user/verify-email?token=" + token;
+        String link = "https://technihongo-lwh1edw2l-lams-projects-496a2108.vercel.app/verify/" + token;
         String subject = "Verify your email";
         String body = "Click the link to verify your email: " + link;
 

@@ -19,4 +19,5 @@ public class SubscriptionHistoryDTO {
     private BigDecimal amount;
     private String paymentMethod;
     private Boolean status;
+    private String groupStatus;
 }
