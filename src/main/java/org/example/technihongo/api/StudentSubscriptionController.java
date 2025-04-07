@@ -127,18 +127,18 @@ public class StudentSubscriptionController {
     }
     @GetMapping("/history")
     public ResponseEntity<ApiResponse> getSubscriptionHistory(
-            @RequestHeader("Authorization") String authorizationHeader,
+//            @RequestHeader("Authorization") String authorizationHeader,
             @RequestParam("studentId") Integer studentId) {
         try {
-            Integer authenticatedStudentId = extractStudentId(authorizationHeader);
-
-            if (!authenticatedStudentId.equals(studentId)) {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                        .body(ApiResponse.builder()
-                                .success(false)
-                                .message("Unauthorized access to subscription history!")
-                                .build());
-            }
+//            Integer authenticatedStudentId = extractStudentId(authorizationHeader);
+//
+//            if (!authenticatedStudentId.equals(studentId)) {
+//                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+//                        .body(ApiResponse.builder()
+//                                .success(false)
+//                                .message("Unauthorized access to subscription history!")
+//                                .build());
+//            }
 
             List<SubscriptionHistoryDTO> history = subscriptionService.getSubscriptionHistory(studentId);
             return ResponseEntity.ok(ApiResponse.builder()
