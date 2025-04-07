@@ -17,7 +17,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -83,7 +82,7 @@ public class StudentSubscriptionController {
         }
     }
 
-    @GetMapping("/callback/momo")
+    @GetMapping("/callback")
     public ResponseEntity<ApiResponse> handleMoMoCallback(@RequestParam Map<String, String> request) {
         try {
             log.info("Received MoMo callback: {}", request);

@@ -146,6 +146,7 @@ public class FlashcardController {
             if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
                 String token = authorizationHeader.substring(7);
                 Integer userId = jwtUtil.extractUserId(token);
+                Integer studentId = studentService.getStudentIdByUserId(userId);
 
                 String ipAddress = httpRequest.getRemoteAddr();
                 String userAgent = httpRequest.getHeader("User-Agent");
@@ -158,7 +159,7 @@ public class FlashcardController {
                         userAgent
                 );
 
-                FlashcardResponseDTO response = flashcardService.updateFlashcard(userId, flashcardId, request);
+                FlashcardResponseDTO response = flashcardService.updateFlashcard(userId, studentId, flashcardId, request);
                 return ResponseEntity.ok(ApiResponse.builder()
                         .success(true)
                         .message("Flashcard updated successfully")

@@ -146,53 +146,7 @@ public class PaymentTransactionServiceImpl implements PaymentTransactionService 
                 .build();
     }
 
-//    @Override
-//    public PaymentResponseDTO initiateZaloPayment(Integer studentId, PaymentRequestDTO requestDTO) {
-//        logger.info("Initiating ZaloPay payment for studentId: {}, subPlanId: {}", studentId, requestDTO.getSubPlanId());
-//
-//        Student student = studentRepository.findById(studentId)
-//                .orElseThrow(() -> new IllegalArgumentException("Student not found"));
-//        SubscriptionPlan plan = subscriptionPlanRepository.findById(requestDTO.getSubPlanId())
-//                .orElseThrow(() -> new IllegalArgumentException("Subscription plan not found"));
-//
-//        StudentSubscription subscription = StudentSubscription.builder()
-//                .student(student)
-//                .subscriptionPlan(plan)
-//                .startDate(LocalDateTime.now())
-//                .endDate(LocalDateTime.now().plusDays(plan.getDurationDays()))
-//                .isActive(false)
-//                .build();
-//        subscription = studentSubscriptionRepository.save(subscription);
-//
-//        PaymentMethod zaloMethod = paymentMethodRepository.findByCode(PaymentMethodCode.ZALOPAY_QR);
-//        if (zaloMethod == null || !zaloMethod.getName().equals(PaymentMethodType.ZaloPay) || !zaloMethod.isActive()) {
-//            throw new IllegalStateException("ZaloPay payment method is not available or inactive");
-//        }
-//
-//        PaymentTransaction transaction = PaymentTransaction.builder()
-//                .subscription(subscription)
-//                .paymentMethod(zaloMethod)
-//                .transactionAmount(plan.getPrice())
-//                .currency("VND")
-//                .transactionStatus(TransactionStatus.PENDING)
-//                .expiresAt(LocalDateTime.now().plusMinutes(15)) // ZaloPay 15 phút
-//                .build();
-//        transaction = paymentTransactionRepository.save(transaction);
-//
-//        String appTransId = new SimpleDateFormat("yyMMdd").format(new Date()) + "_" + transaction.getTransactionId();
-//        String orderInfo = "Thanh toán SubscriptionPlan: " + plan.getName();
-//        CreateZaloResponse zaloResponse = zaloPayService.createOrder(appTransId, orderInfo, plan.getPrice().longValue(), studentId);
-//
-//        transaction.setExternalOrderId(appTransId);
-//        paymentTransactionRepository.save(transaction);
-//
-//        return PaymentResponseDTO.builder()
-//                .transactionId(transaction.getTransactionId())
-//                .orderId(appTransId)
-//                .payUrl(zaloResponse.getOrderUrl())
-//                .qrCodeUrl(zaloResponse.getQrCode())
-//                .build();
-//    }
+
 
     @Override
     public void handleMoMoCallback(MomoCallbackDTO callbackDTO, Map<String, String> requestParams) {

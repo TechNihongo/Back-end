@@ -17,7 +17,7 @@ public interface FlashcardService {
 
 
 
-    FlashcardResponseDTO updateFlashcard(Integer userId, Integer flashcardId, FlashcardRequestDTO request);
+    FlashcardResponseDTO updateFlashcard(Integer userId, Integer studentId, Integer flashcardId, FlashcardRequestDTO request);
     void deleteFlashcard(Integer userId, Integer flashcardId);
     FlashcardResponseDTO getFlashcardById(Integer flashcardId);
 }

@@ -8,6 +8,5 @@ import lombok.*;
 @AllArgsConstructor
 @Builder
 public class RenewSubscriptionRequestDTO {
-
     private Integer subPlanId;
 }

@@ -89,40 +89,7 @@ public class MomoService {
         }
     }
 
-//    public boolean verifyCallbackSignature(MomoCallbackDTO callback, Map<String, String> requestParams) throws Exception {
-//        log.info("Callback data: {}", requestParams);
-//
-//        TreeMap<String, String> sortedParams = new TreeMap<>();
-//        sortedParams.put("accessKey", accessKey); // Lấy từ cấu hình
-//        sortedParams.put("amount", requestParams.get("amount"));
-//        sortedParams.put("message", requestParams.get("message"));
-//        sortedParams.put("orderId", requestParams.get("orderId"));
-//        sortedParams.put("partnerCode", requestParams.get("partnerCode"));
-//        sortedParams.put("requestId", requestParams.get("requestId"));
-//        sortedParams.put("responseTime", requestParams.get("responseTime"));
-//        sortedParams.put("resultCode", requestParams.get("resultCode"));
-//
-//        StringBuilder rawSignature = new StringBuilder();
-//        for (Map.Entry<String, String> entry : sortedParams.entrySet()) {
-//            if (entry.getValue() != null && !entry.getValue().isEmpty()) {
-//                if (!rawSignature.isEmpty()) {
-//                    rawSignature.append("&");
-//                }
-//                rawSignature.append(entry.getKey()).append("=").append(entry.getValue());
-//            }
-//        }
-//
-//        String signature = signHmacSHA256(rawSignature.toString(), secretKey);
-//        log.info("Raw signature: {}", rawSignature);
-//        log.info("Expected signature: {}", signature);
-//        log.info("Received signature: {}", callback.getSignature());
-//
-//        boolean isValid = signature.equals(callback.getSignature());
-//        if (!isValid) {
-//            log.warn("Signature verification failed: expected={}, received={}", signature, callback.getSignature());
-//        }
-//        return isValid;
-//    }
+
 
     public boolean verifyCallbackSignature(MomoCallbackDTO callback, Map<String, String> requestParams) throws Exception {
         log.info("Callback data: {}", requestParams);

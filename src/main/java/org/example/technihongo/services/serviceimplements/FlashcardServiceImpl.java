@@ -138,13 +138,13 @@ public class FlashcardServiceImpl implements FlashcardService {
     }
 
     @Override
-    public FlashcardResponseDTO updateFlashcard(Integer userId, Integer flashcardId, FlashcardRequestDTO request) {
+    public FlashcardResponseDTO updateFlashcard(Integer userId, Integer studentId , Integer flashcardId, FlashcardRequestDTO request) {
         Flashcard flashcard = flashcardRepository.findById(flashcardId)
                 .orElseThrow(() -> new ResourceNotFoundException("Flashcard not found with Id: " + flashcardId));
 
         boolean hasPermission = false;
         if (flashcard.getStudentFlashCardSet() != null) {
-            hasPermission = flashcard.getStudentFlashCardSet().getCreator().getStudentId().equals(userId);
+            hasPermission = flashcard.getStudentFlashCardSet().getCreator().getStudentId().equals(studentId);
         } else if (flashcard.getSystemFlashCardSet() != null) {
             hasPermission = flashcard.getSystemFlashCardSet().getCreator().getUserId().equals(userId);
         }
