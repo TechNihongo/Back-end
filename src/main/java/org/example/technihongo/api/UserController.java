@@ -57,13 +57,14 @@ public class UserController {
             LoginResponseDTO response = userService.login(userLogin.getEmail(), userLogin.getPassword());
             String token = myUserDetailsService.loginToken(userLogin);
 
+            Integer studentId = null;
             if (response.isSuccess()) {
                 LocalDateTime expired = jwtHelper.getExpirationDateFromToken(token).toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime();
                 authTokenService.saveLoginToken(new CreateLoginTokenDTO(response.getUserId(), token, String.valueOf(TokenType.LOGIN), expired));
                 authTokenService.updateLoginTokenStatus(response.getUserId());
 
-                Integer studentId = studentService.getStudentIdByUserId(response.getUserId());
-                if(studentId != null){
+                studentId = studentService.getStudentIdByUserId(response.getUserId());
+                if (studentId != null) {
                     studentDailyLearningLogService.trackStudentDailyLearningLog(studentId, 0);
                 }
 
@@ -78,17 +79,17 @@ public class UserController {
                         userAgent
                 );
 
-                return ResponseEntity.ok(new LoginResponseTokenDTO(response.getUserId(), response.getUserName(),
+                return ResponseEntity.ok(new LoginResponseTokenDTO(response.getUserId(), studentId, response.getUserName(),
                         response.getEmail(), response.getRole(), true, response.getMessage(), token));
 
             } else {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new LoginResponseTokenDTO(response.getUserId(), response.getUserName(),
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new LoginResponseTokenDTO(response.getUserId(), studentId, response.getUserName(),
                         response.getEmail(), response.getRole(), false, response.getMessage(), token));
             }
 
         } catch (Exception e) {
             String errorMessage = "Login failed: " + e.getMessage();
-            LoginResponseTokenDTO errorResponse = new LoginResponseTokenDTO(null, null, null, null, false, errorMessage, null);
+            LoginResponseTokenDTO errorResponse = new LoginResponseTokenDTO(null,null, null, null, null, false, errorMessage, null);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
         }
     }
@@ -122,6 +123,7 @@ public class UserController {
     public ResponseEntity<LoginResponseTokenDTO> authenticateWithGoogle(
             @RequestBody GoogleTokenDTO googleTokenDTO,
             HttpServletRequest httpRequest) {
+        Integer studentId = null;
         try {
             LoginResponseDTO response = userService.authenticateWithGoogle(googleTokenDTO);
             UserLogin userLogin = new UserLogin(response.getEmail(), "");
@@ -132,8 +134,8 @@ public class UserController {
                 authTokenService.saveLoginToken(new CreateLoginTokenDTO(response.getUserId(), token, String.valueOf(TokenType.LOGIN_GOOGLE), expired));
                 authTokenService.updateLoginTokenStatus(response.getUserId());
 
-                Integer studentId = studentService.getStudentIdByUserId(response.getUserId());
-                if(studentId != null){
+                studentId = studentService.getStudentIdByUserId(response.getUserId());
+                if (studentId != null) {
                     studentDailyLearningLogService.trackStudentDailyLearningLog(studentId, 0);
                 }
 
@@ -148,16 +150,16 @@ public class UserController {
                         userAgent
                 );
 
-                return ResponseEntity.ok(new LoginResponseTokenDTO(response.getUserId(), response.getUserName(),
+                return ResponseEntity.ok(new LoginResponseTokenDTO(response.getUserId(), studentId, response.getUserName(),
                         response.getEmail(), response.getRole(), true, response.getMessage(), token));
 
             } else {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new LoginResponseTokenDTO(response.getUserId(), response.getUserName(),
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new LoginResponseTokenDTO(response.getUserId(), studentId, response.getUserName(),
                         response.getEmail(), response.getRole(), false, response.getMessage(), token));
             }
         } catch (Exception e) {
             String errorMessage = "Google authentication failed: " + e.getMessage();
-            LoginResponseTokenDTO errorResponse = new LoginResponseTokenDTO(null, null, null, null, false, errorMessage, null);
+            LoginResponseTokenDTO errorResponse = new LoginResponseTokenDTO(null, null, null, null, null, false, errorMessage, null);
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorResponse);
         }
     }
