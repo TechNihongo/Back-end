@@ -209,10 +209,12 @@ public class StudentFlashcardSetServiceImpl implements StudentFlashcardSetServic
         response.setStudentSetId(flashcardSet.getStudentSetId());
         response.setTitle(flashcardSet.getTitle());
         response.setDescription(flashcardSet.getDescription());
+        response.setTotalViews(flashcardSet.getTotalViews());
         response.setIsPublic(flashcardSet.isPublic());
         response.setFlashcards(flashcardPage.getContent().stream()
                 .map(this::convertToFlashcardResponseDTO)
                 .collect(Collectors.toList()));
+        response.setCreatedAt(flashcardSet.getCreatedAt());
 
         return response;
     }
@@ -392,8 +394,10 @@ public class StudentFlashcardSetServiceImpl implements StudentFlashcardSetServic
         responseDTO.setStudentSetId(flashcardSet.getStudentSetId());
         responseDTO.setTitle(flashcardSet.getTitle());
         responseDTO.setDescription(flashcardSet.getDescription());
+        responseDTO.setTotalViews(flashcardSet.getTotalViews());
         responseDTO.setIsPublic(flashcardSet.isPublic());
         responseDTO.setFlashcards(flashcardDTOs);
+        responseDTO.setCreatedAt(flashcardSet.getCreatedAt());
 
         return responseDTO;
     }
