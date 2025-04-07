@@ -4,6 +4,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.example.technihongo.core.security.JwtUtil;
 import org.example.technihongo.dto.*;
+import org.example.technihongo.entities.PaymentTransaction;
 import org.example.technihongo.enums.ActivityType;
 import org.example.technihongo.enums.ContentType;
 import org.example.technihongo.enums.TransactionStatus;
@@ -244,6 +245,31 @@ public class PaymentTransactionController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ApiResponse.builder()
                     .success(false)
                     .message("Failed to retrieve payment history: " + e.getMessage())
+                    .build());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(ApiResponse.builder()
+                    .success(false)
+                    .message("Internal Server Error: " + e.getMessage())
+                    .build());
+        }
+    }
+
+    @GetMapping("/detail")
+    public ResponseEntity<ApiResponse> getPaymentTransactionById(
+            @RequestParam Integer transactionId,
+            @RequestHeader("Authorization") String authorizationHeader) {
+        try {
+            Integer studentId = extractStudentId(authorizationHeader);
+            PaymentTransaction transaction = paymentTransactionService.getPaymentTransactionById(studentId, transactionId);
+            return ResponseEntity.ok(ApiResponse.builder()
+                    .success(true)
+                    .message("Payment transaction retrieved successfully!")
+                    .data(transaction)
+                    .build());
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ApiResponse.builder()
+                    .success(false)
+                    .message("Failed to retrieve payment transaction: " + e.getMessage())
                     .build());
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(ApiResponse.builder()

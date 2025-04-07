@@ -1,6 +1,7 @@
 package org.example.technihongo.services.interfaces;
 
 import org.example.technihongo.dto.*;
+import org.example.technihongo.entities.PaymentTransaction;
 
 import java.util.List;
 import java.util.Map;
@@ -13,5 +14,5 @@ public interface PaymentTransactionService {
 
     void handleMoMoCallback(MomoCallbackDTO callbackDTO, Map<String, String> requestParams);
 //    void handleZaloCallback(ZaloPayCallbackDTO callbackDTO, Map<String, String> requestParams);
-
+    PaymentTransaction getPaymentTransactionById(Integer studentId, Integer transactionId);
 }
