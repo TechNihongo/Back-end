@@ -19,6 +19,10 @@ import org.example.technihongo.services.interfaces.MomoService;
 import org.example.technihongo.services.interfaces.StudentSubscriptionService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -29,6 +33,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 
 @Service
@@ -140,43 +145,99 @@ public class StudentSubscriptionServiceImpl implements StudentSubscriptionServic
             log.warn("Payment failed or canceled for transaction: {}. ResultCode: {}, Message: {}",
                     transaction.getTransactionId(), callback.getResultCode(), callback.getMessage());
         }
-
-
     }
+
     @Override
-    public List<SubscriptionHistoryDTO> getSubscriptionHistory(Integer studentId) {
-        List<StudentSubscription> subscriptions = subscriptionRepository.findAllByStudent_StudentIdOrderByStartDateDesc(studentId);
-        List<SubscriptionHistoryDTO> result = new ArrayList<>();
+    public PageResponseDTO<SubscriptionHistoryDTO> getSubscriptionHistory(Integer studentId, int pageNo, int pageSize, String sortBy, String sortDir) {
+        if (studentId == null) {
+            throw new IllegalArgumentException("Student ID must not be null.");
+        }
 
-        for (StudentSubscription sub : subscriptions) {
-            List<PaymentTransaction> transactions = paymentTransactionRepository.findAllBySubscription_SubscriptionId(sub.getSubscriptionId());
+        Sort sort = sortDir.equalsIgnoreCase(Sort.Direction.ASC.name())
+                ? Sort.by(sortBy).ascending()
+                : Sort.by(sortBy).descending();
+        Pageable pageable = PageRequest.of(pageNo, pageSize, sort);
 
-            if (transactions.isEmpty()) {
-                result.add(SubscriptionHistoryDTO.builder()
-                        .subscriptionId(sub.getSubscriptionId())
-                        .planName(sub.getSubscriptionPlan().getName())
-                        .startDate(sub.getStartDate())
-                        .endDate(sub.getEndDate())
-                        .amount(BigDecimal.ZERO)
-                        .paymentMethod("N/A")
-                        .status(sub.getIsActive())
-                        .build());
-            } else {
-                for (PaymentTransaction transaction : transactions) {
-                    result.add(SubscriptionHistoryDTO.builder()
+        Page<StudentSubscription> subscriptions = subscriptionRepository.findAllByStudent_StudentId(studentId, pageable);
+
+        List<SubscriptionHistoryDTO> result = subscriptions.getContent().stream()
+                .map(sub -> {
+                    List<PaymentTransaction> transactions = paymentTransactionRepository
+                            .findAllBySubscription_SubscriptionIdAndTransactionStatusOrderByPaymentDateDesc(sub.getSubscriptionId(), TransactionStatus.COMPLETED);
+                    PaymentTransaction latestTransaction = transactions.isEmpty() ? null : transactions.get(0);
+
+                    String groupStatus = determineGroupStatus(sub, latestTransaction);
+
+                    return SubscriptionHistoryDTO.builder()
                             .subscriptionId(sub.getSubscriptionId())
                             .planName(sub.getSubscriptionPlan().getName())
                             .startDate(sub.getStartDate())
                             .endDate(sub.getEndDate())
-                            .amount(transaction.getTransactionAmount())
-                            .paymentMethod(transaction.getPaymentMethod().getName().name())
+                            .amount(latestTransaction != null ? latestTransaction.getTransactionAmount() : BigDecimal.ZERO)
+                            .paymentMethod(latestTransaction != null ? latestTransaction.getPaymentMethod().getName().name() : "N/A")
                             .status(sub.getIsActive())
-                            .build());
-                }
-            }
-        }
-        return result;
+                            .groupStatus(groupStatus)
+                            .build();
+                })
+                .collect(Collectors.toList());
+
+        return PageResponseDTO.<SubscriptionHistoryDTO>builder()
+                .content(result)
+                .pageNo(subscriptions.getNumber())
+                .pageSize(subscriptions.getSize())
+                .totalElements(subscriptions.getTotalElements())
+                .totalPages(subscriptions.getTotalPages())
+                .last(subscriptions.isLast())
+                .build();
     }
+
+    private String determineGroupStatus(StudentSubscription sub, PaymentTransaction latestTransaction) {
+        LocalDateTime now = LocalDateTime.now();
+        if (sub.getIsActive()) {
+            return "Đang hoạt động";
+        } else if (latestTransaction == null) {
+            return "Không hoạt động/Hết hạn";
+        } else if (sub.getStartDate().isAfter(now)) {
+            return "Sắp mở";
+        } else {
+            return "Không hoạt động/Hết hạn";
+        }
+    }
+
+//    @Override
+//    public List<SubscriptionHistoryDTO> getSubscriptionHistory(Integer studentId) {
+//        List<StudentSubscription> subscriptions = subscriptionRepository.findAllByStudent_StudentIdOrderByStartDateDesc(studentId);
+//        List<SubscriptionHistoryDTO> result = new ArrayList<>();
+//
+//        for (StudentSubscription sub : subscriptions) {
+//            List<PaymentTransaction> transactions = paymentTransactionRepository.findAllBySubscription_SubscriptionId(sub.getSubscriptionId());
+//
+//            if (transactions.isEmpty()) {
+//                result.add(SubscriptionHistoryDTO.builder()
+//                        .subscriptionId(sub.getSubscriptionId())
+//                        .planName(sub.getSubscriptionPlan().getName())
+//                        .startDate(sub.getStartDate())
+//                        .endDate(sub.getEndDate())
+//                        .amount(BigDecimal.ZERO)
+//                        .paymentMethod("N/A")
+//                        .status(sub.getIsActive())
+//                        .build());
+//            } else {
+//                for (PaymentTransaction transaction : transactions) {
+//                    result.add(SubscriptionHistoryDTO.builder()
+//                            .subscriptionId(sub.getSubscriptionId())
+//                            .planName(sub.getSubscriptionPlan().getName())
+//                            .startDate(sub.getStartDate())
+//                            .endDate(sub.getEndDate())
+//                            .amount(transaction.getTransactionAmount())
+//                            .paymentMethod(transaction.getPaymentMethod().getName().name())
+//                            .status(sub.getIsActive())
+//                            .build());
+//                }
+//            }
+//        }
+//        return result;
+//    }
 
     @Override
     @Scheduled(cron = "0 0 9 * * *")

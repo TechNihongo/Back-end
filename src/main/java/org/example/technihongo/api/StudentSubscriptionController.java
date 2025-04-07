@@ -3,10 +3,7 @@ package org.example.technihongo.api;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.example.technihongo.core.security.JwtUtil;
-import org.example.technihongo.dto.MomoCallbackDTO;
-import org.example.technihongo.dto.RenewSubscriptionRequestDTO;
-import org.example.technihongo.dto.RenewSubscriptionResponseDTO;
-import org.example.technihongo.dto.SubscriptionHistoryDTO;
+import org.example.technihongo.dto.*;
 import org.example.technihongo.enums.ActivityType;
 import org.example.technihongo.enums.ContentType;
 import org.example.technihongo.exception.ResourceNotFoundException;
@@ -128,7 +125,11 @@ public class StudentSubscriptionController {
     @GetMapping("/history")
     public ResponseEntity<ApiResponse> getSubscriptionHistory(
             @RequestHeader("Authorization") String authorizationHeader,
-            @RequestParam("studentId") Integer studentId) {
+            @RequestParam("studentId") Integer studentId,
+            @RequestParam(defaultValue = "0") int pageNo,
+            @RequestParam(defaultValue = "10") int pageSize,
+            @RequestParam(defaultValue = "startDate") String sortBy,
+            @RequestParam(defaultValue = "desc") String sortDir) {
         try {
             Integer authenticatedStudentId = extractStudentId(authorizationHeader);
 
@@ -140,7 +141,7 @@ public class StudentSubscriptionController {
                                 .build());
             }
 
-            List<SubscriptionHistoryDTO> history = subscriptionService.getSubscriptionHistory(studentId);
+            PageResponseDTO<SubscriptionHistoryDTO> history = subscriptionService.getSubscriptionHistory(studentId, pageNo, pageSize, sortBy, sortDir);
             return ResponseEntity.ok(ApiResponse.builder()
                     .success(true)
                     .message("Subscription history retrieved successfully!")

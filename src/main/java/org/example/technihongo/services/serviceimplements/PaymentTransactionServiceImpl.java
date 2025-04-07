@@ -21,10 +21,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -252,6 +249,21 @@ public class PaymentTransactionServiceImpl implements PaymentTransactionService 
 
         logger.info("MoMo callback handled for transactionId: {}, new status: {}",
                 transaction.getTransactionId(), newStatus);
+    }
+
+    @Override
+    public PaymentTransaction getPaymentTransactionById(Integer studentId, Integer transactionId) {
+        studentRepository.findById(studentId)
+                .orElseThrow(() -> new RuntimeException("Student not found!"));
+
+        PaymentTransaction transaction = paymentTransactionRepository.findById(transactionId)
+                .orElseThrow(() -> new RuntimeException("Payment transaction not found!"));
+
+        if (!Objects.equals(transaction.getSubscription().getStudent().getStudentId(), studentId)) {
+            throw new RuntimeException("Student does not have subscription for this transaction!");
+        }
+
+        return transaction;
     }
 
 //    @Override
