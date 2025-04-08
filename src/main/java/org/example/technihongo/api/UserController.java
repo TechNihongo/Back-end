@@ -12,6 +12,7 @@ import org.example.technihongo.entities.User;
 import org.example.technihongo.enums.ActivityType;
 import org.example.technihongo.enums.ContentType;
 import org.example.technihongo.enums.TokenType;
+import org.example.technihongo.exception.ResourceNotFoundException;
 import org.example.technihongo.response.ApiResponse;
 import org.example.technihongo.services.interfaces.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -459,6 +460,30 @@ public class UserController {
                     .body(ApiResponse.builder()
                             .success(false)
                             .message("Failed to search Student: " + e.getMessage())
+                            .build());
+        }
+    }
+
+    @GetMapping("/getUserByStudentId/{studentId}")
+    public ResponseEntity<ApiResponse> getUserByStudentId(@PathVariable Integer studentId) {
+        try {
+            UserDTO userDTO = userService.getUserByStudentId(studentId);
+            return ResponseEntity.ok(ApiResponse.builder()
+                    .success(true)
+                    .message("User retrieved successfully")
+                    .data(userDTO)
+                    .build());
+        } catch (ResourceNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(ApiResponse.builder()
+                            .success(false)
+                            .message(e.getMessage())
+                            .build());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponse.builder()
+                            .success(false)
+                            .message("Failed to retrieve user: " + e.getMessage())
                             .build());
         }
     }
