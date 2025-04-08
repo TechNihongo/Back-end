@@ -13,10 +13,12 @@ import org.example.technihongo.services.interfaces.UserActivityLogService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDateTime;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 
@@ -160,6 +162,7 @@ public class StudentCourseProgressServiceImpl implements StudentCourseProgressSe
     }
 
     @Override
+    @Transactional
     public void trackStudentCourseProgress(Integer studentId, Integer courseId, Integer currentLessonId) {
         StudentCourseProgress progress = studentCourseProgressRepository
                 .findByStudent_StudentIdAndCourse_CourseId(studentId, courseId)
@@ -198,6 +201,25 @@ public class StudentCourseProgressServiceImpl implements StudentCourseProgressSe
             Lesson currentLesson = lessonRepository.findById(currentLessonId)
                     .orElseThrow(() -> new RuntimeException("Lesson not found"));
             progress.setCurrentLesson(currentLesson);
+        }
+        else {
+            // Tìm Lesson có IN_PROGRESS gần nhất dựa trên lessonOrder
+            StudentLessonProgress latestInProgress = lessonProgresses.stream()
+                    .filter(p -> p.getCompletionStatus().equals(CompletionStatus.IN_PROGRESS))
+                    .min(Comparator.comparing(p -> p.getLesson().getLessonOrder())) // Sắp xếp theo lessonOrder nhỏ nhất
+                    .orElse(null);
+
+            if (latestInProgress != null) {
+                progress.setCurrentLesson(latestInProgress.getLesson());
+            } else {
+                // Nếu không có IN_PROGRESS, chọn Lesson đầu tiên trong StudyPlan
+                Lesson firstLesson = lessonRepository
+                        .findByStudyPlan_StudyPlanIdOrderByLessonOrderAsc(activePlan.getStudyPlan().getStudyPlanId())
+                        .stream()
+                        .findFirst()
+                        .orElse(null);
+                progress.setCurrentLesson(firstLesson);
+            }
         }
 
         // Cập nhật total_study_date

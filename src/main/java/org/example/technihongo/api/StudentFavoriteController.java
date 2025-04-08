@@ -9,6 +9,7 @@ import org.example.technihongo.entities.PathCourse;
 import org.example.technihongo.entities.StudentFavorite;
 import org.example.technihongo.enums.ActivityType;
 import org.example.technihongo.enums.ContentType;
+import org.example.technihongo.exception.ResourceNotFoundException;
 import org.example.technihongo.response.ApiResponse;
 import org.example.technihongo.services.interfaces.StudentFavoriteService;
 import org.example.technihongo.services.interfaces.StudentService;
@@ -128,5 +129,102 @@ public class StudentFavoriteController {
                             .message("Internal Server Error: " + e.getMessage())
                             .build());
         }
+    }
+
+    @DeleteMapping("/remove")
+    public ResponseEntity<ApiResponse> removeFavoriteLearningResource(
+            @RequestParam Integer learningResourceId,
+            @RequestHeader("Authorization") String authorizationHeader,
+            HttpServletRequest httpRequest) {
+        try {
+            if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
+                String token = authorizationHeader.substring(7);
+                Integer userId = jwtUtil.extractUserId(token);
+                Integer studentId = studentService.getStudentIdByUserId(userId);
+
+                studentFavoriteService.removeFavoriteLearningResource(studentId, learningResourceId);
+
+                String ipAddress = httpRequest.getRemoteAddr();
+                String userAgent = httpRequest.getHeader("User-Agent");
+                userActivityLogService.trackUserActivityLog(
+                        userId,
+                        ActivityType.REMOVE_FAVORITE,
+                        ContentType.StudentFavorite,
+                        null,
+                        ipAddress,
+                        userAgent
+                );
+
+                return ResponseEntity.ok(ApiResponse.builder()
+                        .success(true)
+                        .message("Learning resource removed from favorites successfully!")
+                        .data(null)
+                        .build());
+            } else {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(ApiResponse.builder()
+                                .success(false)
+                                .message("Unauthorized")
+                                .build());
+            }
+        } catch (ResourceNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ApiResponse.builder()
+                    .success(false)
+                    .message(e.getMessage())
+                    .build());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(ApiResponse.builder()
+                    .success(false)
+                    .message("An error occurred: " + e.getMessage())
+                    .build());
+        }
+    }
+
+    @GetMapping("/check")
+    public ResponseEntity<ApiResponse> checkLearningResourceFavorited(
+            @RequestParam Integer learningResourceId,
+            @RequestHeader("Authorization") String authorizationHeader) {
+        try {
+            Integer studentId = extractStudentId(authorizationHeader);
+            boolean isFavorited = studentFavoriteService.checkLearningResourceFavorited(studentId, learningResourceId);
+            if(isFavorited) {
+                return ResponseEntity.ok(ApiResponse.builder()
+                        .success(true)
+                        .message("Favorite status checked successfully!")
+                        .data(true)
+                        .build());
+            }
+            else {
+                return ResponseEntity.ok(ApiResponse.builder()
+                        .success(true)
+                        .message("Learning Resource not yet favorited!")
+                        .data(false)
+                        .build());
+            }
+        } catch (ResourceNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ApiResponse.builder()
+                    .success(false)
+                    .message(e.getMessage())
+                    .build());
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ApiResponse.builder()
+                    .success(false)
+                    .message(e.getMessage())
+                    .build());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(ApiResponse.builder()
+                    .success(false)
+                    .message("An error occurred: " + e.getMessage())
+                    .build());
+        }
+    }
+
+    private Integer extractStudentId(String authorizationHeader) {
+        if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
+            String token = authorizationHeader.substring(7);
+            Integer userId = jwtUtil.extractUserId(token);
+            return studentService.getStudentIdByUserId(userId);
+        }
+        throw new IllegalArgumentException("Authorization header is missing or invalid.");
     }
 }

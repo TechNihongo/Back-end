@@ -25,15 +25,15 @@ public class StudentResourceProgressController {
     @PatchMapping("/track")
     public ResponseEntity<ApiResponse> trackLearningResourceProgress(
             @RequestHeader("Authorization") String authorizationHeader,
-            @RequestParam Integer resourceId,
-            @RequestParam(required = false) String notes) {
+            @RequestParam Integer resourceId) {
+//            @RequestParam(required = false) String notes) {
         try {
             if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
                 String token = authorizationHeader.substring(7);
                 Integer userId = jwtUtil.extractUserId(token);
                 Integer studentId = studentService.getStudentIdByUserId(userId);
 
-                resourceProgressService.trackLearningResourceProgress(studentId, resourceId, notes);
+                resourceProgressService.trackLearningResourceProgress(studentId, resourceId, null);
 
                 return ResponseEntity.ok(ApiResponse.builder()
                         .success(true)
@@ -111,6 +111,46 @@ public class StudentResourceProgressController {
                     .body(ApiResponse.builder()
                             .success(false)
                             .message("Failed to retrieve learning resource progress: " + e.getMessage())
+                            .build());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponse.builder()
+                            .success(false)
+                            .message("Internal Server Error: " + e.getMessage())
+                            .build());
+        }
+    }
+
+    @PatchMapping("/note")
+    public ResponseEntity<ApiResponse> writeNoteForLearningResource(
+            @RequestHeader("Authorization") String authorizationHeader,
+            @RequestParam Integer resourceId,
+            @RequestParam(required = false) String notes) {
+        try {
+            if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
+                String token = authorizationHeader.substring(7);
+                Integer userId = jwtUtil.extractUserId(token);
+                Integer studentId = studentService.getStudentIdByUserId(userId);
+
+                StudentResourceProgress progress = resourceProgressService.writeNoteForLearningResource(studentId, resourceId, notes);
+
+                return ResponseEntity.ok(ApiResponse.builder()
+                        .success(true)
+                        .message("Note successfully!")
+                        .data(progress)
+                        .build());
+            }  else {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(ApiResponse.builder()
+                                .success(false)
+                                .message("Unauthorized")
+                                .build());
+            }
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(ApiResponse.builder()
+                            .success(false)
+                            .message("Failed to track learning resource progress: " + e.getMessage())
                             .build());
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)

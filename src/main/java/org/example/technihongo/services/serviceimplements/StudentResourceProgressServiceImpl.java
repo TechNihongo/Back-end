@@ -93,4 +93,33 @@ public class StudentResourceProgressServiceImpl implements StudentResourceProgre
                 .findByStudent_StudentIdAndLearningResource_ResourceId(studentId, resourceId)
                 .orElseThrow(() -> new RuntimeException("Progress not found for student ID: " + studentId + " and resource ID: " + resourceId));
     }
+
+    @Override
+    public StudentResourceProgress writeNoteForLearningResource(Integer studentId, Integer resourceId, String notes) {
+        Student student = studentRepository.findById(studentId)
+                .orElseThrow(() -> new RuntimeException("Student not found with ID: " + studentId));
+        LearningResource learningResource = learningResourceRepository.findById(resourceId)
+                .orElseThrow(() -> new RuntimeException("LearningResource not found with ID: " + resourceId));
+
+        Optional<StudentResourceProgress> existingProgressOpt = studentResourceProgressRepository
+                .findByStudent_StudentIdAndLearningResource_ResourceId(studentId, resourceId);
+
+        StudentResourceProgress progress;
+        if (existingProgressOpt.isEmpty()) {
+            progress = new StudentResourceProgress();
+            progress.setStudent(student);
+            progress.setLearningResource(learningResource);
+            progress.setCompletionStatus(CompletionStatus.IN_PROGRESS);
+            progress.setLastStudied(LocalDateTime.now());
+        } else {
+            progress = existingProgressOpt.get();
+            progress.setLastStudied(LocalDateTime.now());
+
+            if (notes != null) {
+                progress.setNotes(notes);
+            }
+        }
+
+        return studentResourceProgressRepository.save(progress);
+    }
 }

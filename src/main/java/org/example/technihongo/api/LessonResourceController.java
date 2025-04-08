@@ -8,6 +8,7 @@ import org.example.technihongo.enums.ActivityType;
 import org.example.technihongo.enums.ContentType;
 import org.example.technihongo.response.ApiResponse;
 import org.example.technihongo.services.interfaces.LessonResourceService;
+import org.example.technihongo.services.interfaces.StudentService;
 import org.example.technihongo.services.interfaces.UserActivityLogService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -27,6 +28,8 @@ public class LessonResourceController {
     private JwtUtil jwtUtil;
     @Autowired
     private UserActivityLogService userActivityLogService;
+    @Autowired
+    private StudentService studentService;
 
     @GetMapping("/lesson/{lessonId}")
     public ResponseEntity<ApiResponse> getLessonResourcesByLessonId(
@@ -37,23 +40,35 @@ public class LessonResourceController {
                 String token = authorizationHeader.substring(7);
                 int roleId = jwtUtil.extractUserRoleId(token);
 
-                List<LessonResource> lessonResourceList;
                 if (roleId == 1 || roleId == 2) {
-                    lessonResourceList = lessonResourceService.getLessonResourceListByLessonId(lessonId);
+                    List<LessonResource> lessonResourceList = lessonResourceService.getLessonResourceListByLessonId(lessonId);
+                    if (lessonResourceList.isEmpty()) {
+                        return ResponseEntity.ok(ApiResponse.builder()
+                                .success(false)
+                                .message("List LessonResources is empty!")
+                                .build());
+                    } else {
+                        return ResponseEntity.ok(ApiResponse.builder()
+                                .success(true)
+                                .message("Get All LessonResources By Lesson")
+                                .data(lessonResourceList)
+                                .build());
+                    }
                 } else {
-                    lessonResourceList = lessonResourceService.getActiveLessonResourceListByLessonId(lessonId);
-                }
-                if (lessonResourceList.isEmpty()) {
-                    return ResponseEntity.ok(ApiResponse.builder()
-                            .success(false)
-                            .message("List LessonResources is empty!")
-                            .build());
-                } else {
-                    return ResponseEntity.ok(ApiResponse.builder()
-                            .success(true)
-                            .message("Get All LessonResources By Lesson")
-                            .data(lessonResourceList)
-                            .build());
+                    Integer studentId = extractStudentId(authorizationHeader);
+                    List<LessonResourceDTO> dto = lessonResourceService.getActiveLessonResourceListByLessonId(studentId, lessonId);
+                    if (dto.isEmpty()) {
+                        return ResponseEntity.ok(ApiResponse.builder()
+                                .success(false)
+                                .message("List Active LessonResources is empty!")
+                                .build());
+                    } else {
+                        return ResponseEntity.ok(ApiResponse.builder()
+                                .success(true)
+                                .message("Get All Active LessonResources By Lesson")
+                                .data(dto)
+                                .build());
+                    }
                 }
             }
             else {
@@ -359,5 +374,14 @@ public class LessonResourceController {
                             .message("Internal Server Error: " + e.getMessage())
                             .build());
         }
+    }
+
+    private Integer extractStudentId(String authorizationHeader) {
+        if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
+            String token = authorizationHeader.substring(7);
+            Integer userId = jwtUtil.extractUserId(token);
+            return studentService.getStudentIdByUserId(userId);
+        }
+        throw new IllegalArgumentException("Authorization header is missing or invalid.");
     }
 }

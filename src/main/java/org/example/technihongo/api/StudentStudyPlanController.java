@@ -7,11 +7,14 @@ import org.example.technihongo.dto.EnrollStudyPlanRequest;
 import org.example.technihongo.dto.StudentStudyPlanDTO;
 import org.example.technihongo.dto.StudyPlanDTO;
 import org.example.technihongo.dto.SwitchStudyPlanRequestDTO;
+import org.example.technihongo.entities.Course;
 import org.example.technihongo.enums.ActivityType;
 import org.example.technihongo.enums.ContentType;
 import org.example.technihongo.exception.ResourceNotFoundException;
 import org.example.technihongo.response.ApiResponse;
+import org.example.technihongo.services.interfaces.StudentCourseProgressService;
 import org.example.technihongo.services.interfaces.StudentStudyPlanService;
+import org.example.technihongo.services.interfaces.StudyPlanService;
 import org.example.technihongo.services.interfaces.UserActivityLogService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -29,6 +32,10 @@ public class StudentStudyPlanController {
     private JwtUtil jwtUtil;
     @Autowired
     private UserActivityLogService userActivityLogService;
+    @Autowired
+    private StudentCourseProgressService studentCourseProgressService;
+    @Autowired
+    private StudyPlanService studyPlanService;
 
     @PostMapping("/enroll")
     public ResponseEntity<ApiResponse> enrollStudentInStudyPlan(
@@ -70,6 +77,8 @@ public class StudentStudyPlanController {
             HttpServletRequest httpRequest) {
         try {
             StudentStudyPlanDTO newPlan = studentStudyPlanService.switchStudyPlan(request);
+            Course course = studyPlanService.getCourseByStudyPlanId(request.getNewStudyPlanId());
+            studentCourseProgressService.trackStudentCourseProgress(request.getStudentId(), course.getCourseId(), null);
 
             String ipAddress = httpRequest.getRemoteAddr();
             String userAgent = httpRequest.getHeader("User-Agent");

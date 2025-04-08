@@ -48,7 +48,7 @@ public class LessonController {
                     lessonService.checkLessonProgressPrerequisite(studentId, id);
                     studentLessonProgressService.trackStudentLessonProgress(studentId, id);
                     Integer courseId = lessonService.getCourseIdByLessonId(id);
-                    studentCourseProgressService.trackStudentCourseProgress(studentId, courseId, id);
+                    studentCourseProgressService.trackStudentCourseProgress(studentId, courseId, null);
                 }
 
                 Optional<Lesson> lesson = lessonService.getLessonById(id);

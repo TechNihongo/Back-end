@@ -3,13 +3,15 @@ package org.example.technihongo.api;
 import jakarta.servlet.http.HttpServletRequest;
 import org.example.technihongo.core.security.JwtUtil;
 import org.example.technihongo.dto.CourseStatisticsDTO;
+import org.example.technihongo.dto.EnrollStudyPlanRequest;
+import org.example.technihongo.dto.StudentStudyPlanDTO;
 import org.example.technihongo.entities.StudentCourseProgress;
+import org.example.technihongo.entities.StudentStudyPlan;
+import org.example.technihongo.entities.StudyPlan;
 import org.example.technihongo.enums.ActivityType;
 import org.example.technihongo.enums.ContentType;
 import org.example.technihongo.response.ApiResponse;
-import org.example.technihongo.services.interfaces.StudentCourseProgressService;
-import org.example.technihongo.services.interfaces.StudentService;
-import org.example.technihongo.services.interfaces.UserActivityLogService;
+import org.example.technihongo.services.interfaces.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -28,6 +30,10 @@ public class StudentCourseProgressController {
     private StudentService studentService;
     @Autowired
     private UserActivityLogService userActivityLogService;
+    @Autowired
+    private StudyPlanService studyPlanService;
+    @Autowired
+    private StudentStudyPlanService studentStudyPlanService;
 
     @GetMapping("/view/{studentId}")
     public ResponseEntity<ApiResponse> getStudentCourseProgress(
@@ -156,6 +162,9 @@ public class StudentCourseProgressController {
                 Integer studentId = studentService.getStudentIdByUserId(userId);
 
                 courseProgressService.enrollCourse(studentId, courseId);
+                StudyPlan studyPlan = studyPlanService.getDefaultStudyPlanByCourseId(courseId);
+                StudentStudyPlanDTO dto = studentStudyPlanService.enrollStudentInStudyPlan(
+                        new EnrollStudyPlanRequest(studentId, studyPlan.getStudyPlanId()));
 
                 String ipAddress = httpRequest.getRemoteAddr();
                 String userAgent = httpRequest.getHeader("User-Agent");

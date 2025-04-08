@@ -5,6 +5,7 @@ import org.example.technihongo.dto.PageResponseDTO;
 import org.example.technihongo.entities.LearningResource;
 import org.example.technihongo.entities.Student;
 import org.example.technihongo.entities.StudentFavorite;
+import org.example.technihongo.exception.ResourceNotFoundException;
 import org.example.technihongo.repositories.LearningResourceRepository;
 import org.example.technihongo.repositories.StudentFavoriteRepository;
 import org.example.technihongo.repositories.StudentRepository;
@@ -91,6 +92,33 @@ public class StudentFavoriteServiceImpl implements StudentFavoriteService {
         Page<LearningResource> learningResources = favorites.map(StudentFavorite::getLearningResource);
 
         return getPageResponseDTO(learningResources);
+    }
+
+    @Override
+    @Transactional
+    public void removeFavoriteLearningResource(Integer studentId, Integer learningResourceId) {
+        studentRepository.findById(studentId)
+                .orElseThrow(() -> new ResourceNotFoundException("Student not found with ID: " + studentId));
+
+        learningResourceRepository.findById(learningResourceId)
+                .orElseThrow(() -> new ResourceNotFoundException("Learning resource not found with ID: " + learningResourceId));
+
+        StudentFavorite favorite = studentFavoriteRepository
+                .findByStudent_StudentIdAndLearningResource_ResourceId(studentId, learningResourceId)
+                .orElseThrow(() -> new ResourceNotFoundException("Favorite not found for this student and learning resource"));
+
+        studentFavoriteRepository.delete(favorite);
+    }
+
+    @Override
+    public boolean checkLearningResourceFavorited(Integer studentId, Integer learningResourceId) {
+        studentRepository.findById(studentId)
+                .orElseThrow(() -> new ResourceNotFoundException("Student not found with ID: " + studentId));
+
+        learningResourceRepository.findById(learningResourceId)
+                .orElseThrow(() -> new ResourceNotFoundException("Learning resource not found with ID: " + learningResourceId));
+
+        return studentFavoriteRepository.existsByStudent_StudentIdAndLearningResource_ResourceId(studentId, learningResourceId);
     }
 
     private PageResponseDTO<LearningResource> getPageResponseDTO(Page<LearningResource> page) {

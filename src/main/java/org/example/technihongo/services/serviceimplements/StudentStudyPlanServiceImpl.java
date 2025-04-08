@@ -10,6 +10,7 @@ import org.example.technihongo.enums.CompletionStatus;
 import org.example.technihongo.enums.StudyPlanStatus;
 import org.example.technihongo.exception.ResourceNotFoundException;
 import org.example.technihongo.repositories.*;
+import org.example.technihongo.services.interfaces.StudentLessonProgressService;
 import org.example.technihongo.services.interfaces.StudentStudyPlanService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -25,7 +26,6 @@ import java.util.stream.Collectors;
 @Transactional
 @RequiredArgsConstructor
 public class StudentStudyPlanServiceImpl implements StudentStudyPlanService {
-
     @Autowired
     private StudentStudyPlanRepository studentStudyPlanRepository;
     @Autowired
@@ -38,6 +38,8 @@ public class StudentStudyPlanServiceImpl implements StudentStudyPlanService {
     private StudentLessonProgressRepository studentLessonProgressRepository;
     @Autowired
     private StudentCourseProgressRepository studentCourseProgressRepository;
+    @Autowired
+    private StudentLessonProgressService studentLessonProgressService;
 
     @Override
     public StudentStudyPlanDTO enrollStudentInStudyPlan(EnrollStudyPlanRequest request) {
@@ -176,6 +178,13 @@ public class StudentStudyPlanServiceImpl implements StudentStudyPlanService {
                 studentLessonProgressRepository.save(lessonProgress);
             }
         }
+
+        //check progress toàn bộ Lesson
+        List<Lesson> lessons = lessonRepository.findByStudyPlan_StudyPlanIdOrderByLessonOrderAsc(newStudyPlan.getStudyPlanId());
+        for (Lesson lesson : lessons) {
+            studentLessonProgressService.trackStudentLessonProgress(request.getStudentId(), lesson.getLessonId());
+        }
+
         return mapToDTO(savedPlan);
     }
 
