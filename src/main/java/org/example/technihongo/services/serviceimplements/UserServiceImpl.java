@@ -492,6 +492,10 @@ public class UserServiceImpl implements UserService {
         authTokenRepository.save(authToken);
     }
 
+    @Override
+    public Integer getUserByStudentId(Integer studentId) {
+        return 0;
+    }
 
 
     private PageResponseDTO<User> getPageResponseDTO(Page<User> page) {

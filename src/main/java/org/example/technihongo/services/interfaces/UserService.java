@@ -13,6 +13,7 @@ public interface UserService {
     List<User> getStudentUsers();
     List<User> getContentManagerUsers();
 
+
     PageResponseDTO<User> userListPaginated(Integer roleId, int pageNo, int pageSize, String sortBy, String sortDir);
     PageResponseDTO<User> getStudentUsersPaginated(int pageNo, int pageSize, String sortBy, String sortDir);
     PageResponseDTO<User> getContentManagerUsersPaginated(int pageNo, int pageSize, String sortBy, String sortDir);
@@ -35,4 +36,6 @@ public interface UserService {
     PageResponseDTO<User> searchContentManager(String keyword, int pageNo, int pageSize, String sortBy, String sortDir);
 
     void verifyEmailToken(String token);
+
+    Integer getUserByStudentId(Integer studentId);
 }

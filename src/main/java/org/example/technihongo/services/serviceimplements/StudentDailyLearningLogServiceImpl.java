@@ -31,34 +31,28 @@ public class StudentDailyLearningLogServiceImpl implements StudentDailyLearningL
     @Transactional
     @Override
     public void trackStudentDailyLearningLog(Integer studentId, Integer studyTimeInput) {
-        // Lấy ngày hiện tại
         LocalDate today = LocalDate.now();
 
         // Tìm student
         Student student = studentRepository.findById(studentId)
                 .orElseThrow(() -> new RuntimeException("Student not found!"));
 
-        // Kiểm tra xem log của ngày hôm nay đã tồn tại chưa
         Optional<StudentDailyLearningLog> existingLogOpt = dailyLogRepository
                 .findByStudentStudentIdAndLogDate(studentId, today);
 
         StudentDailyLearningLog dailyLog;
-        boolean isNewLog = false; // Biến để kiểm tra log mới
+        boolean isNewLog = false;
         if (existingLogOpt.isPresent()) {
-            // Nếu đã tồn tại log, cập nhật
             dailyLog = existingLogOpt.get();
             updateDailyLog(dailyLog, studyTimeInput, student.getDailyGoal());
         } else {
-            // Nếu chưa tồn tại, tạo mới log
             dailyLog = createNewDailyLog(student, today);
             updateDailyLog(dailyLog, studyTimeInput, student.getDailyGoal());
             isNewLog = true; // Đánh dấu là log mới
         }
 
-        // Lưu daily log
         dailyLogRepository.save(dailyLog);
 
-        // Cập nhật StudentLearningStatistics
         updateLearningStatistics(student, dailyLog, isNewLog);
     }
 

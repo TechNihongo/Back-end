@@ -197,7 +197,11 @@ public class PaymentTransactionServiceImpl implements PaymentTransactionService 
         paymentTransactionRepository.save(transaction);
 
         if (newStatus == TransactionStatus.COMPLETED) {
-            studentSubscriptionRepository.save(transaction.getSubscription());
+            StudentSubscription subscription = transaction.getSubscription();
+            subscription.setIsActive(true);
+            subscription.setStartDate(LocalDateTime.now());
+            subscription.setEndDate(LocalDateTime.now().plusDays(subscription.getSubscriptionPlan().getDurationDays()));
+            studentSubscriptionRepository.save(subscription);
             logger.info("Subscription activated for transactionId: {}", transaction.getTransactionId());
         }
 
