@@ -90,8 +90,9 @@ public class StudentSubscriptionServiceImpl implements StudentSubscriptionServic
 
     @Override
     public void handleRenewalMoMo(MomoCallbackDTO callback, Map<String, String> requestParams) {
-
         String orderId = callback.getOrderId();
+        log.info("Handling MoMo renewal callback for orderId: {}", orderId);
+
         PaymentTransaction transaction = paymentTransactionRepository.findByExternalOrderId(orderId)
                 .orElseThrow(() -> new RuntimeException("Transaction not found for orderId: " + orderId));
 
@@ -108,6 +109,10 @@ public class StudentSubscriptionServiceImpl implements StudentSubscriptionServic
             paymentTransactionRepository.save(transaction);
 
             StudentSubscription currentSubscription = transaction.getSubscription();
+            log.info("Current subscription found: ID={}, EndDate={}",
+                    currentSubscription.getSubscriptionId(),
+                    currentSubscription.getEndDate());
+
             SubscriptionPlan plan = subscriptionPlanRepository.findById(currentSubscription.getSubscriptionPlan().getSubPlanId())
                     .orElseThrow(() -> new RuntimeException("Subscription plan not found"));
 
@@ -118,24 +123,32 @@ public class StudentSubscriptionServiceImpl implements StudentSubscriptionServic
                     .endDate(currentSubscription.getEndDate().plusDays(plan.getDurationDays()))
                     .isActive(false)
                     .build();
-            subscriptionRepository.save(newSubscription);
+
+            StudentSubscription savedSubscription = subscriptionRepository.save(newSubscription);
 
             log.info("New subscription created: ID={}, StudentID={}, PlanID={}, StartDate={}, EndDate={}, IsActive={}",
-                    newSubscription.getSubscriptionId(),
-                    newSubscription.getStudent().getStudentId(),
-                    newSubscription.getSubscriptionPlan().getSubPlanId(),
-                    newSubscription.getStartDate(),
-                    newSubscription.getEndDate(),
-                    newSubscription.getIsActive());
+                    savedSubscription.getSubscriptionId(),
+                    savedSubscription.getStudent().getStudentId(),
+                    savedSubscription.getSubscriptionPlan().getSubPlanId(),
+                    savedSubscription.getStartDate(),
+                    savedSubscription.getEndDate(),
+                    savedSubscription.getIsActive());
+
+             transaction.setSubscription(savedSubscription);
+             paymentTransactionRepository.save(transaction);
 
             if (currentSubscription.getEndDate().isBefore(LocalDateTime.now())) {
                 currentSubscription.setIsActive(false);
-                newSubscription.setIsActive(true);
                 subscriptionRepository.save(currentSubscription);
-                subscriptionRepository.save(newSubscription);
-                log.info("Old subscription expired, new subscription activated for student: {}", currentSubscription.getStudent().getStudentId());
+
+                savedSubscription.setIsActive(true);
+                subscriptionRepository.save(savedSubscription);
+
+                log.info("Old subscription deactivated, new subscription activated for student: {}",
+                        currentSubscription.getStudent().getStudentId());
             } else {
-                log.info("New subscription created (pending) for student: {}", currentSubscription.getStudent().getStudentId());
+                log.info("New subscription created (pending) for student: {}",
+                        currentSubscription.getStudent().getStudentId());
             }
         } else {
             transaction.setTransactionStatus(TransactionStatus.FAILED);

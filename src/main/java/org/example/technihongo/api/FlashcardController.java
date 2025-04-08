@@ -198,6 +198,8 @@ public class FlashcardController {
             if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
                 String token = authorizationHeader.substring(7);
                 Integer userId = jwtUtil.extractUserId(token);
+                Integer studentId = studentService.getStudentIdByUserId(userId);
+
 
                 String ipAddress = httpRequest.getRemoteAddr();
                 String userAgent = httpRequest.getHeader("User-Agent");
@@ -210,7 +212,7 @@ public class FlashcardController {
                         userAgent
                 );
 
-                flashcardService.deleteFlashcard(userId, flashcardId);
+                flashcardService.deleteFlashcard(userId, studentId , flashcardId);
                 return ResponseEntity.ok(ApiResponse.builder()
                         .success(true)
                         .message("Flashcard deleted successfully")
