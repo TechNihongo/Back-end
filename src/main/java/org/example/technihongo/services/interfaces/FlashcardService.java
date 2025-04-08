@@ -18,6 +18,6 @@ public interface FlashcardService {
 
 
     FlashcardResponseDTO updateFlashcard(Integer userId, Integer studentId, Integer flashcardId, FlashcardRequestDTO request);
-    void deleteFlashcard(Integer userId, Integer flashcardId);
+    void deleteFlashcard(Integer userId, Integer studentId , Integer flashcardId);
     FlashcardResponseDTO getFlashcardById(Integer flashcardId);
 }

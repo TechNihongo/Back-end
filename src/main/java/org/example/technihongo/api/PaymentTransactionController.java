@@ -12,6 +12,7 @@ import org.example.technihongo.exception.UnauthorizedAccessException;
 import org.example.technihongo.response.ApiResponse;
 import org.example.technihongo.services.interfaces.PaymentTransactionService;
 import org.example.technihongo.services.interfaces.StudentService;
+import org.example.technihongo.services.interfaces.StudentSubscriptionService;
 import org.example.technihongo.services.interfaces.UserActivityLogService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,6 +33,7 @@ public class PaymentTransactionController {
     private final JwtUtil jwtUtil;
     private final StudentService studentService;
     private final UserActivityLogService userActivityLogService;
+    private final StudentSubscriptionService subscriptionService;
 
 
     @PostMapping("/initiateMomo")
@@ -141,7 +143,17 @@ public class PaymentTransactionController {
                     .responseTime(request.get("responseTime"))
                     .build();
 
-            paymentTransactionService.handleMoMoCallback(callbackDTO, request);
+            String orderId = request.get("orderId");
+            log.info("Processing orderId: {}", orderId);
+
+            if (orderId != null && orderId.startsWith("RENEW-")) {
+                log.info("Detected renewal transaction: {}", orderId);
+                subscriptionService.handleRenewalMoMo(callbackDTO, request);
+            } else {
+                log.info("Detected regular payment transaction: {}", orderId);
+                paymentTransactionService.handleMoMoCallback(callbackDTO, request);
+            }
+
             if ("0".equals(callbackDTO.getResultCode())) {
                 return ResponseEntity.ok(ApiResponse.builder()
                         .success(true)
@@ -156,7 +168,7 @@ public class PaymentTransactionController {
                         .build());
             }
         } catch (Exception e) {
-            log.error("Error processing MoMo callback: {}", e.getMessage());
+            log.error("Error processing MoMo callback: {}", e.getMessage(), e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(ApiResponse.builder()
                     .success(false)
                     .message("Error processing callback: " + e.getMessage())
@@ -164,7 +176,7 @@ public class PaymentTransactionController {
         }
     }
 
-//
+
     @GetMapping("/studentTransaction")
     public ResponseEntity<ApiResponse> getPaymentHistoryByStudentId(
             @RequestParam(defaultValue = "0") int pageNo,

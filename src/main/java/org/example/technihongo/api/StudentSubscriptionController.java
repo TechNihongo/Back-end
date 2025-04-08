@@ -3,7 +3,10 @@ package org.example.technihongo.api;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.example.technihongo.core.security.JwtUtil;
-import org.example.technihongo.dto.*;
+import org.example.technihongo.dto.PageResponseDTO;
+import org.example.technihongo.dto.RenewSubscriptionRequestDTO;
+import org.example.technihongo.dto.RenewSubscriptionResponseDTO;
+import org.example.technihongo.dto.SubscriptionHistoryDTO;
 import org.example.technihongo.enums.ActivityType;
 import org.example.technihongo.enums.ContentType;
 import org.example.technihongo.exception.ResourceNotFoundException;
@@ -16,8 +19,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.Map;
 
 @RestController
 @RequestMapping("${spring.application.api-prefix}/subscription")
@@ -82,71 +83,44 @@ public class StudentSubscriptionController {
         }
     }
 
-    @GetMapping("/callback")
-    public ResponseEntity<ApiResponse> handleMoMoCallback(@RequestParam Map<String, String> request) {
-        try {
-            log.info("Received MoMo callback: {}", request);
 
-            MomoCallbackDTO callbackDTO = MomoCallbackDTO.builder()
-                    .partnerCode(request.get("partnerCode"))
-                    .orderId(request.get("orderId"))
-                    .requestId(request.get("requestId"))
-                    .amount(request.get("amount"))
-                    .resultCode(request.get("resultCode"))
-                    .message(request.get("message"))
-                    .signature(request.get("signature"))
-                    .build();
-
-            subscriptionService.handleRenewalMoMo(callbackDTO, request);
-
-            if ("0".equals(callbackDTO.getResultCode())) {
-                return ResponseEntity.ok(ApiResponse.builder()
-                        .success(true)
-                        .message("Payment completed successfully!")
-                        .data(Map.of("orderId", callbackDTO.getOrderId()))
-                        .build());
-            } else {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ApiResponse.builder()
-                        .success(false)
-                        .message("Payment failed: " + callbackDTO.getMessage())
-                        .data(Map.of("orderId", callbackDTO.getOrderId()))
-                        .build());
-            }
-        } catch (Exception e) {
-            log.error("Error processing MoMo callback: {}", e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(ApiResponse.builder()
-                    .success(false)
-                    .message("Error processing callback: " + e.getMessage())
-                    .data(null)
-                    .build());
-        }
-    }
     @GetMapping("/history")
     public ResponseEntity<ApiResponse> getSubscriptionHistory(
             @RequestHeader("Authorization") String authorizationHeader,
-            @RequestParam("studentId") Integer studentId,
+            HttpServletRequest httpRequest,
             @RequestParam(defaultValue = "0") int pageNo,
             @RequestParam(defaultValue = "10") int pageSize,
             @RequestParam(defaultValue = "startDate") String sortBy,
             @RequestParam(defaultValue = "desc") String sortDir) {
         try {
-            Integer authenticatedStudentId = extractStudentId(authorizationHeader);
-
-            if (!authenticatedStudentId.equals(studentId)) {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                        .body(ApiResponse.builder()
-                                .success(false)
-                                .message("Unauthorized access to subscription history!")
-                                .build());
+            if(authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
+                String token = authorizationHeader.substring(7);
+                Integer userId = jwtUtil.extractUserId(token);
+                Integer studentId = studentService.getStudentIdByUserId(userId);
+                String ipAddress = httpRequest.getRemoteAddr();
+                String userAgent = httpRequest.getHeader("User-Agent");
+                userActivityLogService.trackUserActivityLog(
+                        userId,
+                        ActivityType.RENEW_SUBSCRIPTION,
+                        ContentType.StudentSubscription,
+                        null,
+                        ipAddress,
+                        userAgent
+                );
+                PageResponseDTO<SubscriptionHistoryDTO> history = subscriptionService.getSubscriptionHistory(studentId, pageNo, pageSize, sortBy, sortDir);
+                return ResponseEntity.ok(ApiResponse.builder()
+                        .success(true)
+                        .message("Subscription history retrieved successfully!")
+                        .data(history)
+                        .build());
             }
-
-            PageResponseDTO<SubscriptionHistoryDTO> history = subscriptionService.getSubscriptionHistory(studentId, pageNo, pageSize, sortBy, sortDir);
-            return ResponseEntity.ok(ApiResponse.builder()
-                    .success(true)
-                    .message("Subscription history retrieved successfully!")
-                    .data(history)
-                    .build());
-
+            else {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ApiResponse.builder()
+                        .success(false)
+                        .message("Unauthorized access!")
+                        .data(null)
+                        .build());
+            }
         } catch (ResourceNotFoundException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(ApiResponse.builder()
@@ -189,12 +163,5 @@ public class StudentSubscriptionController {
     }
 
 
-    private Integer extractStudentId(String authorizationHeader) throws Exception {
-        if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
-            String token = authorizationHeader.substring(7);
-            Integer userId = jwtUtil.extractUserId(token);
-            return studentService.getStudentIdByUserId(userId);
-        }
-        throw new Exception("Authorization failed!");
-    }
+ 
 }

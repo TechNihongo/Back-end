@@ -150,14 +150,6 @@ public class StudentFlashcardSetServiceImpl implements StudentFlashcardSetServic
             throw new ResourceNotFoundException("One or more flashcards not found");
         }
 
-        for (Flashcard flashcard : flashcards) {
-            if (flashcard.getStudentFlashCardSet() == null ||
-                    !flashcard.getStudentFlashCardSet().getStudentSetId().equals(flashcardSetId)) {
-                throw new IllegalArgumentException("Flashcard " + flashcard.getFlashCardId() +
-                        " does not belong to the specified student flashcard set");
-            }
-        }
-
         List<Flashcard> studentFlashcardSet = flashcardRepository.findByStudentFlashCardSet_StudentSetId(flashcardSetId);
 
         Map<Integer, Flashcard> flashcardMap = studentFlashcardSet.stream()
@@ -171,7 +163,6 @@ public class StudentFlashcardSetServiceImpl implements StudentFlashcardSetServic
                 flashcard.setCardOrder(i + 1);
             }
         }
-
         flashcardRepository.saveAll(flashcards);
     }
 

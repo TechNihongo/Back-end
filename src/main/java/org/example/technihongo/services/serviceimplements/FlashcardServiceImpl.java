@@ -161,13 +161,13 @@ public class FlashcardServiceImpl implements FlashcardService {
     }
 
     @Override
-    public void deleteFlashcard(Integer userId, Integer flashcardId) {
+    public void deleteFlashcard(Integer userId, Integer studentId , Integer flashcardId) {
         Flashcard flashcard = flashcardRepository.findById(flashcardId)
                 .orElseThrow(() -> new ResourceNotFoundException("Flashcard not found with id: " + flashcardId));
 
         boolean hasPermission = false;
         if (flashcard.getStudentFlashCardSet() != null) {
-            hasPermission = flashcard.getStudentFlashCardSet().getCreator().getStudentId().equals(userId);
+            hasPermission = flashcard.getStudentFlashCardSet().getCreator().getStudentId().equals(studentId);
         } else if (flashcard.getSystemFlashCardSet() != null) {
             hasPermission = flashcard.getSystemFlashCardSet().getCreator().getUserId().equals(userId);
         }
