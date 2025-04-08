@@ -76,7 +76,6 @@ public class StudentFlashcardSetProgressServiceImpl implements StudentFlashcardS
 
         StudentFlashcardSetProgress progress;
         if (existingProgressOpt.isEmpty()) {
-            // Tạo mới tiến độ nếu chưa tồn tại
             progress = new StudentFlashcardSetProgress();
             progress.setStudent(student);
             progress.setCompletionStatus(CompletionStatus.IN_PROGRESS);
@@ -94,17 +93,14 @@ public class StudentFlashcardSetProgressServiceImpl implements StudentFlashcardS
                 progress.setStudentFlashcardSet(studentSet);
             }
 
-            // Xử lý currentFlashcardId khi tạo mới
             if (currentFlashcardId != null) {
                 Flashcard currentCard = flashcardRepo.findById(currentFlashcardId)
                         .orElseThrow(() -> new RuntimeException("Flashcard not found with ID " + currentFlashcardId));
-                // Kiểm tra flashcard có thuộc bộ không
                 if (isSystemSet && currentCard.getSystemFlashCardSet() != null && currentCard.getSystemFlashCardSet().getSystemSetId().equals(setId)) {
                     progress.setCurrentFlashCardId(currentCard);
                 } else if (!isSystemSet && currentCard.getStudentFlashCardSet() != null && currentCard.getStudentFlashCardSet().getStudentSetId().equals(setId)) {
                     progress.setCurrentFlashCardId(currentCard);
                 } else {
-                    //logger.warn("Flashcard ID {} does not belong to set ID {} (isSystemSet: {})", currentFlashcardId, setId, isSystemSet);
                     progress.setCurrentFlashCardId(null);
                 }
             } else {
@@ -115,15 +111,12 @@ public class StudentFlashcardSetProgressServiceImpl implements StudentFlashcardS
                 if (firstCardOpt.isPresent()) {
                     progress.setCurrentFlashCardId(firstCardOpt.get());
                 } else {
-                    //logger.warn("No flashcards found in set ID {} (isSystemSet: {}). Setting currentFlashcardId to null.", setId, isSystemSet);
                     progress.setCurrentFlashCardId(null);
                 }
             }
         } else {
-            // Cập nhật tiến độ hiện có
             progress = existingProgressOpt.get();
 
-            // Tính lại cardStudied dựa trên isLearned
             long cardStudied = isSystemSet
                     ? flashcardProgressRepo.findByStudentStudentIdAndFlashcard_SystemFlashCardSet_SystemSetId(studentId, setId)
                     .stream().filter(StudentFlashcardProgress::isLearned).count()
@@ -134,12 +127,10 @@ public class StudentFlashcardSetProgressServiceImpl implements StudentFlashcardS
             progress.setLastStudied(LocalDateTime.now());
             progress.setStudyCount(progress.getStudyCount() + 1);
 
-            // Lấy totalCards từ bộ tương ứng
             int totalCards = isSystemSet
                     ? progress.getSystemFlashcardSet().getTotalCards()
                     : progress.getStudentFlashcardSet().getTotalCards();
 
-            // Kiểm tra hoàn thành
             if (cardStudied >= totalCards && progress.getCompletionStatus() != CompletionStatus.COMPLETED) {
                 progress.setCompletionStatus(CompletionStatus.COMPLETED);
                 StudentDailyLearningLog dailyLog = dailyLogRepository.findByStudentStudentIdAndLogDate(studentId, LocalDate.now()).get();
@@ -154,18 +145,15 @@ public class StudentFlashcardSetProgressServiceImpl implements StudentFlashcardS
                 }
             }
 
-            // Cập nhật currentFlashcardId theo tham số truyền vào
             if (currentFlashcardId != null) {
                 Flashcard currentCard = flashcardRepo.findById(currentFlashcardId)
                         .orElseThrow(() -> new RuntimeException("Flashcard not found with ID " + currentFlashcardId));
-                // Kiểm tra flashcard có thuộc bộ không
                 if (isSystemSet && currentCard.getSystemFlashCardSet() != null && currentCard.getSystemFlashCardSet().getSystemSetId().equals(setId)) {
                     progress.setCurrentFlashCardId(currentCard);
                 } else if (!isSystemSet && currentCard.getStudentFlashCardSet() != null && currentCard.getStudentFlashCardSet().getStudentSetId().equals(setId)) {
                     progress.setCurrentFlashCardId(currentCard);
                 }
             } else if (progress.getCurrentFlashCardId() == null) {
-                // Nếu không truyền currentFlashcardId và hiện tại là null, thử lấy thẻ đầu tiên
                 Optional<Flashcard> firstCardOpt = isSystemSet
                         ? flashcardRepo.findTopBySystemFlashCardSet_SystemSetIdOrderByCardOrderAsc(setId)
                         : flashcardRepo.findTopByStudentFlashCardSet_StudentSetIdOrderByCardOrderAsc(setId);
@@ -175,6 +163,21 @@ public class StudentFlashcardSetProgressServiceImpl implements StudentFlashcardS
 
         setProgressRepo.save(progress);
     }
+
+    public void markFlashcardAsLearned(Integer studentId, Integer flashcardId) {
+        StudentFlashcardProgress progress = flashcardProgressRepo
+                .findByStudentStudentIdAndFlashcardFlashCardId(studentId, flashcardId)
+                .orElseGet(() -> StudentFlashcardProgress.builder()
+                        .student(Student.builder().studentId(studentId).build())
+                        .flashcard(Flashcard.builder().flashCardId(flashcardId).build())
+                        .build());
+
+        progress.setLearned(true);
+        progress.setLastStudied(LocalDateTime.now());
+        flashcardProgressRepo.save(progress);
+    }
+
+
 
     private FlashcardSetProgressDTO mapToDTO(StudentFlashcardSetProgress progress) {
         if (progress.getStudentFlashcardSet() != null) {

@@ -13,4 +13,6 @@ public interface AchievementService {
     void assignAchievementsToStudent(Integer studentId, LocalDateTime loginTime);
     void trackAchievementProgress(Integer studentId);
     StudentAchievementDTO awardAchievement(Integer studentId, Integer achievementId);
+    void checkAndAssignStreakAchievements(Integer studentId);
+    void checkAndAssignFlashcardAchievement(Integer studentId, Integer studentSetId);
 }
