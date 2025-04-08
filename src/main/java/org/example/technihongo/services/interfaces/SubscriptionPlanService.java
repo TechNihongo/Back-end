@@ -10,6 +10,6 @@ public interface SubscriptionPlanService {
     SubscriptionPlan createSubscriptionPlan(SubscriptionDTO subscriptionDTO);
     SubscriptionPlan updateSubscriptionPlan(Integer Id, UpdateSubscriptionDTO updateSubscriptionDTO);
     void deleteSubscriptionPlan(Integer Id);
-
     List<SubscriptionPlan> subscriptionList();
+    SubscriptionPlan getSubscriptionPlanById(Integer planId);
 }

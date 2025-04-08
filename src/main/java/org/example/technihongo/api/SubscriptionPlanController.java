@@ -150,6 +150,30 @@ public class SubscriptionPlanController {
         }
     }
 
+    @GetMapping("/detail/{planId}")
+    public ResponseEntity<ApiResponse> getSubscriptionPlanById(@PathVariable Integer planId){
+        try {
+            SubscriptionPlan subscriptionPlan = subscriptionPlanService.getSubscriptionPlanById(planId);
+            return ResponseEntity.ok(ApiResponse.builder()
+                    .success(true)
+                    .message("Get Subscription Plan")
+                    .data(subscriptionPlan)
+                    .build());
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(ApiResponse.builder()
+                            .success(false)
+                            .message("Failed to get StudyPlan: " + e.getMessage())
+                            .build());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponse.builder()
+                            .success(false)
+                            .message("Internal Server Error: " + e.getMessage())
+                            .build());
+        }
+    }
+
     private Integer extractUserId(String authorizationHeader) {
         if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
             String token = authorizationHeader.substring(7);
