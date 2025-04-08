@@ -1,6 +1,7 @@
 package org.example.technihongo.api;
 
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.example.technihongo.core.security.JwtUtil;
 import org.example.technihongo.dto.*;
@@ -20,6 +21,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.IOException;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
 
@@ -124,7 +128,7 @@ public class PaymentTransactionController {
     }
 
     @GetMapping("/callback")
-    public ResponseEntity<ApiResponse> handleMoMoReturn(@RequestParam Map<String, String> request) {
+    public void handleMoMoReturn(@RequestParam Map<String, String> request, HttpServletResponse response) {
         try {
             log.info("Received MoMo callback: {}", request);
 
@@ -155,25 +159,38 @@ public class PaymentTransactionController {
             }
 
             if ("0".equals(callbackDTO.getResultCode())) {
-                return ResponseEntity.ok(ApiResponse.builder()
-                        .success(true)
-                        .message("Payment completed successfully!")
-                        .data(Map.of("orderId", callbackDTO.getOrderId()))
-                        .build());
+                response.sendRedirect("http://localhost:3000/api/v1/payment/success?orderId=" + callbackDTO.getOrderId());
             } else {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ApiResponse.builder()
-                        .success(false)
-                        .message("Payment failed: " + callbackDTO.getMessage())
-                        .data(Map.of("orderId", callbackDTO.getOrderId()))
-                        .build());
+                response.sendRedirect("http://localhost:3000/api/v1/payment/failed?orderId=" + callbackDTO.getOrderId()
+                        + "&message=" + URLEncoder.encode(callbackDTO.getMessage(), StandardCharsets.UTF_8));
             }
         } catch (Exception e) {
             log.error("Error processing MoMo callback: {}", e.getMessage(), e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(ApiResponse.builder()
-                    .success(false)
-                    .message("Error processing callback: " + e.getMessage())
-                    .build());
+            try {
+                response.sendRedirect("http://localhost:3000/v1/payment/failed?message="
+                        + URLEncoder.encode("Server error: " + e.getMessage(), StandardCharsets.UTF_8));
+            } catch (IOException ex) {
+                log.error("Failed to redirect after error: {}", ex.getMessage());
+            }
         }
+    }
+
+    @GetMapping("/success")
+    public ResponseEntity<ApiResponse> paymentSuccess(@RequestParam String orderId) {
+        return ResponseEntity.ok(ApiResponse.builder()
+                .success(true)
+                .message("Payment completed successfully!")
+                .data(Map.of("orderId", orderId))
+                .build());
+    }
+
+    @GetMapping("/failed")
+    public ResponseEntity<ApiResponse> paymentFailed(@RequestParam String orderId, @RequestParam(required = false) String message) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ApiResponse.builder()
+                .success(false)
+                .message("Payment failed: " + (message != null ? message : "Unknown error"))
+                .data(Map.of("orderId", orderId))
+                .build());
     }
 
 
