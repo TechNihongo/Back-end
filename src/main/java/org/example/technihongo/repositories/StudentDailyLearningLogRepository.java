@@ -10,4 +10,5 @@ import java.util.Optional;
 @Repository
 public interface StudentDailyLearningLogRepository extends JpaRepository<StudentDailyLearningLog, Integer> {
     Optional<StudentDailyLearningLog> findByStudentStudentIdAndLogDate(Integer studentId, LocalDate logDate);
+    Optional<StudentDailyLearningLog> findTopByStudent_StudentIdOrderByLogDateDesc(Integer studentId);
 }

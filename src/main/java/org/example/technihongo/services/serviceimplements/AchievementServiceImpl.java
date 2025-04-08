@@ -2,16 +2,13 @@ package org.example.technihongo.services.serviceimplements;
 
 import lombok.RequiredArgsConstructor;
 import org.example.technihongo.dto.StudentAchievementDTO;
-import org.example.technihongo.entities.Achievement;
-import org.example.technihongo.entities.Student;
-import org.example.technihongo.entities.StudentAchievement;
-import org.example.technihongo.entities.UserActivityLog;
+import org.example.technihongo.entities.*;
 import org.example.technihongo.enums.ActivityType;
-import org.example.technihongo.repositories.AchievementRepository;
-import org.example.technihongo.repositories.StudentAchievementProgressRepository;
-import org.example.technihongo.repositories.StudentAchievementRepository;
-import org.example.technihongo.repositories.UserActivityLogRepository;
+import org.example.technihongo.enums.Category;
+import org.example.technihongo.enums.ConditionType;
+import org.example.technihongo.repositories.*;
 import org.example.technihongo.services.interfaces.AchievementService;
+import org.example.technihongo.services.interfaces.StudentFlashcardSetProgressService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -28,7 +25,10 @@ public class AchievementServiceImpl implements AchievementService {
     private final AchievementRepository achievementRepository;
     private final StudentAchievementRepository studentAchievementRepository;
     private final StudentAchievementProgressRepository progressRepository;
+    private final StudentDailyLearningLogRepository dailyLearningLogRepository;
     private final UserActivityLogRepository userActivityLogRepository;
+    private final StudentFlashcardSetProgressService flashcardSetProgressService;
+    private final StudentFlashcardSetProgressRepository setProgressRepo;
 
     private static final LocalTime NIGHT_OWL_TIME = LocalTime.of(22, 30);
     private static final LocalTime EARLY_BIRD_TIME = LocalTime.of(7, 30);
@@ -89,6 +89,72 @@ public class AchievementServiceImpl implements AchievementService {
                 saved.getAchievedAt()
         );
     }
+
+    @Override
+    public void checkAndAssignStreakAchievements(Integer studentId) {
+        Optional<StudentDailyLearningLog> latestLogOpt = dailyLearningLogRepository
+                .findTopByStudent_StudentIdOrderByLogDateDesc(studentId);
+        if (latestLogOpt.isEmpty() || latestLogOpt.get().getStudyTime() <= 0) {
+            return;
+        }
+
+        int currentStreak = latestLogOpt.get().getStreak();
+        List<Achievement> streakAchievements = achievementRepository.findAll().stream()
+                .filter(a -> a.getCategory() == Category.Streak && a.getConditionType() == ConditionType.DAYS_STREAK)
+                .toList();
+
+        for (Achievement achievement : streakAchievements) {
+            Optional<StudentAchievementProgress> progressOpt = progressRepository
+                    .findByStudent_StudentIdAndAchievement_AchievementId(studentId, achievement.getAchievementId());
+
+            StudentAchievementProgress progress;
+            if (progressOpt.isEmpty()) {
+                progress = StudentAchievementProgress.builder()
+                        .student(Student.builder().studentId(studentId).build())
+                        .achievement(achievement)
+                        .currentValue(currentStreak)
+                        .requiredValue(achievement.getConditionValue())
+                        .lastUpdated(LocalDateTime.now())
+                        .build();
+            } else {
+                progress = progressOpt.get();
+                progress.setCurrentValue(currentStreak);
+                progress.setLastUpdated(LocalDateTime.now());
+            }
+
+            progressRepository.save(progress);
+
+            if (lacksAchievement(studentId, achievement.getAchievementId()) && progress.getCurrentValue() >= progress.getRequiredValue()) {
+                awardAchievement(studentId, achievement.getAchievementId());
+            }
+        }
+    }
+
+    @Override
+    public void checkAndAssignFlashcardAchievement(Integer studentId, Integer studentSetId) {
+        Optional<Achievement> flashcardAchievementOpt = achievementRepository.findByBadgeName("Tập sự ghép thẻ");
+        if (flashcardAchievementOpt.isEmpty()) {
+            return;
+        }
+
+        Achievement flashcardAchievement = flashcardAchievementOpt.get();
+
+        if (lacksAchievement(studentId, flashcardAchievement.getAchievementId())) {
+            flashcardSetProgressService.trackFlashcardSetProgress(studentId, studentSetId, false, null);
+
+            Optional<StudentFlashcardSetProgress> progressOpt = setProgressRepo.findByStudentStudentIdAndStudentFlashcardSet_StudentSetId(studentId, studentSetId);
+
+
+            if (progressOpt.isPresent()) {
+                StudentFlashcardSetProgress progress = progressOpt.get();
+                // Chỉ trao thưởng khi đã học ít nhất 1 flashcard (card_studied > 0)
+                if (progress.getCardStudied() > 0) {
+                    awardAchievement(studentId, flashcardAchievement.getAchievementId());
+                }
+            }
+        }
+    }
+
     private boolean isNightOwlTime(LocalDateTime loginTime) {
         LocalTime time = loginTime.toLocalTime();
         return time.isAfter(NIGHT_OWL_TIME) || time.equals(NIGHT_OWL_TIME);

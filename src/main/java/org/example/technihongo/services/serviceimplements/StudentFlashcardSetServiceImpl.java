@@ -241,35 +241,66 @@ public class StudentFlashcardSetServiceImpl implements StudentFlashcardSetServic
         if (resource == null) {
             throw new ResourceNotFoundException("Resource not found with Id: " + request.getResourceId());
         }
+
         if (!StringUtils.hasText(resource.getVideoUrl())) {
             throw new IllegalArgumentException("Resource must have a video URL to create Flashcard Set.");
         }
+
         if (request.getFlashcards() == null || request.getFlashcards().isEmpty()) {
             throw new IllegalArgumentException("You must provide at least one Flashcard to create Flashcard Set.");
         }
 
-        StudentFlashcardSet flashcardSet = StudentFlashcardSet.builder()
-                .creator(student)
-                .learningResource(resource)
-                .title(StringUtils.hasText(request.getTitle()) ? request.getTitle() : resource.getTitle())
-                .description(request.getDescription())
-                .isPublic(request.getIsPublic() != null ? request.getIsPublic() : true)
-                .totalCards(0)
-                .totalViews(0)
-                .isViolated(false)
-                .isDeleted(false)
-                .flashcards(new HashSet<>())
-                .build();
+        // Kiểm tra flashcard set đã tồn tại chưa
+        StudentFlashcardSet existingFlashcardSet = flashcardSetRepository.findExistingFlashcardSet(
+                studentId, request.getResourceId());
 
-        StudentFlashcardSet savedFlashcardSet = flashcardSetRepository.save(flashcardSet);
+        StudentFlashcardSet flashcardSet;
+        List<Flashcard> flashcards;
 
-        List<Flashcard> flashcards = createFlashcards(savedFlashcardSet, request.getFlashcards());
-        savedFlashcardSet.setFlashcards(new HashSet<>(flashcards));
-        savedFlashcardSet.setTotalCards(flashcards.size());
+        if (existingFlashcardSet != null) {
+            // Nếu đã tồn tại, cập nhật thay vì tạo mới
+            flashcardSet = existingFlashcardSet;
+            if (StringUtils.hasText(request.getTitle())) {
+                flashcardSet.setTitle(request.getTitle());
+            }
+            if (request.getDescription() != null) {
+                flashcardSet.setDescription(request.getDescription());
+            }
+            if (request.getIsPublic() != null) {
+                flashcardSet.setPublic(request.getIsPublic());
+            }
 
-        flashcardSetRepository.save(savedFlashcardSet);
+            // Thêm flashcard mới vào set hiện có
+            flashcards = createFlashcards(flashcardSet, request.getFlashcards());
+            flashcardSet.getFlashcards().addAll(new HashSet<>(flashcards));
+            flashcardSet.setTotalCards(flashcardSet.getFlashcards().size());
+        } else {
+            // Tạo mới nếu chưa tồn tại
+            flashcardSet = StudentFlashcardSet.builder()
+                    .creator(student)
+                    .learningResource(resource)
+                    .title(StringUtils.hasText(request.getTitle()) ? request.getTitle() : resource.getTitle())
+                    .description(request.getDescription())
+                    .isPublic(request.getIsPublic() != null ? request.getIsPublic() : true)
+                    .totalCards(0)
+                    .totalViews(0)
+                    .isViolated(false)
+                    .isDeleted(false)
+                    .flashcards(new HashSet<>())
+                    .build();
 
-        return mapToFlashcardSetResponseDTO(savedFlashcardSet, flashcards);
+            StudentFlashcardSet savedFlashcardSet = flashcardSetRepository.save(flashcardSet);
+            flashcards = createFlashcards(savedFlashcardSet, request.getFlashcards());
+            savedFlashcardSet.setFlashcards(new HashSet<>(flashcards));
+            savedFlashcardSet.setTotalCards(flashcards.size());
+            flashcardSet = savedFlashcardSet;
+        }
+
+        flashcardSetRepository.save(flashcardSet);
+
+        List<Flashcard> allFlashcards = new ArrayList<>(flashcardSet.getFlashcards());
+
+        return mapToFlashcardSetResponseDTO(flashcardSet, allFlashcards);
     }
 
     @Override

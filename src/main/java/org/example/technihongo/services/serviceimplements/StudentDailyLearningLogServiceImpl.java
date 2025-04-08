@@ -33,7 +33,6 @@ public class StudentDailyLearningLogServiceImpl implements StudentDailyLearningL
     public void trackStudentDailyLearningLog(Integer studentId, Integer studyTimeInput) {
         LocalDate today = LocalDate.now();
 
-        // Tìm student
         Student student = studentRepository.findById(studentId)
                 .orElseThrow(() -> new RuntimeException("Student not found!"));
 
@@ -48,7 +47,7 @@ public class StudentDailyLearningLogServiceImpl implements StudentDailyLearningL
         } else {
             dailyLog = createNewDailyLog(student, today);
             updateDailyLog(dailyLog, studyTimeInput, student.getDailyGoal());
-            isNewLog = true; // Đánh dấu là log mới
+            isNewLog = true;
         }
 
         dailyLogRepository.save(dailyLog);
@@ -66,14 +65,13 @@ public class StudentDailyLearningLogServiceImpl implements StudentDailyLearningL
         StudentDailyLearningLog dailyLog = new StudentDailyLearningLog();
         dailyLog.setStudent(student);
         dailyLog.setLogDate(today);
-        dailyLog.setStudyTime(0);           // Khởi tạo bằng 0
-        dailyLog.setCompletedLessons(0);    // Khởi tạo bằng 0
-        dailyLog.setCompletedQuizzes(0);    // Khởi tạo bằng 0
-        dailyLog.setCompletedResources(0);  // Khởi tạo bằng 0
-        dailyLog.setCompletedFlashcardSets(0); // Khởi tạo bằng 0
-        dailyLog.setDailyGoalAchieved(false);  // Mặc định là false
+        dailyLog.setStudyTime(0);
+        dailyLog.setCompletedLessons(0);
+        dailyLog.setCompletedQuizzes(0);
+        dailyLog.setCompletedResources(0);
+        dailyLog.setCompletedFlashcardSets(0);
+        dailyLog.setDailyGoalAchieved(false);
 
-        // Tính streak
         int streak = calculateStreak(student, today);
         dailyLog.setStreak(streak);
 
@@ -81,30 +79,23 @@ public class StudentDailyLearningLogServiceImpl implements StudentDailyLearningL
     }
 
     private void updateDailyLog(StudentDailyLearningLog dailyLog, Integer studyTimeInput, Integer dailyGoal) {
-        // Cộng dồn studyTime
         int newStudyTime = dailyLog.getStudyTime() + studyTimeInput;
         dailyLog.setStudyTime(newStudyTime);
-
-        // Kiểm tra dailyGoalAchieved
         dailyLog.setDailyGoalAchieved(newStudyTime >= dailyGoal);
-
-        // Các trường khác (completedLessons, completedQuizzes, v.v.) có thể được cập nhật qua hàm khác
-        // Ở đây giả sử chỉ cập nhật studyTime, các trường khác sẽ được cập nhật riêng nếu cần
     }
 
     private int calculateStreak(Student student, LocalDate today) {
-        // Tìm log của ngày hôm qua
         LocalDate yesterday = today.minusDays(1);
         Optional<StudentDailyLearningLog> yesterdayLogOpt = dailyLogRepository
                 .findByStudentStudentIdAndLogDate(student.getStudentId(), yesterday);
 
-        // Nếu có log hôm qua, tăng streak lên 1
-        // Nếu không có log hôm qua, bắt đầu streak mới từ 1
-        return yesterdayLogOpt.map(studentDailyLearningLog -> studentDailyLearningLog.getStreak() + 1).orElse(1);
+        if (yesterdayLogOpt.isPresent() && yesterdayLogOpt.get().getStudyTime() > 0) {
+            return yesterdayLogOpt.get().getStreak() + 1;
+        }
+        return 1;
     }
 
     private void updateLearningStatistics(Student student, StudentDailyLearningLog dailyLog, boolean isNewLog) {
-        // Tìm hoặc tạo StudentLearningStatistics
         StudentLearningStatistics stats = statsRepository.findByStudentStudentId(student.getStudentId())
                 .orElseGet(() -> {
                     StudentLearningStatistics newStats = new StudentLearningStatistics();
@@ -119,24 +110,15 @@ public class StudentDailyLearningLogServiceImpl implements StudentDailyLearningL
                     return newStats;
                 });
 
-        // Cập nhật totalStudyTime
         stats.setTotalStudyTime(stats.getTotalStudyTime() + dailyLog.getStudyTime());
-
-        // Cập nhật activeDaysCount (chỉ khi log là mới)
-        if (isNewLog) {
+        if (isNewLog && dailyLog.getStudyTime() > 0) {
             stats.setActiveDaysCount(stats.getActiveDaysCount() + 1);
         }
 
-        // Cập nhật maxDaysStreak
         int currentStreak = dailyLog.getStreak();
-        if (currentStreak > stats.getMaxDaysStreak()) {
-            stats.setMaxDaysStreak(currentStreak);
-        }
-
-        // Cập nhật lastStudyDate
+        stats.setMaxDaysStreak(Math.max(stats.getMaxDaysStreak(), currentStreak));
         stats.setLastStudyDate(LocalDateTime.now());
 
-        // Lưu statistics
         statsRepository.save(stats);
     }
 }
