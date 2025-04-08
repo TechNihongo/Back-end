@@ -86,6 +86,12 @@ public class SubscriptionPlanServiceImpl implements SubscriptionPlanService {
         return subscriptionPlanRepository.findAll();
     }
 
+    @Override
+    public SubscriptionPlan getSubscriptionPlanById(Integer planId) {
+        return subscriptionPlanRepository.findById(planId)
+                .orElseThrow(() -> new RuntimeException("Subscription Plan not found!"));
+    }
+
     private boolean checkIfPlanIsUsed(SubscriptionPlan plan) {
         return studentSubscriptionRepository.existsBySubscriptionPlan(plan);
     }
