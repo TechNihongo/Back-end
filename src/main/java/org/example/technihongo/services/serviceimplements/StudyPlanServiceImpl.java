@@ -145,4 +145,15 @@ public class StudyPlanServiceImpl implements StudyPlanService {
 
         studyPlanRepository.deleteById(studyPlanId);
     }
+
+    @Override
+    public StudyPlan getDefaultStudyPlanByCourseId(Integer courseId) {
+        return studyPlanRepository.findByCourse_CourseIdAndDefault(courseId, true)
+                .orElseThrow(() -> new RuntimeException("StudyPlan default not found!"));
+    }
+
+    @Override
+    public Course getCourseByStudyPlanId(Integer studyPlanId) {
+        return studyPlanRepository.findByStudyPlanId(studyPlanId).getCourse();
+    }
 }

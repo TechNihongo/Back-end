@@ -1,13 +1,12 @@
 package org.example.technihongo.services.serviceimplements;
 
 import lombok.RequiredArgsConstructor;
-import org.example.technihongo.dto.CreateLessonResourceDTO;
-import org.example.technihongo.dto.PageResponseDTO;
-import org.example.technihongo.dto.UpdateLessonResourceDTO;
-import org.example.technihongo.dto.UpdateLessonResourceOrderDTO;
+import org.example.technihongo.dto.*;
 import org.example.technihongo.entities.*;
+import org.example.technihongo.enums.CompletionStatus;
 import org.example.technihongo.repositories.*;
 import org.example.technihongo.services.interfaces.LessonResourceService;
+import org.example.technihongo.services.interfaces.StudentFlashcardSetProgressService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -34,6 +33,14 @@ public class LessonResourceServiceImpl implements LessonResourceService {
     private QuizRepository quizRepository;
     @Autowired
     private StudyPlanRepository studyPlanRepository;
+    @Autowired
+    private StudentRepository studentRepository;
+    @Autowired
+    private StudentQuizAttemptRepository studentQuizAttemptRepository;
+    @Autowired
+    private StudentResourceProgressRepository studentResourceProgressRepository;
+    @Autowired
+    private StudentFlashcardSetProgressRepository studentFlashcardSetProgressRepository;
 
     @Override
     public List<LessonResource> getLessonResourceListByLessonId(Integer lessonId) {
@@ -44,12 +51,65 @@ public class LessonResourceServiceImpl implements LessonResourceService {
     }
 
     @Override
-    public List<LessonResource> getActiveLessonResourceListByLessonId(Integer lessonId) {
+    public List<LessonResourceDTO> getActiveLessonResourceListByLessonId(Integer studentId, Integer lessonId) {
         lessonRepository.findById(lessonId)
                 .orElseThrow(() -> new RuntimeException("Lesson ID not found"));
 
-        return lessonResourceRepository.findByLesson_LessonIdOrderByTypeOrderAsc(lessonId).stream()
+        studentRepository.findById(studentId)
+                .orElseThrow(() -> new RuntimeException("Student ID not found"));
+
+        List<LessonResource> resources = lessonResourceRepository
+                .findByLesson_LessonIdOrderByTypeOrderAsc(lessonId)
+                .stream()
                 .filter(LessonResource::isActive)
+                .toList();
+
+        return resources.stream()
+                .map(resource -> {
+                    boolean isCompleted = false;
+
+                    if (resource.getQuiz() != null) {
+                        Quiz quiz = quizRepository.findById(resource.getQuiz().getQuizId())
+                                .orElse(null);
+                        if (quiz != null && quiz.isPublic()) {
+                            isCompleted = studentQuizAttemptRepository
+                                    .existsByStudentStudentIdAndQuizQuizIdAndIsPassedAndIsCompleted(
+                                            studentId, quiz.getQuizId(), true, true);
+                        }
+                    } else if (resource.getSystemFlashCardSet() != null) {
+                        SystemFlashcardSet set = systemFlashcardSetRepository
+                                .findById(resource.getSystemFlashCardSet().getSystemSetId())
+                                .orElse(null);
+                        if (set != null && set.isPublic()) {
+                            isCompleted = studentFlashcardSetProgressRepository
+                                    .existsByStudentStudentIdAndSystemFlashcardSetSystemSetIdAndCompletionStatus(
+                                            studentId, set.getSystemSetId(), CompletionStatus.COMPLETED);
+                        }
+                    } else if (resource.getLearningResource() != null) {
+                        LearningResource lr = learningResourceRepository
+                                .findById(resource.getLearningResource().getResourceId())
+                                .orElse(null);
+                        if (lr != null && lr.isPublic()) {
+                            isCompleted = studentResourceProgressRepository
+                                    .existsByStudentStudentIdAndLearningResourceResourceIdAndCompletionStatus(
+                                            studentId, lr.getResourceId(), CompletionStatus.COMPLETED);
+                        }
+                    }
+
+                    return LessonResourceDTO.builder()
+                            .lessonResourceId(resource.getLessonResourceId())
+                            .lesson(resource.getLesson())
+                            .type(resource.getType())
+                            .typeOrder(resource.getTypeOrder())
+                            .quiz(resource.getQuiz() != null ? resource.getQuiz() : null)
+                            .learningResource(resource.getLearningResource() != null ? resource.getLearningResource() : null)
+                            .systemFlashCardSet(resource.getSystemFlashCardSet() != null ? resource.getSystemFlashCardSet() : null)
+                            .isActive(resource.isActive())
+                            .createdAt(resource.getCreatedAt())
+                            .updatedAt(resource.getUpdatedAt())
+                            .isProgressCompleted(isCompleted)
+                            .build();
+                })
                 .toList();
     }
 

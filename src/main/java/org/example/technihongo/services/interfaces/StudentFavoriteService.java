@@ -8,4 +8,6 @@ public interface StudentFavoriteService {
     StudentFavorite saveLearningResource(Integer studentId, Integer learningResourceId);
     PageResponseDTO<LearningResource> getListFavoriteLearningResourcesByStudentId(
             Integer studentId, int pageNo, int pageSize, String sortBy, String sortDir);
+    void removeFavoriteLearningResource(Integer studentId, Integer learningResourceId);
+    boolean checkLearningResourceFavorited(Integer studentId, Integer learningResourceId);
 }

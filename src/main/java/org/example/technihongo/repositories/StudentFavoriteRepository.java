@@ -8,6 +8,8 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.Optional;
+
 @Repository
 public interface StudentFavoriteRepository extends JpaRepository<StudentFavorite, Integer>{
     Boolean existsByLearningResource_ResourceId(Integer learningResourceId);
@@ -26,4 +28,6 @@ public interface StudentFavoriteRepository extends JpaRepository<StudentFavorite
             @Param("isPublic") boolean isPublic,
             @Param("isPremium") boolean isPremium,
             Pageable pageable);
+
+    Optional<StudentFavorite> findByStudent_StudentIdAndLearningResource_ResourceId(Integer studentId, Integer learningResourceId);
 }
