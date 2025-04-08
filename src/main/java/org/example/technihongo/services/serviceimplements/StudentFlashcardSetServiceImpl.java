@@ -346,6 +346,7 @@ public class StudentFlashcardSetServiceImpl implements StudentFlashcardSetServic
         response.setStudentId(flashcardSet.getCreator().getStudentId());
         response.setStudentSetId(flashcardSet.getStudentSetId());
         response.setTitle(flashcardSet.getTitle());
+        response.setTotalViews(flashcardSet.getTotalViews());
         response.setDescription(flashcardSet.getDescription());
         response.setIsPublic(flashcardSet.isPublic());
         response.setFlashcards(flashcardPage.getContent().stream()
