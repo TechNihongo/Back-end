@@ -37,5 +37,5 @@ public interface UserService {
 
     void verifyEmailToken(String token);
 
-    Integer getUserByStudentId(Integer studentId);
+    UserDTO getUserByStudentId(Integer studentId);
 }

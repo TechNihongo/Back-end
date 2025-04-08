@@ -352,6 +352,7 @@ public class StudentFlashcardSetServiceImpl implements StudentFlashcardSetServic
         response.setFlashcards(flashcardPage.getContent().stream()
                 .map(this::convertToFlashcardResponseDTO)
                 .collect(Collectors.toList()));
+        response.setCreatedAt(flashcardSet.getCreatedAt());
 
         return response;
     }
