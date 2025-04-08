@@ -1,6 +1,5 @@
 package org.example.technihongo.repositories;
 
-import org.example.technihongo.entities.PaymentTransaction;
 import org.example.technihongo.entities.StudentSubscription;
 import org.example.technihongo.entities.SubscriptionPlan;
 import org.springframework.data.domain.Page;
@@ -25,4 +24,6 @@ public interface StudentSubscriptionRepository extends JpaRepository<StudentSubs
 
     List<StudentSubscription> findAllByIsActiveTrue();
     Page<StudentSubscription> findAllByStudent_StudentId(Integer studentId, Pageable pageable);
+
+    List<StudentSubscription> findByStudentStudentIdAndIsActive(Integer studentId, boolean isActive);
 }
