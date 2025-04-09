@@ -29,4 +29,6 @@ public interface LessonResourceRepository extends JpaRepository<LessonResource, 
     List<LessonResource> findByQuiz_QuizId(Integer quizId);
     List<LessonResource> findBySystemFlashCardSet_SystemSetId(Integer flashcardSetId);
     List<LessonResource> findByLearningResource_ResourceId(Integer learningResourceId);
+
+    List<LessonResource> findByLesson_LessonIdAndActiveOrderByTypeOrderAsc(Integer lessonId, boolean isActive);
 }
