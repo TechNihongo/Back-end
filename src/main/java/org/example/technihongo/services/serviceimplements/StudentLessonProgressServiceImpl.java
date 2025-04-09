@@ -69,7 +69,7 @@ public class StudentLessonProgressServiceImpl implements StudentLessonProgressSe
             return;
         }
 
-        List<LessonResource> resources = lessonResourceRepository.findByLesson_LessonIdOrderByTypeOrderAsc(lessonId);
+        List<LessonResource> resources = lessonResourceRepository.findByLesson_LessonIdAndActiveOrderByTypeOrderAsc(lessonId, true);
         int totalItems = resources.size();
         int completedItems = 0;
 
