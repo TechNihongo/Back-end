@@ -164,6 +164,94 @@ public class StudentFlashcardSetProgressServiceImpl implements StudentFlashcardS
         setProgressRepo.save(progress);
     }
 
+    @Override
+    public void completeFlashcardSetProgress(Integer studentId, Integer setId, boolean isSystemSet, Integer currentFlashcardId) {
+        Student student = studentRepo.findById(studentId)
+                .orElseThrow(() -> new RuntimeException("Student not found with ID " + studentId));
+
+        Optional<StudentFlashcardSetProgress> existingProgressOpt = isSystemSet
+                ? setProgressRepo.findByStudentStudentIdAndSystemFlashcardSet_SystemSetId(studentId, setId)
+                : setProgressRepo.findByStudentStudentIdAndStudentFlashcardSet_StudentSetId(studentId, setId);
+
+        StudentFlashcardSetProgress progress;
+        if (existingProgressOpt.isEmpty()) {
+            progress = new StudentFlashcardSetProgress();
+            progress.setStudent(student);
+            progress.setCompletionStatus(CompletionStatus.IN_PROGRESS);
+            progress.setCardStudied(0);
+            progress.setStudyCount(1);
+            progress.setLastStudied(LocalDateTime.now());
+
+            if (isSystemSet) {
+                SystemFlashcardSet systemSet = systemSetRepo.findById(setId)
+                        .orElseThrow(() -> new RuntimeException("SystemFlashcardSet not found with ID " + setId));
+                progress.setSystemFlashcardSet(systemSet);
+            } else {
+                StudentFlashcardSet studentSet = studentSetRepo.findById(setId)
+                        .orElseThrow(() -> new RuntimeException("StudentFlashcardSet not found with ID " + setId));
+                progress.setStudentFlashcardSet(studentSet);
+            }
+
+            if (currentFlashcardId != null) {
+                Flashcard currentCard = flashcardRepo.findById(currentFlashcardId)
+                        .orElseThrow(() -> new RuntimeException("Flashcard not found with ID " + currentFlashcardId));
+                if (isSystemSet && currentCard.getSystemFlashCardSet() != null && currentCard.getSystemFlashCardSet().getSystemSetId().equals(setId)) {
+                    progress.setCurrentFlashCardId(currentCard);
+                } else if (!isSystemSet && currentCard.getStudentFlashCardSet() != null && currentCard.getStudentFlashCardSet().getStudentSetId().equals(setId)) {
+                    progress.setCurrentFlashCardId(currentCard);
+                } else {
+                    progress.setCurrentFlashCardId(null);
+                }
+            } else {
+                // Nếu không truyền currentFlashcardId, thử lấy thẻ đầu tiên
+                Optional<Flashcard> firstCardOpt = isSystemSet
+                        ? flashcardRepo.findTopBySystemFlashCardSet_SystemSetIdOrderByCardOrderAsc(setId)
+                        : flashcardRepo.findTopByStudentFlashCardSet_StudentSetIdOrderByCardOrderAsc(setId);
+                if (firstCardOpt.isPresent()) {
+                    progress.setCurrentFlashCardId(firstCardOpt.get());
+                } else {
+                    progress.setCurrentFlashCardId(null);
+                }
+            }
+        } else {
+            progress = existingProgressOpt.get();
+
+            progress.setLastStudied(LocalDateTime.now());
+            progress.setStudyCount(progress.getStudyCount() + 1);
+
+            if (progress.getCompletionStatus() != CompletionStatus.COMPLETED) {
+                progress.setCompletionStatus(CompletionStatus.COMPLETED);
+                StudentDailyLearningLog dailyLog = dailyLogRepository.findByStudentStudentIdAndLogDate(studentId, LocalDate.now()).get();
+                dailyLog.setCompletedFlashcardSets(dailyLog.getCompletedFlashcardSets() + 1);
+                dailyLogRepository.save(dailyLog);
+
+                if(isSystemSet) {
+                    userActivityLogService.trackUserActivityLog(userRepository.findByStudentStudentId(studentId).getUserId(), ActivityType.COMPLETE, ContentType.SystemFlashcardSet, setId, null, null);
+                }
+                else {
+                    userActivityLogService.trackUserActivityLog(userRepository.findByStudentStudentId(studentId).getUserId(), ActivityType.COMPLETE, ContentType.StudentFlashcardSet, setId, null, null);
+                }
+            }
+
+            if (currentFlashcardId != null) {
+                Flashcard currentCard = flashcardRepo.findById(currentFlashcardId)
+                        .orElseThrow(() -> new RuntimeException("Flashcard not found with ID " + currentFlashcardId));
+                if (isSystemSet && currentCard.getSystemFlashCardSet() != null && currentCard.getSystemFlashCardSet().getSystemSetId().equals(setId)) {
+                    progress.setCurrentFlashCardId(currentCard);
+                } else if (!isSystemSet && currentCard.getStudentFlashCardSet() != null && currentCard.getStudentFlashCardSet().getStudentSetId().equals(setId)) {
+                    progress.setCurrentFlashCardId(currentCard);
+                }
+            } else if (progress.getCurrentFlashCardId() == null) {
+                Optional<Flashcard> firstCardOpt = isSystemSet
+                        ? flashcardRepo.findTopBySystemFlashCardSet_SystemSetIdOrderByCardOrderAsc(setId)
+                        : flashcardRepo.findTopByStudentFlashCardSet_StudentSetIdOrderByCardOrderAsc(setId);
+                firstCardOpt.ifPresent(progress::setCurrentFlashCardId);
+            }
+        }
+
+        setProgressRepo.save(progress);
+    }
+
     public void markFlashcardAsLearned(Integer studentId, Integer flashcardId) {
         StudentFlashcardProgress progress = flashcardProgressRepo
                 .findByStudentStudentIdAndFlashcardFlashCardId(studentId, flashcardId)
