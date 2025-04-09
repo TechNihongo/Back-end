@@ -23,6 +23,8 @@ public interface PaymentTransactionRepository extends JpaRepository<PaymentTrans
     Page<PaymentTransaction> findBySubscription_Student_StudentIdAndTransactionStatus(
             Integer studentId, TransactionStatus transactionStatus, Pageable pageable);
     List<PaymentTransaction> findAllBySubscription_SubscriptionIdAndTransactionStatusOrderByPaymentDateDesc(Integer subscriptionId, TransactionStatus transactionStatus);
+
+    List<PaymentTransaction> findBySubscription_SubscriptionIdAndTransactionStatus(Integer subscriptionId, TransactionStatus transactionStatus);
 }
 
 

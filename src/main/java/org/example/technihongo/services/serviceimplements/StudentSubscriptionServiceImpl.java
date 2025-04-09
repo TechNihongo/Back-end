@@ -30,6 +30,7 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -57,6 +58,14 @@ public class StudentSubscriptionServiceImpl implements StudentSubscriptionServic
         if (currentSubscription == null) {
             throw new RuntimeException("No active subscription found for student ID: " + studentId);
         }
+
+        List<PaymentTransaction> pendingTransactions = paymentTransactionRepository
+                .findBySubscription_SubscriptionIdAndTransactionStatus(
+                        currentSubscription.getSubscriptionId(), TransactionStatus.PENDING);
+        if (!pendingTransactions.isEmpty()) {
+            throw new RuntimeException("There is already a pending renewal transaction for this subscription");
+        }
+
         SubscriptionPlan plan = subscriptionPlanRepository.findById(request.getSubPlanId())
                 .orElseThrow(() -> new RuntimeException("Subscription plan not found: " + request.getSubPlanId()));
 
@@ -77,7 +86,6 @@ public class StudentSubscriptionServiceImpl implements StudentSubscriptionServic
                 .expiresAt(LocalDateTime.now().plusMinutes(15))
                 .build();
         paymentTransactionRepository.save(transaction);
-
 
         String orderInfo = "Gia hạn gói: " + plan.getName();
         CreateMomoResponse momoResponse = momoService.createPaymentQR(orderId, orderInfo, plan.getPrice().longValue());
@@ -110,18 +118,21 @@ public class StudentSubscriptionServiceImpl implements StudentSubscriptionServic
 
             StudentSubscription currentSubscription = transaction.getSubscription();
             log.info("Current subscription found: ID={}, EndDate={}",
-                    currentSubscription.getSubscriptionId(),
-                    currentSubscription.getEndDate());
+                    currentSubscription.getSubscriptionId(), currentSubscription.getEndDate());
 
-            SubscriptionPlan plan = subscriptionPlanRepository.findById(currentSubscription.getSubscriptionPlan().getSubPlanId())
-                    .orElseThrow(() -> new RuntimeException("Subscription plan not found"));
+            // Lấy thông tin gói đăng ký từ request ban đầu (đã lưu trong transaction)
+            SubscriptionPlan plan = currentSubscription.getSubscriptionPlan();
 
+            // Tìm đăng ký mới nhất (active hoặc waiting) để tính thời gian bắt đầu và kết thúc
+            LocalDateTime latestEndDate = findLatestEndDate(currentSubscription.getStudent().getStudentId());
+
+            // Tạo đăng ký mới với thời gian bắt đầu = thời gian kết thúc của đăng ký mới nhất
             StudentSubscription newSubscription = StudentSubscription.builder()
                     .student(currentSubscription.getStudent())
                     .subscriptionPlan(plan)
-                    .startDate(currentSubscription.getEndDate())
-                    .endDate(currentSubscription.getEndDate().plusDays(plan.getDurationDays()))
-                    .isActive(false)
+                    .startDate(latestEndDate)
+                    .endDate(latestEndDate.plusDays(plan.getDurationDays()))
+                    .isActive(false) // Ban đầu không active
                     .build();
 
             StudentSubscription savedSubscription = subscriptionRepository.save(newSubscription);
@@ -134,8 +145,8 @@ public class StudentSubscriptionServiceImpl implements StudentSubscriptionServic
                     savedSubscription.getEndDate(),
                     savedSubscription.getIsActive());
 
-             transaction.setSubscription(savedSubscription);
-             paymentTransactionRepository.save(transaction);
+            transaction.setSubscription(savedSubscription);
+            paymentTransactionRepository.save(transaction);
 
             if (currentSubscription.getEndDate().isBefore(LocalDateTime.now())) {
                 currentSubscription.setIsActive(false);
@@ -156,6 +167,17 @@ public class StudentSubscriptionServiceImpl implements StudentSubscriptionServic
             log.warn("Payment failed or canceled for transaction: {}. ResultCode: {}, Message: {}",
                     transaction.getTransactionId(), callback.getResultCode(), callback.getMessage());
         }
+    }
+
+    private LocalDateTime findLatestEndDate(Integer studentId) {
+        // Lấy tất cả các đăng ký của student
+        List<StudentSubscription> allSubscriptions = subscriptionRepository.findAllByStudent_StudentId(studentId, Pageable.unpaged()).getContent();
+
+        // Tìm end_date mới nhất
+        return allSubscriptions.stream()
+                .map(StudentSubscription::getEndDate)
+                .max(LocalDateTime::compareTo)
+                .orElse(LocalDateTime.now()); // Nếu không có đăng ký nào thì dùng thời gian hiện tại
     }
 
     @Override
@@ -202,6 +224,18 @@ public class StudentSubscriptionServiceImpl implements StudentSubscriptionServic
                 .build();
     }
 
+    @Override
+    public StudentSubscription getCurrentSubscriptionByStudentId(Integer studentId) {
+        List<StudentSubscription> activeSubscriptions = subscriptionRepository.findAllByStudent_StudentIdAndIsActiveTrue(studentId);
+
+        if (activeSubscriptions.isEmpty()) {
+            return null;
+        }
+        return activeSubscriptions.stream()
+                .max(Comparator.comparing(StudentSubscription::getEndDate))
+                .orElse(null);
+    }
+
     private String determineGroupStatus(StudentSubscription sub, PaymentTransaction latestTransaction) {
         LocalDateTime now = LocalDateTime.now();
         if (sub.getIsActive()) {
@@ -214,6 +248,8 @@ public class StudentSubscriptionServiceImpl implements StudentSubscriptionServic
             return "Không hoạt động/Hết hạn";
         }
     }
+
+
 
 
     @Override
