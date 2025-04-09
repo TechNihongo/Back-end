@@ -2,6 +2,7 @@ package org.example.technihongo.entities;
 
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Pattern;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
@@ -30,9 +31,11 @@ public class Flashcard {
     private SystemFlashcardSet systemFlashCardSet;
 
     @Column(name = "japanese_definition")
+    @Pattern(regexp = "^[a-zA-Z\\s]+$", message = "Japanese definition must not contain special characters")
     private String definition;
 
     @Column(name = "viet_eng_translation")
+    @Pattern(regexp = "^[a-zA-Z\\s]+$", message = "Viet/Eng translation must not contain special characters")
     private String translation;
 
     @Column(name = "image_url")

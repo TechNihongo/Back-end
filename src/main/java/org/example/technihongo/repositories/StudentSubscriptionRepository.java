@@ -23,7 +23,8 @@ public interface StudentSubscriptionRepository extends JpaRepository<StudentSubs
     List<StudentSubscription> findSubscriptionsExpiringSoon(LocalDateTime threshold);
 
     List<StudentSubscription> findAllByIsActiveTrue();
+    List<StudentSubscription> findAllByStudent_StudentIdAndIsActiveTrue(Integer studentId);
     Page<StudentSubscription> findAllByStudent_StudentId(Integer studentId, Pageable pageable);
 
-    List<StudentSubscription> findByStudentStudentIdAndIsActive(Integer studentId, boolean isActive);
+    List<StudentSubscription> findByStudentStudentIdAndIsActive(Integer studentId, Boolean isActive);
 }

@@ -3,10 +3,8 @@ package org.example.technihongo.api;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.example.technihongo.core.security.JwtUtil;
-import org.example.technihongo.dto.PageResponseDTO;
-import org.example.technihongo.dto.RenewSubscriptionRequestDTO;
-import org.example.technihongo.dto.RenewSubscriptionResponseDTO;
-import org.example.technihongo.dto.SubscriptionHistoryDTO;
+import org.example.technihongo.dto.*;
+import org.example.technihongo.entities.StudentSubscription;
 import org.example.technihongo.enums.ActivityType;
 import org.example.technihongo.enums.ContentType;
 import org.example.technihongo.exception.ResourceNotFoundException;
@@ -79,6 +77,65 @@ public class StudentSubscriptionController {
                     .success(false)
                     .message("Internal server error: " + e.getMessage())
                     .data(null)
+                    .build());
+        }
+    }
+
+    @GetMapping("/current-plan")
+    public ResponseEntity<ApiResponse> getCurrentSubscriptionPlan(
+            @RequestHeader("Authorization") String authorizationHeader,
+            HttpServletRequest httpRequest) {
+        try {
+            if(authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
+                String token = authorizationHeader.substring(7);
+                Integer userId = jwtUtil.extractUserId(token);
+                Integer studentId = studentService.getStudentIdByUserId(userId);
+                String ipAddress = httpRequest.getRemoteAddr();
+                String userAgent = httpRequest.getHeader("User-Agent");
+                userActivityLogService.trackUserActivityLog(
+                        userId,
+                        ActivityType.RENEW_SUBSCRIPTION,
+                        ContentType.StudentSubscription,
+                        null,
+                        ipAddress,
+                        userAgent
+                );
+                StudentSubscription currentSubscription = subscriptionService.getCurrentSubscriptionByStudentId(studentId);
+
+                if (currentSubscription == null) {
+                    return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ApiResponse.builder()
+                            .success(false)
+                            .message("No active subscription found for student ID: " + studentId)
+                            .build());
+                }
+
+                SubscriptionPlanDTO subscriptionPlanDTO = SubscriptionPlanDTO.builder()
+                        .planName(currentSubscription.getSubscriptionPlan().getName())
+                        .startDate(currentSubscription.getStartDate())
+                        .endDate(currentSubscription.getEndDate())
+                        .isActive(currentSubscription.getIsActive())
+                        .build();
+
+                return ResponseEntity.ok(ApiResponse.builder()
+                        .success(true)
+                        .message("Current subscription plan retrieved successfully!")
+                        .data(subscriptionPlanDTO)
+                        .build());
+            }
+            else {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ApiResponse.builder()
+                        .success(false)
+                        .message("Unauthorized access!")
+                        .data(null)
+                        .build());
+            }
+
+
+
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(ApiResponse.builder()
+                    .success(false)
+                    .message("Failed to retrieve subscription plan: " + e.getMessage())
                     .build());
         }
     }
