@@ -62,6 +62,45 @@ public class StudentResourceProgressController {
         }
     }
 
+    @PatchMapping("/complete")
+    public ResponseEntity<ApiResponse> completeLearningResourceProgress(
+            @RequestHeader("Authorization") String authorizationHeader,
+            @RequestParam Integer resourceId) {
+        try {
+            if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
+                String token = authorizationHeader.substring(7);
+                Integer userId = jwtUtil.extractUserId(token);
+                Integer studentId = studentService.getStudentIdByUserId(userId);
+
+                resourceProgressService.completeLearningResourceProgress(studentId, resourceId);
+
+                return ResponseEntity.ok(ApiResponse.builder()
+                        .success(true)
+                        .message("Learning resource progress completed successfully!")
+                        .data(null)
+                        .build());
+            }  else {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(ApiResponse.builder()
+                                .success(false)
+                                .message("Unauthorized")
+                                .build());
+            }
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(ApiResponse.builder()
+                            .success(false)
+                            .message("Failed to complete learning resource progress: " + e.getMessage())
+                            .build());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponse.builder()
+                            .success(false)
+                            .message("Internal Server Error: " + e.getMessage())
+                            .build());
+        }
+    }
+
     @GetMapping("/all/{studentId}")
     public ResponseEntity<ApiResponse> getAllStudentResourceProgress(
             @PathVariable Integer studentId) {

@@ -9,4 +9,5 @@ public interface StudentResourceProgressService {
     List<StudentResourceProgress> getAllStudentResourceProgress(Integer studentId);
     StudentResourceProgress viewStudentResourceProgress(Integer studentId, Integer resourceId);
     StudentResourceProgress writeNoteForLearningResource(Integer studentId, Integer resourceId, String notes);
+    void completeLearningResourceProgress(Integer studentId, Integer resourceId);
 }
