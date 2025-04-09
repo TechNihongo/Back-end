@@ -12,10 +12,7 @@ import org.example.technihongo.enums.ActivityType;
 import org.example.technihongo.enums.ContentType;
 import org.example.technihongo.exception.ResourceNotFoundException;
 import org.example.technihongo.response.ApiResponse;
-import org.example.technihongo.services.interfaces.StudentCourseProgressService;
-import org.example.technihongo.services.interfaces.StudentStudyPlanService;
-import org.example.technihongo.services.interfaces.StudyPlanService;
-import org.example.technihongo.services.interfaces.UserActivityLogService;
+import org.example.technihongo.services.interfaces.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -36,6 +33,8 @@ public class StudentStudyPlanController {
     private StudentCourseProgressService studentCourseProgressService;
     @Autowired
     private StudyPlanService studyPlanService;
+    @Autowired
+    private StudentService studentService;
 
     @PostMapping("/enroll")
     public ResponseEntity<ApiResponse> enrollStudentInStudyPlan(
@@ -142,10 +141,13 @@ public class StudentStudyPlanController {
         }
     }
 
-    @GetMapping("/activeStudyPlan/{studentId}")
-    public ResponseEntity<ApiResponse> getActiveStudyPlan(@PathVariable Integer studentId) {
+    @GetMapping("/activeStudyPlan/{courseId}")
+    public ResponseEntity<ApiResponse> getActiveStudyPlan(
+            @PathVariable Integer courseId,
+            @RequestHeader("Authorization") String authorizationHeader) {
         try {
-            StudentStudyPlanDTO activePlan = studentStudyPlanService.getActiveStudyPlan(studentId);
+            Integer studentId = extractStudentId(authorizationHeader);
+            StudentStudyPlanDTO activePlan = studentStudyPlanService.getActiveStudyPlan(studentId, courseId);
             return ResponseEntity.ok(ApiResponse.builder()
                     .success(true)
                     .message("Active study plan retrieved successfully")
@@ -189,6 +191,15 @@ public class StudentStudyPlanController {
         if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
             String token = authorizationHeader.substring(7);
             return jwtUtil.extractUserId(token);
+        }
+        throw new IllegalArgumentException("Authorization header is missing or invalid.");
+    }
+
+    private Integer extractStudentId(String authorizationHeader) {
+        if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
+            String token = authorizationHeader.substring(7);
+            Integer userId = jwtUtil.extractUserId(token);
+            return studentService.getStudentIdByUserId(userId);
         }
         throw new IllegalArgumentException("Authorization header is missing or invalid.");
     }

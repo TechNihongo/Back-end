@@ -40,6 +40,8 @@ public class StudentStudyPlanServiceImpl implements StudentStudyPlanService {
     private StudentCourseProgressRepository studentCourseProgressRepository;
     @Autowired
     private StudentLessonProgressService studentLessonProgressService;
+    @Autowired
+    private CourseRepository courseRepository;
 
     @Override
     public StudentStudyPlanDTO enrollStudentInStudyPlan(EnrollStudyPlanRequest request) {
@@ -198,9 +200,20 @@ public class StudentStudyPlanServiceImpl implements StudentStudyPlanService {
 
     //Get the current active study plan for a student
     @Override
-    public StudentStudyPlanDTO getActiveStudyPlan(Integer studentId) {
-        StudentStudyPlan activePlan = studentStudyPlanRepository.findActiveStudyPlanByStudentId(studentId)
-                .orElseThrow(() -> new ResourceNotFoundException("No active StudyPlan found for student with ID: " + studentId));
+    public StudentStudyPlanDTO getActiveStudyPlan(Integer studentId, Integer courseId) {
+        if (studentId == null || courseId == null) {
+            throw new RuntimeException("Student ID and Course ID must not be null.");
+        }
+
+        studentRepository.findById(studentId)
+                .orElseThrow(() -> new RuntimeException("Student not found with ID: " + studentId));
+
+        courseRepository.findById(courseId)
+                .orElseThrow(() -> new RuntimeException("Course not found with ID: " + courseId));
+
+        StudentStudyPlan activePlan = studentStudyPlanRepository.findByStudent_StudentIdAndStudyPlan_Course_CourseIdAndStatus(
+                        studentId, courseId, StudyPlanStatus.ACTIVE)
+                .orElseThrow(() -> new RuntimeException("No active StudyPlan found for student with ID: " + studentId + " in course with ID: " + courseId));
 
         return mapToDTO(activePlan);
     }
