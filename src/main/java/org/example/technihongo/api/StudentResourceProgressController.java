@@ -1,6 +1,7 @@
 package org.example.technihongo.api;
 
 import org.example.technihongo.core.security.JwtUtil;
+import org.example.technihongo.dto.NoteDTO;
 import org.example.technihongo.entities.StudentResourceProgress;
 import org.example.technihongo.response.ApiResponse;
 import org.example.technihongo.services.interfaces.StudentResourceProgressService;
@@ -164,14 +165,14 @@ public class StudentResourceProgressController {
     public ResponseEntity<ApiResponse> writeNoteForLearningResource(
             @RequestHeader("Authorization") String authorizationHeader,
             @RequestParam Integer resourceId,
-            @RequestParam(required = false) String notes) {
+            @RequestBody NoteDTO note) {
         try {
             if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
                 String token = authorizationHeader.substring(7);
                 Integer userId = jwtUtil.extractUserId(token);
                 Integer studentId = studentService.getStudentIdByUserId(userId);
 
-                StudentResourceProgress progress = resourceProgressService.writeNoteForLearningResource(studentId, resourceId, notes);
+                StudentResourceProgress progress = resourceProgressService.writeNoteForLearningResource(studentId, resourceId, note.getNote());
 
                 return ResponseEntity.ok(ApiResponse.builder()
                         .success(true)
