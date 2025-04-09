@@ -12,7 +12,7 @@ public interface StudentStudyPlanService {
 
     List<StudyPlanDTO> getAvailableStudyPlans(Integer studentId);
 
-    StudentStudyPlanDTO getActiveStudyPlan(Integer studentId);
+    StudentStudyPlanDTO getActiveStudyPlan(Integer studentId, Integer courseId);
 
     List<StudentStudyPlanDTO> getStudyPlanHistory(Integer studentId);
 }

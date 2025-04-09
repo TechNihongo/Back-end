@@ -1,6 +1,7 @@
 package org.example.technihongo.repositories;
 
 import org.example.technihongo.entities.StudentStudyPlan;
+import org.example.technihongo.enums.StudyPlanStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -29,6 +30,8 @@ public interface StudentStudyPlanRepository extends JpaRepository<StudentStudyPl
             @Param("studentId") Integer studentId,
             @Param("courseId") Integer courseId
     );
+
+    Optional<StudentStudyPlan> findByStudent_StudentIdAndStudyPlan_Course_CourseIdAndStatus(Integer studentId, Integer courseId, StudyPlanStatus studyPlanStatus);
 
 //    @Query("SELECT COUNT(ssp) > 0 FROM StudentStudyPlan ssp WHERE ssp.student.studentId = :studentId AND ssp.status = 'Active'")
 //    boolean hasActiveStudyPlan(@Param("studentId") Integer studentId);
