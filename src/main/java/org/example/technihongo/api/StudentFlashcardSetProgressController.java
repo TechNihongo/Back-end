@@ -86,7 +86,7 @@ public class StudentFlashcardSetProgressController {
     public ResponseEntity<ApiResponse> trackFlashcardSetProgress(
             @RequestHeader("Authorization") String authorizationHeader,
             @RequestParam Integer setId,
-            @RequestParam(defaultValue = "false") boolean isSystemSet,
+            @RequestParam(defaultValue = "true") boolean isSystemSet,
             @RequestParam(defaultValue = "") Integer currentFlashcardId) {
         try {
             if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
@@ -113,6 +113,46 @@ public class StudentFlashcardSetProgressController {
                     .body(ApiResponse.builder()
                             .success(false)
                             .message("Failed to track flashcard set progress: " + e.getMessage())
+                            .build());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponse.builder()
+                            .success(false)
+                            .message("Internal Server Error: " + e.getMessage())
+                            .build());
+        }
+    }
+
+    @PatchMapping("/complete")
+    public ResponseEntity<ApiResponse> completeFlashcardSetProgress(
+            @RequestHeader("Authorization") String authorizationHeader,
+            @RequestParam Integer setId,
+            @RequestParam(defaultValue = "true") boolean isSystemSet) {
+        try {
+            if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
+                String token = authorizationHeader.substring(7);
+                Integer userId = jwtUtil.extractUserId(token);
+                Integer studentId = studentService.getStudentIdByUserId(userId);
+
+                setProgressService.completeFlashcardSetProgress(studentId, setId, isSystemSet, null);
+
+                return ResponseEntity.ok(ApiResponse.builder()
+                        .success(true)
+                        .message("Flashcard set progress completed successfully")
+                        .data(null)
+                        .build());
+            }  else {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(ApiResponse.builder()
+                                .success(false)
+                                .message("Unauthorized")
+                                .build());
+            }
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(ApiResponse.builder()
+                            .success(false)
+                            .message("Failed to complete flashcard set progress: " + e.getMessage())
                             .build());
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
