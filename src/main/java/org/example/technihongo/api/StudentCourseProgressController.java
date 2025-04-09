@@ -165,6 +165,7 @@ public class StudentCourseProgressController {
                 StudyPlan studyPlan = studyPlanService.getDefaultStudyPlanByCourseId(courseId);
                 StudentStudyPlanDTO dto = studentStudyPlanService.enrollStudentInStudyPlan(
                         new EnrollStudyPlanRequest(studentId, studyPlan.getStudyPlanId()));
+                courseProgressService.trackStudentCourseProgress(studentId, courseId, null);
 
                 String ipAddress = httpRequest.getRemoteAddr();
                 String userAgent = httpRequest.getHeader("User-Agent");
