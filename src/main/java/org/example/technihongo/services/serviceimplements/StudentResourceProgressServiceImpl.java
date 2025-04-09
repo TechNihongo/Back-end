@@ -56,9 +56,43 @@ public class StudentResourceProgressServiceImpl implements StudentResourceProgre
             progress = existingProgressOpt.get();
             progress.setLastStudied(LocalDateTime.now());
 
-            if(progress.getNotes() != null) {
-                progress.setNotes(notes);
-            }
+//            if(progress.getNotes() != null) {
+//                progress.setNotes(notes);
+//            }
+
+//            if (progress.getCompletionStatus() != CompletionStatus.COMPLETED) {
+//                progress.setCompletionStatus(CompletionStatus.COMPLETED);
+//                StudentDailyLearningLog dailyLog = dailyLogRepository.findByStudentStudentIdAndLogDate(studentId, LocalDate.now()).get();
+//                dailyLog.setCompletedResources(dailyLog.getCompletedResources() + 1);
+//                dailyLogRepository.save(dailyLog);
+//                userActivityLogService.trackUserActivityLog(userRepository.findByStudentStudentId(studentId).getUserId(),
+//                        ActivityType.COMPLETE, ContentType.LearningResource, resourceId, null, null);
+//            }
+        }
+
+        studentResourceProgressRepository.save(progress);
+    }
+
+    @Override
+    public void completeLearningResourceProgress(Integer studentId, Integer resourceId) {
+        studentRepository.findById(studentId)
+                .orElseThrow(() -> new RuntimeException("Student not found with ID: " + studentId));
+        learningResourceRepository.findById(resourceId)
+                .orElseThrow(() -> new RuntimeException("LearningResource not found with ID: " + resourceId));
+
+        Optional<StudentResourceProgress> existingProgressOpt = studentResourceProgressRepository
+                .findByStudent_StudentIdAndLearningResource_ResourceId(studentId, resourceId);
+
+        StudentResourceProgress progress;
+        if (existingProgressOpt.isEmpty()) {
+            throw new RuntimeException("Learning Resource Progress not found!");
+        } else {
+            progress = existingProgressOpt.get();
+            progress.setLastStudied(LocalDateTime.now());
+
+//            if(progress.getNotes() != null) {
+//                progress.setNotes(notes);
+//            }
 
             if (progress.getCompletionStatus() != CompletionStatus.COMPLETED) {
                 progress.setCompletionStatus(CompletionStatus.COMPLETED);
