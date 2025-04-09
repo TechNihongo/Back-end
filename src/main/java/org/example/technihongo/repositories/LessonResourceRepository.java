@@ -4,6 +4,8 @@ import org.example.technihongo.entities.LessonResource;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -30,5 +32,9 @@ public interface LessonResourceRepository extends JpaRepository<LessonResource, 
     List<LessonResource> findBySystemFlashCardSet_SystemSetId(Integer flashcardSetId);
     List<LessonResource> findByLearningResource_ResourceId(Integer learningResourceId);
 
-    List<LessonResource> findByLesson_LessonIdAndActiveOrderByTypeOrderAsc(Integer lessonId, boolean isActive);
-}
+    @Query("SELECT lr FROM LessonResource lr " +
+            "WHERE lr.lesson.lessonId = :lessonId AND lr.isActive = :isActive " +
+            "ORDER BY lr.typeOrder ASC")
+    List<LessonResource> findByLesson_LessonIdAndActiveOrderByTypeOrderAsc(
+            @Param("lessonId") Integer lessonId,
+            @Param("isActive") boolean isActive);}
