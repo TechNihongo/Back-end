@@ -4,12 +4,11 @@ import jakarta.servlet.http.HttpServletRequest;
 import org.example.technihongo.core.security.JwtUtil;
 import org.example.technihongo.dto.*;
 import org.example.technihongo.entities.LessonResource;
+import org.example.technihongo.entities.StudentCourseProgress;
 import org.example.technihongo.enums.ActivityType;
 import org.example.technihongo.enums.ContentType;
 import org.example.technihongo.response.ApiResponse;
-import org.example.technihongo.services.interfaces.LessonResourceService;
-import org.example.technihongo.services.interfaces.StudentService;
-import org.example.technihongo.services.interfaces.UserActivityLogService;
+import org.example.technihongo.services.interfaces.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -30,6 +29,12 @@ public class LessonResourceController {
     private UserActivityLogService userActivityLogService;
     @Autowired
     private StudentService studentService;
+    @Autowired
+    private StudentLessonProgressService studentLessonProgressService;
+    @Autowired
+    private LessonService lessonService;
+    @Autowired
+    private StudentCourseProgressService studentCourseProgressService;
 
     @GetMapping("/lesson/{lessonId}")
     public ResponseEntity<ApiResponse> getLessonResourcesByLessonId(
@@ -57,6 +62,9 @@ public class LessonResourceController {
                 } else {
                     Integer studentId = extractStudentId(authorizationHeader);
                     List<LessonResourceDTO> dto = lessonResourceService.getActiveLessonResourceListByLessonId(studentId, lessonId);
+                    studentLessonProgressService.trackStudentLessonProgress(studentId, lessonId);
+                    Integer courseId = lessonService.getCourseIdByLessonId(lessonId);
+                    studentCourseProgressService.trackStudentCourseProgress(studentId, courseId, null);
                     if (dto.isEmpty()) {
                         return ResponseEntity.ok(ApiResponse.builder()
                                 .success(false)
