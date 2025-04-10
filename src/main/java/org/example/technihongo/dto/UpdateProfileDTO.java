@@ -7,6 +7,7 @@ import lombok.Setter;
 import org.example.technihongo.enums.DifficultyLevelEnum;
 import org.example.technihongo.enums.OccupationStatus;
 
+import java.time.LocalDate;
 import java.time.LocalTime;
 
 @Getter
@@ -23,6 +24,7 @@ public class UpdateProfileDTO {
     private String confirmPassword;
     private String bio;
     private String profileImg;
+    private LocalDate dob;
     private OccupationStatus occupation;
     private boolean reminderEnabled;
     private LocalTime reminderTime;

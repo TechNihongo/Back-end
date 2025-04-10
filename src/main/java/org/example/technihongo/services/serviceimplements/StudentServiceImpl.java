@@ -127,6 +127,10 @@ public class StudentServiceImpl implements StudentService {
             student.setOccupation(dto.getOccupation());
         }
 
+        if(dto.getDob() != null) {
+            student.getUser().setDob(dto.getDob());
+        }
+
         student.setReminderEnabled(dto.isReminderEnabled());
         if (dto.getReminderTime() != null) {
             student.setReminderTime(dto.getReminderTime());
