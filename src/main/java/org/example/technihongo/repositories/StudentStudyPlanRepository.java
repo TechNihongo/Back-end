@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -32,6 +33,7 @@ public interface StudentStudyPlanRepository extends JpaRepository<StudentStudyPl
     );
 
     Optional<StudentStudyPlan> findByStudent_StudentIdAndStudyPlan_Course_CourseIdAndStatus(Integer studentId, Integer courseId, StudyPlanStatus studyPlanStatus);
+    Collection<StudentStudyPlan> findByStudent_StudentIdAndStudyPlan_Course_CourseIdAndStatusIn(Integer studentId, Integer courseId, List<StudyPlanStatus> list);
 
 //    @Query("SELECT COUNT(ssp) > 0 FROM StudentStudyPlan ssp WHERE ssp.student.studentId = :studentId AND ssp.status = 'Active'")
 //    boolean hasActiveStudyPlan(@Param("studentId") Integer studentId);

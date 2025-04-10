@@ -18,6 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -211,11 +212,23 @@ public class StudentStudyPlanServiceImpl implements StudentStudyPlanService {
         courseRepository.findById(courseId)
                 .orElseThrow(() -> new RuntimeException("Course not found with ID: " + courseId));
 
-        StudentStudyPlan activePlan = studentStudyPlanRepository.findByStudent_StudentIdAndStudyPlan_Course_CourseIdAndStatus(
-                        studentId, courseId, StudyPlanStatus.ACTIVE)
-                .orElseThrow(() -> new RuntimeException("No active StudyPlan found for student with ID: " + studentId + " in course with ID: " + courseId));
+        // Lấy StudentStudyPlan với status là ACTIVE hoặc COMPLETED
+        StudentStudyPlan activeOrCompletedPlan = studentStudyPlanRepository
+                .findByStudent_StudentIdAndStudyPlan_Course_CourseIdAndStatusIn(
+                        studentId, courseId, Arrays.asList(StudyPlanStatus.ACTIVE, StudyPlanStatus.COMPLETED))
+                .stream()
+                .filter(plan -> plan.getStatus().equals(StudyPlanStatus.ACTIVE)) // Ưu tiên ACTIVE
+                .findFirst()
+                .orElseGet(() -> studentStudyPlanRepository
+                        .findByStudent_StudentIdAndStudyPlan_Course_CourseIdAndStatusIn(
+                                studentId, courseId, Arrays.asList(StudyPlanStatus.ACTIVE, StudyPlanStatus.COMPLETED))
+                        .stream()
+                        .findFirst()
+                        .orElseThrow(() -> new RuntimeException(
+                                "No active or completed StudyPlan found for student with ID: " + studentId +
+                                        " in course with ID: " + courseId)));
 
-        return mapToDTO(activePlan);
+        return mapToDTO(activeOrCompletedPlan);
     }
 
 
