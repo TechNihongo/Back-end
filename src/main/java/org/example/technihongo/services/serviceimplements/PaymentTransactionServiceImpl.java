@@ -9,7 +9,6 @@ import org.example.technihongo.enums.TransactionStatus;
 import org.example.technihongo.repositories.*;
 import org.example.technihongo.services.interfaces.MomoService;
 import org.example.technihongo.services.interfaces.PaymentTransactionService;
-import org.example.technihongo.services.interfaces.ZaloPayService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
@@ -37,7 +36,6 @@ public class PaymentTransactionServiceImpl implements PaymentTransactionService 
     private final PaymentTransactionRepository paymentTransactionRepository;
     private final PaymentMethodRepository paymentMethodRepository;
     private final MomoService momoService;
-    private final ZaloPayService zaloPayService;
 
     @Override
     public PageResponseDTO<PaymentTransactionDTO> getPaymentHistoryByStudentId(
@@ -161,15 +159,20 @@ public class PaymentTransactionServiceImpl implements PaymentTransactionService 
                 .build();
     }
 
-
-
-
     @Override
     public void handleMoMoCallback(MomoCallbackDTO callbackDTO, Map<String, String> requestParams) {
         logger.info("Handling MoMo callback for orderId: {}", callbackDTO.getOrderId());
 
+        // Kiểm tra xem giao dịch có tồn tại không
         PaymentTransaction transaction = paymentTransactionRepository.findByExternalOrderId(callbackDTO.getOrderId())
                 .orElseThrow(() -> new IllegalArgumentException("Transaction not found for orderId: " + callbackDTO.getOrderId()));
+
+        // 1. Kiểm tra trạng thái hiện tại - nếu đã hoàn thành hoặc thất bại thì không xử lý tiếp
+        if (transaction.getTransactionStatus() == TransactionStatus.COMPLETED ||
+                transaction.getTransactionStatus() == TransactionStatus.FAILED) {
+            logger.warn("Transaction already processed. Current status: {}", transaction.getTransactionStatus());
+            return;
+        }
 
         if (transaction.getExpiresAt().isBefore(LocalDateTime.now())) {
             transaction.setTransactionStatus(TransactionStatus.FAILED);
@@ -178,18 +181,34 @@ public class PaymentTransactionServiceImpl implements PaymentTransactionService 
             return;
         }
 
+        boolean isValidSignature = false;
         try {
-            if (!momoService.verifyCallbackSignature(callbackDTO, requestParams)) {
-                transaction.setTransactionStatus(TransactionStatus.FAILED);
-                paymentTransactionRepository.save(transaction);
-                logger.warn("Invalid signature for transactionId: {}", transaction.getTransactionId());
-                throw new SecurityException("Invalid signature from MoMo callback");
-            }
+            isValidSignature = momoService.verifyCallbackSignature(callbackDTO, requestParams);
         } catch (Exception e) {
+            logger.error("Error verifying signature: {}", e.getMessage());
+        }
+
+        if (!isValidSignature) {
             transaction.setTransactionStatus(TransactionStatus.FAILED);
             paymentTransactionRepository.save(transaction);
-            logger.error("Error verifying signature: {}", e.getMessage());
-            throw new RuntimeException("Signature verification failed", e);
+            logger.warn("Invalid signature for transactionId: {}", transaction.getTransactionId());
+            throw new SecurityException("Invalid signature from MoMo callback");
+        }
+
+        long expectedAmount = transaction.getTransactionAmount().longValue();
+        try {
+            long actualAmount = Long.parseLong(callbackDTO.getAmount());
+            if (expectedAmount != actualAmount) {
+                transaction.setTransactionStatus(TransactionStatus.FAILED);
+                paymentTransactionRepository.save(transaction);
+                logger.warn("Amount mismatch for transactionId: {}", transaction.getTransactionId());
+                throw new SecurityException("Amount mismatch in MoMo callback");
+            }
+        } catch (NumberFormatException e) {
+            transaction.setTransactionStatus(TransactionStatus.FAILED);
+            paymentTransactionRepository.save(transaction);
+            logger.error("Invalid amount format: {}", callbackDTO.getAmount());
+            throw new SecurityException("Invalid amount format in MoMo callback");
         }
 
         TransactionStatus newStatus;
@@ -198,7 +217,6 @@ public class PaymentTransactionServiceImpl implements PaymentTransactionService 
             if (resultCode == 0) {
                 newStatus = TransactionStatus.COMPLETED;
                 transaction.setPaymentDate(LocalDateTime.now());
-                transaction.getSubscription().setIsActive(true);
             } else {
                 newStatus = TransactionStatus.FAILED;
                 logger.warn("Payment failed or canceled. ResultCode: {}, Message: {}",
