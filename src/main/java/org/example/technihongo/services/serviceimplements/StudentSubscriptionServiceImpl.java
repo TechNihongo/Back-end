@@ -104,11 +104,48 @@ public class StudentSubscriptionServiceImpl implements StudentSubscriptionServic
         PaymentTransaction transaction = paymentTransactionRepository.findByExternalOrderId(orderId)
                 .orElseThrow(() -> new RuntimeException("Transaction not found for orderId: " + orderId));
 
+        if (transaction.getTransactionStatus() == TransactionStatus.COMPLETED ||
+                transaction.getTransactionStatus() == TransactionStatus.FAILED) {
+            log.warn("Transaction already processed. Current status: {}, orderId: {}",
+                    transaction.getTransactionStatus(), orderId);
+            return;
+        }
+
         if (transaction.getExpiresAt().isBefore(LocalDateTime.now())) {
             transaction.setTransactionStatus(TransactionStatus.FAILED);
             paymentTransactionRepository.save(transaction);
             log.warn("Transaction expired before callback: orderId={}", orderId);
             return;
+        }
+        boolean isValidSignature = false;
+        try {
+            isValidSignature = momoService.verifyCallbackSignature(callback, requestParams);
+        } catch (Exception e) {
+            log.error("Error verifying signature: {}", e.getMessage());
+        }
+
+        if (!isValidSignature) {
+            transaction.setTransactionStatus(TransactionStatus.FAILED);
+            paymentTransactionRepository.save(transaction);
+            log.warn("Invalid signature for transactionId: {}, orderId: {}",
+                    transaction.getTransactionId(), orderId);
+            throw new SecurityException("Invalid signature from MoMo callback");
+        }
+
+        long expectedAmount = transaction.getTransactionAmount().longValue();
+        try {
+            long actualAmount = Long.parseLong(callback.getAmount());
+            if (expectedAmount != actualAmount) {
+                transaction.setTransactionStatus(TransactionStatus.FAILED);
+                paymentTransactionRepository.save(transaction);
+                log.warn("Amount mismatch for transactionId: {}", transaction.getTransactionId());
+                throw new SecurityException("Amount mismatch in MoMo callback");
+            }
+        } catch (NumberFormatException e) {
+            transaction.setTransactionStatus(TransactionStatus.FAILED);
+            paymentTransactionRepository.save(transaction);
+            log.error("Invalid amount format: {}", callback.getAmount());
+            throw new SecurityException("Invalid amount format in MoMo callback");
         }
 
         if ("0".equals(callback.getResultCode())) {
@@ -120,19 +157,14 @@ public class StudentSubscriptionServiceImpl implements StudentSubscriptionServic
             log.info("Current subscription found: ID={}, EndDate={}",
                     currentSubscription.getSubscriptionId(), currentSubscription.getEndDate());
 
-            // Lấy thông tin gói đăng ký từ request ban đầu (đã lưu trong transaction)
             SubscriptionPlan plan = currentSubscription.getSubscriptionPlan();
-
-            // Tìm đăng ký mới nhất (active hoặc waiting) để tính thời gian bắt đầu và kết thúc
             LocalDateTime latestEndDate = findLatestEndDate(currentSubscription.getStudent().getStudentId());
-
-            // Tạo đăng ký mới với thời gian bắt đầu = thời gian kết thúc của đăng ký mới nhất
             StudentSubscription newSubscription = StudentSubscription.builder()
                     .student(currentSubscription.getStudent())
                     .subscriptionPlan(plan)
                     .startDate(latestEndDate)
                     .endDate(latestEndDate.plusDays(plan.getDurationDays()))
-                    .isActive(false) // Ban đầu không active
+                    .isActive(false)
                     .build();
 
             StudentSubscription savedSubscription = subscriptionRepository.save(newSubscription);
@@ -170,14 +202,11 @@ public class StudentSubscriptionServiceImpl implements StudentSubscriptionServic
     }
 
     private LocalDateTime findLatestEndDate(Integer studentId) {
-        // Lấy tất cả các đăng ký của student
         List<StudentSubscription> allSubscriptions = subscriptionRepository.findAllByStudent_StudentId(studentId, Pageable.unpaged()).getContent();
-
-        // Tìm end_date mới nhất
         return allSubscriptions.stream()
                 .map(StudentSubscription::getEndDate)
                 .max(LocalDateTime::compareTo)
-                .orElse(LocalDateTime.now()); // Nếu không có đăng ký nào thì dùng thời gian hiện tại
+                .orElse(LocalDateTime.now());
     }
 
     @Override
