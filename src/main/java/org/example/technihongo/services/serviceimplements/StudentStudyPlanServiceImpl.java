@@ -125,7 +125,7 @@ public class StudentStudyPlanServiceImpl implements StudentStudyPlanService {
                 .findByStudent_StudentIdAndCourse_CourseId(request.getStudentId(), currentPlan.getStudyPlan().getCourse().getCourseId())
                 .orElseThrow(() -> new ResourceNotFoundException("Course progress not found"));
         if (courseProgress.getCompletionPercentage().compareTo(new BigDecimal("30")) >= 0) {
-            throw new IllegalStateException("Cannot switch study plan as course progress is 30% or higher!");
+            throw new IllegalStateException("Không thể đổi StudyPlan nếu tiến độ khóa học đã đạt hoặc hơn 30%!");
         }
 
         // Chuyển IN_PROGRESS thành PAUSED cho Lesson của StudyPlan cũ

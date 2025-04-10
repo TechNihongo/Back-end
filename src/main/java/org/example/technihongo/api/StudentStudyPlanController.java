@@ -92,7 +92,7 @@ public class StudentStudyPlanController {
 
             return ResponseEntity.ok(ApiResponse.builder()
                     .success(true)
-                    .message("Study plan successfully switched")
+                    .message("Đổi StudyPlan thành công!")
                     .data(newPlan)
                     .build());
         } catch (ResourceNotFoundException e) {
