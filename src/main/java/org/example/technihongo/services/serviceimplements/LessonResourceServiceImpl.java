@@ -272,7 +272,7 @@ public class LessonResourceServiceImpl implements LessonResourceService {
         if(keyword == null && type != null) {
             lessonResources = lessonResourceRepository.findByLesson_StudyPlan_StudyPlanIdAndType(studyPlanId, type, pageable);
         }
-        else if(keyword != null && type.isEmpty()) {
+        else if(keyword != null && !keyword.isEmpty() && type.isEmpty()) {
             lessonResources = lessonResourceRepository.findByLesson_StudyPlan_StudyPlanIdAndLearningResource_TitleContainsIgnoreCaseOrSystemFlashCardSet_TitleContainsIgnoreCaseOrQuiz_TitleContainsIgnoreCase(studyPlanId, keyword, keyword, keyword, pageable);
         }
         else if(keyword != null && type.equalsIgnoreCase("LearningResource")){
