@@ -69,4 +69,42 @@ public class StudentLessonProgressController {
         }
     }
 
+    @PatchMapping("/track")
+    public ResponseEntity<ApiResponse> trackStudentLessonProgress(
+            @RequestHeader("Authorization") String authorizationHeader,
+            @RequestParam Integer lessonId) {
+        try {
+            if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
+                String token = authorizationHeader.substring(7);
+                Integer userId = jwtUtil.extractUserId(token);
+                Integer studentId = studentService.getStudentIdByUserId(userId);
+
+                studentLessonProgressService.trackStudentLessonProgress(studentId, lessonId);
+
+                return ResponseEntity.ok(ApiResponse.builder()
+                        .success(true)
+                        .message("Lesson Progress tracked successfully")
+                        .data(null)
+                        .build());
+            } else {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(ApiResponse.builder()
+                                .success(false)
+                                .message("Unauthorized")
+                                .build());
+            }
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(ApiResponse.builder()
+                            .success(false)
+                            .message("Failed to track lesson progress: " + e.getMessage())
+                            .build());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponse.builder()
+                            .success(false)
+                            .message("Internal Server Error: " + e.getMessage())
+                            .build());
+        }
+    }
 }
