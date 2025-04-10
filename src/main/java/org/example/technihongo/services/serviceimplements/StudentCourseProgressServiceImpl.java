@@ -20,6 +20,7 @@ import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 @Service
@@ -192,10 +193,20 @@ public class StudentCourseProgressServiceImpl implements StudentCourseProgressSe
                 .count();
 
         progress.setCompletedLessons(completedLessons);
-        BigDecimal percentage = BigDecimal.valueOf(completedLessons)
-                .divide(BigDecimal.valueOf(totalLessons), 2, RoundingMode.HALF_UP)
-                .multiply(BigDecimal.valueOf(100));
-        progress.setCompletionPercentage(percentage);
+
+        // Tính completionPercentage dựa trên tổng phần trăm của các lesson
+        BigDecimal totalLessonPercentage = lessonProgresses.stream()
+                .map(StudentLessonProgress::getCompletionPercentage)
+                .filter(Objects::nonNull) // Loại bỏ null nếu có
+                .reduce(BigDecimal.ZERO, BigDecimal::add); // Tổng tất cả completionPercentage
+        BigDecimal completionPercentage = totalLessonPercentage
+                .divide(BigDecimal.valueOf(totalLessons), 2, RoundingMode.HALF_UP); // Chia cho số lesson để lấy trung bình
+        progress.setCompletionPercentage(completionPercentage);
+
+//        BigDecimal percentage = BigDecimal.valueOf(completedLessons)
+//                .divide(BigDecimal.valueOf(totalLessons), 2, RoundingMode.HALF_UP)
+//                .multiply(BigDecimal.valueOf(100));
+//        progress.setCompletionPercentage(percentage);
 
         if (currentLessonId != null) {
             Lesson currentLesson = lessonRepository.findById(currentLessonId)
