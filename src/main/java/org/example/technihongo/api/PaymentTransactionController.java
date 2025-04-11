@@ -15,6 +15,7 @@ import org.example.technihongo.services.interfaces.PaymentTransactionService;
 import org.example.technihongo.services.interfaces.StudentService;
 import org.example.technihongo.services.interfaces.StudentSubscriptionService;
 import org.example.technihongo.services.interfaces.UserActivityLogService;
+import org.example.technihongo.services.interfaces.VNPayService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -33,12 +34,13 @@ import java.util.Map;
 public class PaymentTransactionController {
 
     private final PaymentTransactionService paymentTransactionService;
-    private static final Logger log = LoggerFactory.getLogger(PaymentTransactionController.class);
+    private final VNPayService vnPayService;
     private final JwtUtil jwtUtil;
     private final StudentService studentService;
     private final UserActivityLogService userActivityLogService;
     private final StudentSubscriptionService subscriptionService;
 
+    private static final Logger log = LoggerFactory.getLogger(PaymentTransactionController.class);
 
     @PostMapping("/initiateMomo")
     public ResponseEntity<ApiResponse> initiateMoMoPayment(
@@ -46,7 +48,7 @@ public class PaymentTransactionController {
             HttpServletRequest httpRequest,
             @RequestBody PaymentRequestDTO requestDTO) {
         try {
-            if(authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
+            if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
                 String token = authorizationHeader.substring(7);
                 Integer userId = jwtUtil.extractUserId(token);
                 Integer studentId = studentService.getStudentIdByUserId(userId);
@@ -66,8 +68,7 @@ public class PaymentTransactionController {
                         .message("MoMo payment initiated successfully!")
                         .data(responseDTO)
                         .build());
-            }
-            else {
+            } else {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ApiResponse.builder()
                         .success(false)
                         .message("Unauthorized access!")
@@ -102,6 +103,66 @@ public class PaymentTransactionController {
         }
     }
 
+    @PostMapping("/initiateVNPay")
+    public ResponseEntity<ApiResponse> initiateVNPayPayment(
+            @RequestHeader("Authorization") String authorizationHeader,
+            HttpServletRequest httpRequest,
+            @RequestBody PaymentRequestDTO requestDTO) {
+        try {
+            if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
+                String token = authorizationHeader.substring(7);
+                Integer userId = jwtUtil.extractUserId(token);
+                Integer studentId = studentService.getStudentIdByUserId(userId);
+                String ipAddress = httpRequest.getRemoteAddr();
+                String userAgent = httpRequest.getHeader("User-Agent");
+                userActivityLogService.trackUserActivityLog(
+                        userId,
+                        ActivityType.REGISTER_SUBSCRIPTION,
+                        ContentType.PaymentTransaction,
+                        null,
+                        ipAddress,
+                        userAgent
+                );
+                PaymentResponseDTO responseDTO = vnPayService.initiateVNPayPayment(studentId, requestDTO, httpRequest);
+                return ResponseEntity.ok(ApiResponse.builder()
+                        .success(true)
+                        .message("VNPay payment initiated successfully!")
+                        .data(responseDTO)
+                        .build());
+            } else {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ApiResponse.builder()
+                        .success(false)
+                        .message("Unauthorized access!")
+                        .data(null)
+                        .build());
+            }
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ApiResponse.builder()
+                    .success(false)
+                    .message("Invalid request: " + e.getMessage())
+                    .build());
+        } catch (IllegalStateException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ApiResponse.builder()
+                    .success(false)
+                    .message("Payment method unavailable: " + e.getMessage())
+                    .build());
+        } catch (UnauthorizedAccessException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ApiResponse.builder()
+                    .success(false)
+                    .message(e.getMessage())
+                    .build());
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ApiResponse.builder()
+                    .success(false)
+                    .message("Failed to initiate VNPay payment: " + e.getMessage())
+                    .build());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(ApiResponse.builder()
+                    .success(false)
+                    .message("Internal Server Error: " + e.getMessage())
+                    .build());
+        }
+    }
 
     @GetMapping("/ipn-handler")
     public ResponseEntity<String> ipnHandler(@RequestParam Map<String, String> request) {
@@ -124,6 +185,16 @@ public class PaymentTransactionController {
             return ResponseEntity.ok("Callback processed");
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Callback failed: " + e.getMessage());
+        }
+    }
+
+    @GetMapping("/vn-pay-ipn")
+    public ResponseEntity<String> vnPayIpnHandler(@RequestParam Map<String, String> request) {
+        try {
+            vnPayService.handleVNPayCallback(request);
+            return ResponseEntity.ok("VNPay IPN processed");
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("VNPay IPN failed: " + e.getMessage());
         }
     }
 
@@ -175,6 +246,102 @@ public class PaymentTransactionController {
         }
     }
 
+    @PostMapping("/renewVNPay")
+    public ResponseEntity<ApiResponse> initiateVNPayRenewal(
+            @RequestHeader("Authorization") String authorizationHeader,
+            HttpServletRequest httpRequest,
+            @RequestBody RenewSubscriptionRequestDTO requestDTO) {
+        try {
+            if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
+                String token = authorizationHeader.substring(7);
+                Integer userId = jwtUtil.extractUserId(token);
+                Integer studentId = studentService.getStudentIdByUserId(userId);
+                String ipAddress = httpRequest.getRemoteAddr();
+                String userAgent = httpRequest.getHeader("User-Agent");
+                userActivityLogService.trackUserActivityLog(
+                        userId,
+                        ActivityType.REGISTER_SUBSCRIPTION,
+                        ContentType.PaymentTransaction,
+                        null,
+                        ipAddress,
+                        userAgent
+                );
+                RenewSubscriptionResponseDTO responseDTO = vnPayService.initiateRenewalVNPay(studentId, requestDTO, httpRequest);
+                return ResponseEntity.ok(ApiResponse.builder()
+                        .success(true)
+                        .message("VNPay renewal initiated successfully!")
+                        .data(responseDTO)
+                        .build());
+            } else {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ApiResponse.builder()
+                        .success(false)
+                        .message("Unauthorized access!")
+                        .data(null)
+                        .build());
+            }
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ApiResponse.builder()
+                    .success(false)
+                    .message("Invalid request: " + e.getMessage())
+                    .build());
+        } catch (IllegalStateException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ApiResponse.builder()
+                    .success(false)
+                    .message("Payment method unavailable: " + e.getMessage())
+                    .build());
+        } catch (UnauthorizedAccessException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ApiResponse.builder()
+                    .success(false)
+                    .message(e.getMessage())
+                    .build());
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ApiResponse.builder()
+                    .success(false)
+                    .message("Failed to initiate VNPay renewal: " + e.getMessage())
+                    .build());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(ApiResponse.builder()
+                    .success(false)
+                    .message("Internal Server Error: " + e.getMessage())
+                    .build());
+        }
+    }
+
+    @GetMapping("/vn-pay-callback")
+    public void handleVNPayReturn(@RequestParam Map<String, String> request, HttpServletResponse response) {
+        try {
+            log.info("Received VNPay callback: {}", request);
+
+            String orderId = request.get("vnp_TxnRef");
+            String responseCode = request.get("vnp_ResponseCode");
+            log.info("Processing VNPay orderId: {}", orderId);
+
+            if (orderId != null && orderId.startsWith("RENEW-")) {
+                log.info("Detected renewal transaction: {}", orderId);
+                vnPayService.handleRenewalVNPay(request);
+            } else {
+                log.info("Detected regular payment transaction: {}", orderId);
+                vnPayService.handleVNPayCallback(request);
+            }
+
+            if ("00".equals(responseCode)) {
+                response.sendRedirect("http://localhost:3000/api/v1/payment/success?orderId=" + orderId);
+            } else {
+                String message = request.getOrDefault("vnp_OrderInfo", "Payment failed");
+                response.sendRedirect("http://localhost:3000/api/v1/payment/failed?orderId=" + orderId
+                        + "&message=" + URLEncoder.encode(message, StandardCharsets.UTF_8));
+            }
+        } catch (Exception e) {
+            log.error("Error processing VNPay callback: {}", e.getMessage(), e);
+            try {
+                response.sendRedirect("http://localhost:3000/api/v1/payment/failed?message="
+                        + URLEncoder.encode("Server error: " + e.getMessage(), StandardCharsets.UTF_8));
+            } catch (IOException ex) {
+                log.error("Failed to redirect after error: {}", ex.getMessage());
+            }
+        }
+    }
+
     @GetMapping("/success")
     public ResponseEntity<ApiResponse> paymentSuccess(@RequestParam String orderId) {
         return ResponseEntity.ok(ApiResponse.builder()
@@ -193,7 +360,6 @@ public class PaymentTransactionController {
                 .build());
     }
 
-
     @GetMapping("/studentTransaction")
     public ResponseEntity<ApiResponse> getPaymentHistoryByStudentId(
             @RequestParam(defaultValue = "0") int pageNo,
@@ -208,10 +374,10 @@ public class PaymentTransactionController {
                 String token = authorizationHeader.substring(7);
                 Integer userId = jwtUtil.extractUserId(token);
                 Integer studentId = studentService.getStudentIdByUserId(userId);
-              
+
                 PageResponseDTO<PaymentTransactionDTO> history = paymentTransactionService.getPaymentHistoryByStudentId(
-                    studentId, pageNo, pageSize, sortBy, sortDir, transactionStatus);
-              
+                        studentId, pageNo, pageSize, sortBy, sortDir, transactionStatus);
+
                 String ipAddress = httpRequest.getRemoteAddr();
                 String userAgent = httpRequest.getHeader("User-Agent");
                 userActivityLogService.trackUserActivityLog(
@@ -222,13 +388,13 @@ public class PaymentTransactionController {
                         ipAddress,
                         userAgent
                 );
-                
+
                 return ResponseEntity.ok(ApiResponse.builder()
                         .success(true)
                         .message("Payment history retrieved successfully!")
                         .data(history)
                         .build());
-            }  else {
+            } else {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                         .body(ApiResponse.builder()
                                 .success(false)
@@ -317,6 +483,3 @@ public class PaymentTransactionController {
         throw new Exception("Authorization failed!");
     }
 }
-
-
-
