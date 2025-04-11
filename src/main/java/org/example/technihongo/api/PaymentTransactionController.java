@@ -167,7 +167,7 @@ public class PaymentTransactionController {
         } catch (Exception e) {
             log.error("Error processing MoMo callback: {}", e.getMessage(), e);
             try {
-                response.sendRedirect("http://localhost:3000/v1/payment/failed?message="
+                response.sendRedirect("http://localhost:3000/api/v1/payment/failed?message="
                         + URLEncoder.encode("Server error: " + e.getMessage(), StandardCharsets.UTF_8));
             } catch (IOException ex) {
                 log.error("Failed to redirect after error: {}", ex.getMessage());

@@ -104,48 +104,11 @@ public class StudentSubscriptionServiceImpl implements StudentSubscriptionServic
         PaymentTransaction transaction = paymentTransactionRepository.findByExternalOrderId(orderId)
                 .orElseThrow(() -> new RuntimeException("Transaction not found for orderId: " + orderId));
 
-        if (transaction.getTransactionStatus() == TransactionStatus.COMPLETED ||
-                transaction.getTransactionStatus() == TransactionStatus.FAILED) {
-            log.warn("Transaction already processed. Current status: {}, orderId: {}",
-                    transaction.getTransactionStatus(), orderId);
-            return;
-        }
-
         if (transaction.getExpiresAt().isBefore(LocalDateTime.now())) {
             transaction.setTransactionStatus(TransactionStatus.FAILED);
             paymentTransactionRepository.save(transaction);
             log.warn("Transaction expired before callback: orderId={}", orderId);
             return;
-        }
-        boolean isValidSignature = false;
-        try {
-            isValidSignature = momoService.verifyCallbackSignature(callback, requestParams);
-        } catch (Exception e) {
-            log.error("Error verifying signature: {}", e.getMessage());
-        }
-
-        if (!isValidSignature) {
-            transaction.setTransactionStatus(TransactionStatus.FAILED);
-            paymentTransactionRepository.save(transaction);
-            log.warn("Invalid signature for transactionId: {}, orderId: {}",
-                    transaction.getTransactionId(), orderId);
-            throw new SecurityException("Invalid signature from MoMo callback");
-        }
-
-        long expectedAmount = transaction.getTransactionAmount().longValue();
-        try {
-            long actualAmount = Long.parseLong(callback.getAmount());
-            if (expectedAmount != actualAmount) {
-                transaction.setTransactionStatus(TransactionStatus.FAILED);
-                paymentTransactionRepository.save(transaction);
-                log.warn("Amount mismatch for transactionId: {}", transaction.getTransactionId());
-                throw new SecurityException("Amount mismatch in MoMo callback");
-            }
-        } catch (NumberFormatException e) {
-            transaction.setTransactionStatus(TransactionStatus.FAILED);
-            paymentTransactionRepository.save(transaction);
-            log.error("Invalid amount format: {}", callback.getAmount());
-            throw new SecurityException("Invalid amount format in MoMo callback");
         }
 
         if ("0".equals(callback.getResultCode())) {
