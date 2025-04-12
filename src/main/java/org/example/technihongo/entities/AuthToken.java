@@ -36,7 +36,7 @@ public class AuthToken {
 
     @CreationTimestamp
     @Column(name = "created_at")
-    private LocalDateTime createAt;
+    private LocalDateTime createdAt;
 
 
     @Column(name = "is_active")

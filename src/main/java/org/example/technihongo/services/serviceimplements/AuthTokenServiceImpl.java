@@ -2,6 +2,7 @@ package org.example.technihongo.services.serviceimplements;
 
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.example.technihongo.core.security.JWTHelper;
 import org.example.technihongo.dto.CreateLoginTokenDTO;
 import org.example.technihongo.dto.TokenStatusDTO;
 import org.example.technihongo.entities.AuthToken;
@@ -27,6 +28,8 @@ public class AuthTokenServiceImpl implements AuthTokenService {
     private AuthTokenRepository authTokenRepository;
     @Autowired
     private UserRepository userRepository;
+    @Autowired
+    private JWTHelper jwtHelper;
 
     @Override
     public void saveLoginToken(CreateLoginTokenDTO createLoginTokenDTO) {
@@ -47,6 +50,16 @@ public class AuthTokenServiceImpl implements AuthTokenService {
 
     @Override
     public void updateLoginTokenStatus(Integer userId) {
+        List<AuthToken> activeTokens = authTokenRepository.findAllByUser_UserIdAndTokenTypeAndIsActiveOrderByCreatedAtAsc(userId, TokenType.LOGIN, true);
+        List<AuthToken> activeTokens2 = authTokenRepository.findAllByUser_UserIdAndTokenTypeAndIsActiveOrderByCreatedAtAsc(userId, TokenType.LOGIN_GOOGLE, true);
+        activeTokens.addAll(activeTokens2);
+
+        if (activeTokens.size() > 2) {
+            AuthToken oldestToken = activeTokens.get(0);
+            oldestToken.setIsActive(false);
+            authTokenRepository.save(oldestToken);
+        }
+
         List<AuthToken> authTokenList = authTokenRepository.findAll().stream()
                 .filter(authToken -> authToken.getUser().getUserId().equals(userId) &&
                         (authToken.getTokenType().equals(TokenType.LOGIN)
@@ -96,6 +109,12 @@ public class AuthTokenServiceImpl implements AuthTokenService {
 
         deactivateAllTokensByUserId(user.getUserId(), String.valueOf(TokenType.EMAIL_VERIFICATION));
         return createEmailVerifyToken(user.getUserId());
+    }
+
+    @Override
+    public Boolean isTokenValid(String token) {
+        AuthToken authToken = authTokenRepository.findByToken(token);
+        return authToken != null && authToken.getIsActive() && !jwtHelper.isTokenExpired(token);
     }
 
     @Scheduled(cron = "0 0 2 * * ?")

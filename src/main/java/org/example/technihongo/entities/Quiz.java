@@ -7,6 +7,7 @@ import org.hibernate.annotations.UpdateTimestamp;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 
 @Entity
 @Table(name = "Quiz")
@@ -40,6 +41,9 @@ public class Quiz {
 
     @Column(name = "passing_score", precision = 5, scale = 2)
     private BigDecimal passingScore;
+
+    @Column(name = "time_limit")
+    private Integer timeLimit;
 
     @Column(name = "is_public")
     private boolean isPublic = false;

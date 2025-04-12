@@ -10,4 +10,5 @@ public interface AuthTokenService {
     String createEmailVerifyToken(Integer userId);
     void deactivateAllTokensByUserId(Integer userId, String tokenType);
     String resendVerificationEmail(String email);
+    Boolean isTokenValid(String token);
 }

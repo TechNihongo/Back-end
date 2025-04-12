@@ -14,4 +14,5 @@ public class UpdateQuizDTO {
     private String description;
     private Integer difficultyLevelId;
     private BigDecimal passingScore;
+    private Integer timeLimit;
 }

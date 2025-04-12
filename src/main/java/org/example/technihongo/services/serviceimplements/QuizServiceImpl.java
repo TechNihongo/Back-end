@@ -50,7 +50,7 @@ public class QuizServiceImpl implements QuizService {
     public QuizDTO getQuizById(Integer quizId) {
         Quiz quiz = quizRepository.findByQuizId(quizId);
         if(quiz == null || quiz.isDeleted()){
-            throw new RuntimeException("Quiz ID not found!");
+            throw new RuntimeException("Không tìm thấy Quiz!");
         }
         return convertToDTO(quiz);
     }
@@ -59,22 +59,22 @@ public class QuizServiceImpl implements QuizService {
     public QuizDTO getPublicQuizById(Integer userId, Integer quizId) {
         Quiz quiz = quizRepository.findByQuizId(quizId);
         if(quiz == null || quiz.isDeleted() || !quiz.isPublic()){
-            throw new RuntimeException("Quiz ID not found!");
+            throw new RuntimeException("Không tìm thấy Quiz!");
         }
 
         User user = userRepository.findByUserId(userId);
         if(user == null){
-            throw new RuntimeException("User ID not found!");
+            throw new RuntimeException("Không tìm thấy User!");
         }
 
         if(user.getRole().getRoleId() == 3){
             Student student = studentRepository.findByUser_UserId(user.getUserId());
             if(student == null){
-                throw new RuntimeException("Student not found for this user!");
+                throw new RuntimeException("Không tìm thấy Student cho User này!");
             }
 
             if(!studentSubscriptionRepository.existsByStudent_StudentIdAndIsActive(student.getStudentId(), true)){
-                throw new RuntimeException("Student not allowed to view this quiz!");
+                throw new RuntimeException("Student không có quyền để xem Quiz này.");
             }
         }
         return convertToDTO(quiz);
@@ -83,24 +83,28 @@ public class QuizServiceImpl implements QuizService {
     @Override
     public Quiz createQuiz(Integer creatorId, CreateQuizDTO createQuizDTO) {
         User user = userRepository.findById(creatorId).orElseThrow(()
-                -> new RuntimeException("User ID not found!"));
-
+                -> new RuntimeException("Không tìm thấy User!"));
 
         DifficultyLevel difficultyLevel = difficultyLevelRepository.findById(createQuizDTO.getDifficultyLevelId())
-                .orElseThrow(() -> new RuntimeException("DifficultyLevel ID not found!"));
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy DifficultyLevel!"));
 
         if(createQuizDTO.getPassingScore().compareTo(BigDecimal.valueOf(1)) > 0
                 || createQuizDTO.getPassingScore().compareTo(BigDecimal.valueOf(0)) <= 0){
-            throw new RuntimeException("PassingScore must between 0 and 1!");
+            throw new RuntimeException("PassingScore phải nằm trong khoảng từ 0,00 đến 1,00!");
+        }
+
+        if(createQuizDTO.getTimeLimit() < 10 || createQuizDTO.getTimeLimit() > 120){
+            throw new RuntimeException("TimeLimit phải nằm trong khoảng từ 10 đến 120 phút!");
         }
 
         Quiz quiz = quizRepository.save(Quiz.builder()
-                        .title(createQuizDTO.getTitle())
-                        .description(createQuizDTO.getDescription())
-                        .creator(user)
-                        .difficultyLevel(difficultyLevel)
-                        .totalQuestions(0)
-                        .passingScore(createQuizDTO.getPassingScore())
+                .title(createQuizDTO.getTitle())
+                .description(createQuizDTO.getDescription())
+                .creator(user)
+                .difficultyLevel(difficultyLevel)
+                .totalQuestions(0)
+                .passingScore(createQuizDTO.getPassingScore())
+                .timeLimit(createQuizDTO.getTimeLimit())
                 .build());
 
         return quiz;
@@ -109,30 +113,33 @@ public class QuizServiceImpl implements QuizService {
     @Override
     public void updateQuiz(Integer quizId, UpdateQuizDTO updateQuizDTO) {
         Quiz quiz = quizRepository.findById(quizId)
-                .orElseThrow(() -> new RuntimeException("Quiz ID not found!"));
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy Quiz!"));
 
         if(quiz.isPublic()){
-            throw new RuntimeException("Cannot update a public quiz");
+            throw new RuntimeException("Không thể cập nhật Quiz công khai.");
         }
 
-//        Domain domain = domainRepository.findById(updateQuizDTO.getDomainId())
-//                .orElseThrow(() -> new RuntimeException("Domain ID not found!"));
-//        if(domain.getParentDomain() == null){
-//            throw new RuntimeException("Cannot assign parent domain!");
-//        }
+        if(studentQuizAttemptRepository.existsByQuiz_QuizId(quizId)){
+            throw new RuntimeException("Không thể cập nhật Quiz đang trong quá trình học.");
+        }
 
         DifficultyLevel difficultyLevel = difficultyLevelRepository.findById(updateQuizDTO.getDifficultyLevelId())
-                .orElseThrow(() -> new RuntimeException("DifficultyLevel ID not found!"));
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy DifficultyLevel!"));
+
+        if(updateQuizDTO.getTimeLimit() < 10 || updateQuizDTO.getTimeLimit() > 120){
+            throw new RuntimeException("TimeLimit phải nằm trong khoảng từ 10 đến 120 phút!");
+        }
 
         if(updateQuizDTO.getPassingScore().compareTo(BigDecimal.valueOf(1)) > 0
                 || updateQuizDTO.getPassingScore().compareTo(BigDecimal.valueOf(0)) <= 0){
-            throw new RuntimeException("PassingScore must between 0 and 1!");
+            throw new RuntimeException("PassingScore phải nằm trong khoảng từ 0,00 đến 1,00!");
         }
 
         quiz.setTitle(updateQuizDTO.getTitle());
         quiz.setDescription(updateQuizDTO.getDescription());
         quiz.setDifficultyLevel(difficultyLevel);
         quiz.setPassingScore(updateQuizDTO.getPassingScore());
+        quiz.setTimeLimit(updateQuizDTO.getTimeLimit());
 
         quizRepository.save(quiz);
     }
@@ -140,10 +147,10 @@ public class QuizServiceImpl implements QuizService {
     @Override
     public void updateQuizStatus(Integer quizId, UpdateQuizStatusDTO updateQuizStatusDTO) {
         Quiz quiz = quizRepository.findById(quizId)
-                .orElseThrow(() -> new RuntimeException("Quiz ID not found!"));
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy Quiz!"));
 
         if(updateQuizStatusDTO.getIsPublic() && updateQuizStatusDTO.getIsDeleted()){
-            throw new RuntimeException("Cannot delete a public quiz");
+            throw new RuntimeException("Không thể xóa Quiz công khai.");
         }
 
         quiz.setPublic(updateQuizStatusDTO.getIsPublic());
@@ -161,7 +168,7 @@ public class QuizServiceImpl implements QuizService {
     @Override
     public void updateTotalQuestions(Integer quizId) {
         if(quizRepository.findByQuizId(quizId) == null){
-            throw new RuntimeException("Quiz ID not found!");
+            throw new RuntimeException("Không tìm thấy Quiz!");
         }
 
         Quiz quiz = quizRepository.findByQuizId(quizId);
@@ -172,7 +179,7 @@ public class QuizServiceImpl implements QuizService {
     @Override
     public List<Quiz> getListQuizzesByCreatorId(Integer creatorId) {
         userRepository.findById(creatorId)
-                .orElseThrow(() -> new RuntimeException("User ID not found."));
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy User!"));
         return quizRepository.findByCreator_UserId(creatorId);
     }
 
