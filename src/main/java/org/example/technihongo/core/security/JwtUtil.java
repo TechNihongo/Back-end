@@ -3,6 +3,7 @@ package org.example.technihongo.core.security;
 import org.example.technihongo.repositories.UserRepository;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
+import org.example.technihongo.services.interfaces.AuthTokenService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,6 +21,9 @@ public class JwtUtil {
     @Value("${jwt.secret}")
     private String secretKey;
 
+    @Autowired
+    private AuthTokenService authTokenService;
+
     public int extractUserId(String token) {
         logger.info("Secret Key: {}", secretKey);
         logger.info("Token: {}", token);
@@ -33,6 +37,10 @@ public class JwtUtil {
         if (claims == null) {
             logger.error("uid claim is missing or null");
             throw new IllegalArgumentException("Invalid token: uid claim is missing or null");
+        }
+
+        if(!authTokenService.isTokenValid(token)){
+            throw new IllegalArgumentException("Token không hợp lệ!");
         }
 
         //return Integer.parseInt(claims.get("cid").toString());
@@ -52,6 +60,10 @@ public class JwtUtil {
         if (claims == null) {
             logger.error("uid claim is missing or null");
             throw new IllegalArgumentException("Invalid token: uid claim is missing or null");
+        }
+
+        if(!authTokenService.isTokenValid(token)){
+            throw new IllegalArgumentException("Token không hợp lệ!");
         }
 
         //return Integer.parseInt(claims.get("cid").toString());

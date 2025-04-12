@@ -56,10 +56,6 @@ public class User {
     @Column(name = "last_login")
     private LocalDateTime lastLogin;
 
-//    @JsonIgnore
-//    @Column(name="role_id")
-//    private Integer roleId = 3;
-
     @Column(name = "profile_img")
     private String profileImg;
 
@@ -79,5 +75,4 @@ public class User {
     @JsonIgnore
     @JoinColumn(name = "role_id", updatable = false)
     private Role role;
-
 }

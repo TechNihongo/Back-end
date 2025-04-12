@@ -34,18 +34,18 @@ public class StudentServiceImpl implements StudentService {
     @Transactional
     public UpdateProfileDTO setDailyGoal(Integer studentId, Integer dailyGoal) {
         if (studentId == null) {
-            throw new IllegalArgumentException("Student ID cannot be null");
+            throw new RuntimeException("Student ID cannot be null");
         }
 
         if (dailyGoal == null) {
-            throw new IllegalArgumentException("Daily goal cannot be null");
+            throw new RuntimeException("Daily goal cannot be null");
         }
 
         Student student = studentRepository.findById(studentId)
                 .orElseThrow(() -> new ResourceNotFoundException("Student not found with id: " + studentId));
 
         if (dailyGoal < 30) {
-            throw new IllegalArgumentException("Fighting, you can do it better!!!");
+            throw new RuntimeException("Fighting, you can do it better!!!");
         }
 
         student.setDailyGoal(dailyGoal);
@@ -58,7 +58,7 @@ public class StudentServiceImpl implements StudentService {
     @Transactional
     public UpdateProfileDTO updateDifficultyLevel(Integer studentId, DifficultyLevelEnum difficultyLevelEnum) {
         if (studentId == null) {
-            throw new IllegalArgumentException("Student ID cannot be null");
+            throw new RuntimeException("Student ID cannot be null");
         }
         if (difficultyLevelEnum == null) {
             throw new InvalidDifficultyLevelException("Difficulty level cannot be null");
@@ -142,7 +142,7 @@ public class StudentServiceImpl implements StudentService {
     @Override
     public ProfileDTO getStudentProfile(Integer studentId) {
         if (studentId == null) {
-            throw new IllegalArgumentException("Student ID cannot be null");
+            throw new RuntimeException("Student ID cannot be null");
         }
 
         Student student = studentRepository.findById(studentId)
