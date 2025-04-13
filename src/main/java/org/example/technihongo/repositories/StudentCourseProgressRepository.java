@@ -16,4 +16,5 @@ public interface StudentCourseProgressRepository extends JpaRepository<StudentCo
     Integer countByCourse_CourseIdAndCompletionStatus(Integer courseId, CompletionStatus completionStatus);
     boolean existsByStudentStudentIdAndCourseCourseId(Integer studentId, Integer courseId);
     List<StudentCourseProgress> findByCourse_CourseId(Integer courseId);
+    long countByStudent_StudentIdAndCompletionStatus(Integer studentId, CompletionStatus completionStatus);
 }

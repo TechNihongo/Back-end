@@ -37,4 +37,6 @@ public interface FlashcardRepository extends JpaRepository<Flashcard, Integer> {
     @Transactional
     @Query(value = "DELETE FROM flashcard WHERE flashcard_id = :flashcardId", nativeQuery = true)
     void deleteByFlashcardIdNative(@Param("flashcardId") Integer flashcardId);
+
+
 }

@@ -7,6 +7,7 @@ import org.example.technihongo.enums.PaymentMethodCode;
 import org.example.technihongo.enums.PaymentMethodType;
 import org.example.technihongo.enums.TransactionStatus;
 import org.example.technihongo.repositories.*;
+import org.example.technihongo.services.interfaces.AchievementService;
 import org.example.technihongo.services.interfaces.MomoService;
 import org.example.technihongo.services.interfaces.PaymentTransactionService;
 import org.slf4j.Logger;
@@ -36,6 +37,7 @@ public class PaymentTransactionServiceImpl implements PaymentTransactionService 
     private final PaymentTransactionRepository paymentTransactionRepository;
     private final PaymentMethodRepository paymentMethodRepository;
     private final MomoService momoService;
+    private final AchievementService achievementService;
 
     @Override
     public PageResponseDTO<PaymentTransactionDTO> getPaymentHistoryByStudentId(
@@ -214,6 +216,8 @@ public class PaymentTransactionServiceImpl implements PaymentTransactionService 
             subscription.setEndDate(LocalDateTime.now().plusDays(subscription.getSubscriptionPlan().getDurationDays()));
             studentSubscriptionRepository.save(subscription);
             logger.info("Subscription activated for transactionId: {}", transaction.getTransactionId());
+
+            achievementService.checkAndAssignFirstPaymentAchievement(subscription.getStudent().getStudentId());
         }
 
         logger.info("MoMo callback handled for transactionId: {}, new status: {}",

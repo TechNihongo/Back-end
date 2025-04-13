@@ -27,5 +27,6 @@ public interface StudentFlashcardSetRepository extends JpaRepository<StudentFlas
     StudentFlashcardSet findExistingFlashcardSet(
             @Param("studentId") Integer studentId, @Param("resourceId") Integer resourceId);
 
+    @Query("SELECT COUNT(*) FROM StudentFlashcardSet s WHERE s.creator = :studentId AND s.isDeleted = false")
+    long countByCreatorStudentIdAndIsDeletedFalse(Integer studentId);
 }
-
