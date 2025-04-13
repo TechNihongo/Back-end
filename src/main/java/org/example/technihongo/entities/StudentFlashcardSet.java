@@ -64,10 +64,10 @@ public class StudentFlashcardSet {
     private LocalDateTime updatedAt;
 
     @JsonIgnore
-    @OneToMany(mappedBy = "studentFlashCardSet", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    @OneToMany(mappedBy = "studentFlashCardSet", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private Set<Flashcard> flashcards = new HashSet<>();
 
     @JsonIgnore
-    @OneToMany(mappedBy = "studentFlashcardSet", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    @OneToMany(mappedBy = "studentFlashcardSet", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private Set<StudentFlashcardSetProgress> progresses = new HashSet<>();
 }
