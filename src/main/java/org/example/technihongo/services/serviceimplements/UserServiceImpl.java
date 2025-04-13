@@ -13,8 +13,8 @@ import org.example.technihongo.repositories.AuthTokenRepository;
 import org.example.technihongo.repositories.RoleRepository;
 import org.example.technihongo.repositories.StudentRepository;
 import org.example.technihongo.repositories.UserRepository;
+import org.example.technihongo.services.interfaces.AchievementService;
 import org.example.technihongo.services.interfaces.UserService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -37,16 +37,12 @@ public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
     private final RestTemplate restTemplate;
     private static final long EXPIRE_TOKEN = 10;
+    private final AchievementService achievementService;
 
-    @Autowired
-    private RoleRepository roleRepository;
-    @Autowired
-    private AuthTokenRepository authTokenRepository;
-    @Autowired
-    private StudentRepository studentRepository;
-
-    @Autowired
-    private BCryptPasswordEncoder passwordEncoder;
+    private final RoleRepository roleRepository;
+    private final AuthTokenRepository authTokenRepository;
+    private final StudentRepository studentRepository;
+    private final BCryptPasswordEncoder passwordEncoder;
 
 
     private static final String GOOGLE_TOKEN_INFO_URL = "https://www.googleapis.com/oauth2/v3/tokeninfo?access_token=";
@@ -63,6 +59,11 @@ public class UserServiceImpl implements UserService {
         if (!passwordEncoder.matches(password, user.getPassword())) {
             throw new Exception("Invalid password");
         }
+
+        if (user.getRole().getRoleId() == 3 && user.getStudent() != null) {
+            achievementService.assignAchievementsToStudent(user.getStudent().getStudentId(), LocalDateTime.now());
+        }
+
         return new LoginResponseDTO(
                 user.getUserId(),
                 user.getUserName(),
@@ -178,6 +179,10 @@ public class UserServiceImpl implements UserService {
         }
 
         user = userRepository.save(user);
+
+        if (user.getRole().getRoleId() == 3 && user.getStudent() != null) {
+            achievementService.assignAchievementsToStudent(user.getStudent().getStudentId(), LocalDateTime.now());
+        }
 
         return new LoginResponseDTO(
                 user.getUserId(),

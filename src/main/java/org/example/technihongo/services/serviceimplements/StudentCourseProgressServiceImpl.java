@@ -8,6 +8,7 @@ import org.example.technihongo.enums.CompletionStatus;
 import org.example.technihongo.enums.ContentType;
 import org.example.technihongo.enums.StudyPlanStatus;
 import org.example.technihongo.repositories.*;
+import org.example.technihongo.services.interfaces.AchievementService;
 import org.example.technihongo.services.interfaces.StudentCourseProgressService;
 import org.example.technihongo.services.interfaces.UserActivityLogService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -47,6 +48,7 @@ public class StudentCourseProgressServiceImpl implements StudentCourseProgressSe
     private UserRepository userRepository;
     @Autowired
     private UserActivityLogService userActivityLogService;
+    private final AchievementService achievementService;
 
     @Override
     public StudentCourseProgress getStudentCourseProgress(Integer studentId, Integer courseId) {
@@ -123,7 +125,6 @@ public class StudentCourseProgressServiceImpl implements StudentCourseProgressSe
         Course course = courseRepository.findById(courseId)
                 .orElseThrow(() -> new RuntimeException("Course not found with ID: " + courseId));
 
-        // Kiểm tra Course phải public
         if (!course.isPublicStatus()) {
             throw new RuntimeException("Course is not public and cannot be enrolled!");
         }
@@ -253,6 +254,7 @@ public class StudentCourseProgressServiceImpl implements StudentCourseProgressSe
             statisticsRepository.save(statistics);
 
             userActivityLogService.trackUserActivityLog(userRepository.findByStudentStudentId(studentId).getUserId(), ActivityType.COMPLETE, ContentType.Course, courseId, null, null);
+            achievementService.checkAndAssignCourseAchievements(studentId);
         }
 
         studentCourseProgressRepository.save(progress);

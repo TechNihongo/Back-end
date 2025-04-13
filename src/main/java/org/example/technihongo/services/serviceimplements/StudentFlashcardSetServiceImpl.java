@@ -11,6 +11,7 @@ import org.example.technihongo.repositories.FlashcardRepository;
 import org.example.technihongo.repositories.LearningResourceRepository;
 import org.example.technihongo.repositories.StudentFlashcardSetRepository;
 import org.example.technihongo.repositories.StudentRepository;
+import org.example.technihongo.services.interfaces.AchievementService;
 import org.example.technihongo.services.interfaces.StudentFlashcardSetService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -21,7 +22,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -36,6 +40,8 @@ public class StudentFlashcardSetServiceImpl implements StudentFlashcardSetServic
     private FlashcardRepository flashcardRepository;
     @Autowired
     private LearningResourceRepository learningResourceRepository;
+    @Autowired
+    private AchievementService achievementService;
 
     @Override
     public FlashcardSetResponseDTO createFlashcardSet(Integer studentId, FlashcardSetRequestDTO request) {
@@ -55,6 +61,9 @@ public class StudentFlashcardSetServiceImpl implements StudentFlashcardSetServic
         flashcardSet.setTotalViews(0);
 
         flashcardSet = flashcardSetRepository.save(flashcardSet);
+
+        achievementService.checkAndAssignFirstFlashcardSetAchievement(studentId);
+
         return convertToFlashcardSetResponseDTO(flashcardSet);
     }
 
@@ -250,7 +259,6 @@ public class StudentFlashcardSetServiceImpl implements StudentFlashcardSetServic
             throw new IllegalArgumentException("You must provide at least one Flashcard to create Flashcard Set.");
         }
 
-        // Kiểm tra flashcard set đã tồn tại chưa
         StudentFlashcardSet existingFlashcardSet = flashcardSetRepository.findExistingFlashcardSet(
                 studentId, request.getResourceId());
 
@@ -258,7 +266,6 @@ public class StudentFlashcardSetServiceImpl implements StudentFlashcardSetServic
         List<Flashcard> flashcards;
 
         if (existingFlashcardSet != null) {
-            // Nếu đã tồn tại, cập nhật thay vì tạo mới
             flashcardSet = existingFlashcardSet;
             if (StringUtils.hasText(request.getTitle())) {
                 flashcardSet.setTitle(request.getTitle());
@@ -294,6 +301,8 @@ public class StudentFlashcardSetServiceImpl implements StudentFlashcardSetServic
             savedFlashcardSet.setFlashcards(new HashSet<>(flashcards));
             savedFlashcardSet.setTotalCards(flashcards.size());
             flashcardSet = savedFlashcardSet;
+
+            achievementService.checkAndAssignFirstFlashcardSetAchievement(studentId);
         }
 
         flashcardSetRepository.save(flashcardSet);

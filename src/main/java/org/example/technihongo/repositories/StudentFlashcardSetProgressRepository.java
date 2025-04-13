@@ -14,4 +14,5 @@ public interface StudentFlashcardSetProgressRepository extends JpaRepository<Stu
     Optional<StudentFlashcardSetProgress> findByStudentStudentIdAndStudentFlashcardSet_StudentSetId(Integer studentId, Integer studentSetId);
     Optional<StudentFlashcardSetProgress> findByStudentStudentIdAndSystemFlashcardSet_SystemSetId(Integer studentId, Integer systemSetId);
     boolean existsByStudentStudentIdAndSystemFlashcardSetSystemSetIdAndCompletionStatus(Integer studentId, Integer systemSetId, CompletionStatus status);
+    long countByStudentStudentIdAndStudentFlashcardSetNotNullAndCompletionStatus(Integer studentId, CompletionStatus status);
 }

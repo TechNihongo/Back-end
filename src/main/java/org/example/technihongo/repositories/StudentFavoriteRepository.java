@@ -30,4 +30,6 @@ public interface StudentFavoriteRepository extends JpaRepository<StudentFavorite
             Pageable pageable);
 
     Optional<StudentFavorite> findByStudent_StudentIdAndLearningResource_ResourceId(Integer studentId, Integer learningResourceId);
+
+    long countByStudent_StudentId(Integer studentId);
 }

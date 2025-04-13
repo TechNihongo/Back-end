@@ -7,8 +7,8 @@ import org.example.technihongo.entities.StudentLearningStatistics;
 import org.example.technihongo.repositories.StudentDailyLearningLogRepository;
 import org.example.technihongo.repositories.StudentLearningStatisticsRepository;
 import org.example.technihongo.repositories.StudentRepository;
+import org.example.technihongo.services.interfaces.AchievementService;
 import org.example.technihongo.services.interfaces.StudentDailyLearningLogService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,17 +20,20 @@ import java.util.Optional;
 @Service
 @RequiredArgsConstructor
 @Component
+@Transactional
 public class StudentDailyLearningLogServiceImpl implements StudentDailyLearningLogService {
-    @Autowired
-    private StudentDailyLearningLogRepository dailyLogRepository;
-    @Autowired
-    private StudentLearningStatisticsRepository statsRepository;
-    @Autowired
-    private StudentRepository studentRepository;
 
-    @Transactional
-    @Override
+    private final StudentDailyLearningLogRepository dailyLogRepository;
+    private final StudentLearningStatisticsRepository statsRepository;
+
+    private final StudentRepository studentRepository;
+    private final AchievementService achievementService;
+
     public void trackStudentDailyLearningLog(Integer studentId, Integer studyTimeInput) {
+        if (studyTimeInput <= 0) {
+            return; // Bỏ qua nếu không có thời gian học
+        }
+
         LocalDate today = LocalDate.now();
 
         Student student = studentRepository.findById(studentId)
@@ -43,16 +46,25 @@ public class StudentDailyLearningLogServiceImpl implements StudentDailyLearningL
         boolean isNewLog = false;
         if (existingLogOpt.isPresent()) {
             dailyLog = existingLogOpt.get();
-            updateDailyLog(dailyLog, studyTimeInput, student.getDailyGoal());
         } else {
             dailyLog = createNewDailyLog(student, today);
-            updateDailyLog(dailyLog, studyTimeInput, student.getDailyGoal());
             isNewLog = true;
         }
 
+        // Kiểm tra nếu đây là lần học đầu tiên trong ngày
+        boolean isFirstStudyOfDay = isNewLog || dailyLog.getStudyTime() == 0;
+
+        // Cập nhật log
+        updateDailyLog(dailyLog, studyTimeInput, student.getDailyGoal());
         dailyLogRepository.save(dailyLog);
 
+        // Cập nhật thống kê
         updateLearningStatistics(student, dailyLog, isNewLog);
+
+        // Kiểm tra và trao thành tựu streak cho lần học đầu tiên
+        if (isFirstStudyOfDay) {
+            achievementService.checkAndAssignStreakAchievements(studentId);
+        }
     }
 
     @Override
@@ -121,4 +133,6 @@ public class StudentDailyLearningLogServiceImpl implements StudentDailyLearningL
 
         statsRepository.save(stats);
     }
+
+    
 }

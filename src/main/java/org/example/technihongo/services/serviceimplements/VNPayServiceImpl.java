@@ -11,6 +11,7 @@ import org.example.technihongo.enums.PaymentMethodCode;
 import org.example.technihongo.enums.PaymentMethodType;
 import org.example.technihongo.enums.TransactionStatus;
 import org.example.technihongo.repositories.*;
+import org.example.technihongo.services.interfaces.AchievementService;
 import org.example.technihongo.services.interfaces.VNPayService;
 import org.example.technihongo.services.interfaces.VNPayUtil;
 import org.slf4j.Logger;
@@ -37,6 +38,7 @@ public class VNPayServiceImpl implements VNPayService {
     private final StudentSubscriptionRepository studentSubscriptionRepository;
     private final PaymentTransactionRepository paymentTransactionRepository;
     private final PaymentMethodRepository paymentMethodRepository;
+    private final AchievementService achievementService;
 
     @Value("${payment.vnPay.url}")
     private String vnp_PayUrl;
@@ -154,7 +156,6 @@ public class VNPayServiceImpl implements VNPayService {
             throw new SecurityException("Invalid signature from VNPay callback");
         }
 
-        // Process transaction status
         TransactionStatus newStatus;
         String responseCode = requestParams.get("vnp_ResponseCode");
         try {
@@ -167,6 +168,7 @@ public class VNPayServiceImpl implements VNPayService {
                 subscription.setEndDate(LocalDateTime.now().plusDays(subscription.getSubscriptionPlan().getDurationDays()));
                 studentSubscriptionRepository.save(subscription);
                 logger.info("Subscription activated for transactionId: {}", transaction.getTransactionId());
+                achievementService.checkAndAssignFirstPaymentAchievement(subscription.getStudent().getStudentId());
             } else {
                 newStatus = TransactionStatus.FAILED;
                 logger.warn("Payment failed. ResponseCode: {}, Message: {}", responseCode, requestParams.get("vnp_OrderInfo"));

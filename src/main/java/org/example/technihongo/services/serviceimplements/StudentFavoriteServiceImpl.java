@@ -12,6 +12,7 @@ import org.example.technihongo.repositories.StudentRepository;
 import org.example.technihongo.repositories.StudentSubscriptionRepository;
 import org.example.technihongo.services.interfaces.StudentFavoriteService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.example.technihongo.services.interfaces.AchievementService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -32,6 +33,8 @@ public class StudentFavoriteServiceImpl implements StudentFavoriteService {
     private LearningResourceRepository learningResourceRepository;
     @Autowired
     private StudentSubscriptionRepository studentSubscriptionRepository;
+    @Autowired
+    private AchievementService achievementService;
 
 
     @Override
@@ -64,7 +67,11 @@ public class StudentFavoriteServiceImpl implements StudentFavoriteService {
                 .learningResource(learningResource)
                 .build();
 
-        return studentFavoriteRepository.save(favorite);
+        StudentFavorite savedFavorite = studentFavoriteRepository.save(favorite);
+
+        achievementService.checkAndAssignFirstFavoriteAchievement(studentId);
+
+        return savedFavorite;
     }
 
     @Override

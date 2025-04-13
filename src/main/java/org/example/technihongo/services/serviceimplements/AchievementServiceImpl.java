@@ -3,12 +3,9 @@ package org.example.technihongo.services.serviceimplements;
 import lombok.RequiredArgsConstructor;
 import org.example.technihongo.dto.StudentAchievementDTO;
 import org.example.technihongo.entities.*;
-import org.example.technihongo.enums.ActivityType;
-import org.example.technihongo.enums.Category;
-import org.example.technihongo.enums.ConditionType;
+import org.example.technihongo.enums.*;
 import org.example.technihongo.repositories.*;
 import org.example.technihongo.services.interfaces.AchievementService;
-import org.example.technihongo.services.interfaces.StudentFlashcardSetProgressService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -27,8 +24,12 @@ public class AchievementServiceImpl implements AchievementService {
     private final StudentAchievementProgressRepository progressRepository;
     private final StudentDailyLearningLogRepository dailyLearningLogRepository;
     private final UserActivityLogRepository userActivityLogRepository;
-    private final StudentFlashcardSetProgressService flashcardSetProgressService;
     private final StudentFlashcardSetProgressRepository setProgressRepo;
+    private final PaymentTransactionRepository paymentTransactionRepository;
+    private final StudentSubscriptionRepository studentSubscriptionRepository;
+    private final StudentFlashcardSetRepository studentFlashcardSetRepository;
+    private final StudentCourseProgressRepository studentCourseProgressRepository;
+    private final StudentFavoriteRepository studentFavoriteRepository;
 
     private static final LocalTime NIGHT_OWL_TIME = LocalTime.of(22, 30);
     private static final LocalTime EARLY_BIRD_TIME = LocalTime.of(7, 30);
@@ -63,6 +64,16 @@ public class AchievementServiceImpl implements AchievementService {
         }
     }
 
+    private boolean isNightOwlTime(LocalDateTime loginTime) {
+        LocalTime time = loginTime.toLocalTime();
+        return time.isAfter(NIGHT_OWL_TIME) || time.equals(NIGHT_OWL_TIME);
+    }
+
+    private boolean isEarlyBirdTime(LocalDateTime loginTime) {
+        LocalTime time = loginTime.toLocalTime();
+        return time.isBefore(EARLY_BIRD_TIME.plusMinutes(30)) && time.isAfter(EARLY_BIRD_TIME.minusMinutes(30));
+    }
+
     @Override
     public void trackAchievementProgress(Integer studentId) {
         Optional<UserActivityLog> lastLoginOpt = userActivityLogRepository
@@ -82,6 +93,20 @@ public class AchievementServiceImpl implements AchievementService {
                 .build();
 
         StudentAchievement saved = studentAchievementRepository.save(studentAchievement);
+
+        Achievement achievement = achievementRepository.findById(achievementId).orElse(null);
+        if (achievement != null) {
+            UserActivityLog activityLog = UserActivityLog.builder()
+                    .user(User.builder().userId(studentId).build())
+                    .activityType(ActivityType.ACHIEVEMENT_UNLOCKED)
+                    .contentType(ContentType.StudentAchievement)
+                    .contentId(achievementId)
+                    .description("Đã mở khóa thành tựu: " + achievement.getBadgeName())
+                    .createdAt(LocalDateTime.now())
+                    .build();
+            userActivityLogRepository.save(activityLog);
+        }
+
         return new StudentAchievementDTO(
                 saved.getStudentAchievementId(),
                 saved.getStudent().getStudentId(),
@@ -131,7 +156,7 @@ public class AchievementServiceImpl implements AchievementService {
     }
 
     @Override
-    public void checkAndAssignFlashcardAchievement(Integer studentId, Integer studentSetId) {
+    public void checkAndAssignFirstFlashcardAchievement(Integer studentId, Integer studentSetId) {
         Optional<Achievement> flashcardAchievementOpt = achievementRepository.findByBadgeName("Tập sự ghép thẻ");
         if (flashcardAchievementOpt.isEmpty()) {
             return;
@@ -140,14 +165,10 @@ public class AchievementServiceImpl implements AchievementService {
         Achievement flashcardAchievement = flashcardAchievementOpt.get();
 
         if (lacksAchievement(studentId, flashcardAchievement.getAchievementId())) {
-            flashcardSetProgressService.trackFlashcardSetProgress(studentId, studentSetId, false, null);
-
             Optional<StudentFlashcardSetProgress> progressOpt = setProgressRepo.findByStudentStudentIdAndStudentFlashcardSet_StudentSetId(studentId, studentSetId);
-
 
             if (progressOpt.isPresent()) {
                 StudentFlashcardSetProgress progress = progressOpt.get();
-                // Chỉ trao thưởng khi đã học ít nhất 1 flashcard (card_studied > 0)
                 if (progress.getCardStudied() > 0) {
                     awardAchievement(studentId, flashcardAchievement.getAchievementId());
                 }
@@ -155,13 +176,149 @@ public class AchievementServiceImpl implements AchievementService {
         }
     }
 
-    private boolean isNightOwlTime(LocalDateTime loginTime) {
-        LocalTime time = loginTime.toLocalTime();
-        return time.isAfter(NIGHT_OWL_TIME) || time.equals(NIGHT_OWL_TIME);
+    public void checkAndAssignFirstPaymentAchievement(Integer studentId) {
+        Optional<Achievement> achievementOpt = achievementRepository.findByBadgeName("Khám phá TechNihongo");
+        if (achievementOpt.isEmpty()) {
+            return;
+        }
+
+        Achievement achievement = achievementOpt.get();
+
+        if (lacksAchievement(studentId, achievement.getAchievementId())) {
+            List<PaymentTransaction> completedTransactions = paymentTransactionRepository
+                    .findBySubscription_Student_StudentIdAndTransactionStatus(studentId, TransactionStatus.COMPLETED);
+
+            List<StudentSubscription> activeSubscriptions = studentSubscriptionRepository
+                    .findByStudentStudentIdAndIsActive(studentId, true);
+
+            if (completedTransactions.isEmpty() && activeSubscriptions.isEmpty()) {
+
+                awardAchievement(studentId, achievement.getAchievementId());
+            }
+        }
     }
 
-    private boolean isEarlyBirdTime(LocalDateTime loginTime) {
-        LocalTime time = loginTime.toLocalTime();
-        return time.isBefore(EARLY_BIRD_TIME.plusMinutes(30)) && time.isAfter(EARLY_BIRD_TIME.minusMinutes(30));
+    public void checkAndAssignFirstFlashcardSetAchievement(Integer studentId) {
+        Optional<Achievement> achievementOpt = achievementRepository.findByBadgeName("Nhà tạo học phần");
+        if (achievementOpt.isEmpty()) {
+            return;
+        }
+        Achievement achievement = achievementOpt.get();
+        if (lacksAchievement(studentId, achievement.getAchievementId())) {
+            long activeSetCount = studentFlashcardSetRepository.countByCreatorStudentIdAndIsDeletedFalse(studentId);
+            if (activeSetCount <= 1) {
+                awardAchievement(studentId, achievement.getAchievementId());
+            }
+        }
     }
+
+    @Override
+    public void checkAndAssignFlashcardAchievements(Integer studentId) {
+        List<Achievement> flashcardAchievements = achievementRepository.findAll().stream()
+                .filter(a -> a.getConditionType() == ConditionType.FLASHCARD_COMPLETED)
+                .toList();
+
+        long completedSets = setProgressRepo.countByStudentStudentIdAndStudentFlashcardSetNotNullAndCompletionStatus(
+                studentId, CompletionStatus.COMPLETED);
+
+        for (Achievement achievement : flashcardAchievements) {
+            if (lacksAchievement(studentId, achievement.getAchievementId())) {
+                // Lấy hoặc tạo tiến trình
+                Optional<StudentAchievementProgress> progressOpt = progressRepository
+                        .findByStudent_StudentIdAndAchievement_AchievementId(studentId, achievement.getAchievementId());
+
+                StudentAchievementProgress progress;
+                if (progressOpt.isEmpty()) {
+                    progress = StudentAchievementProgress.builder()
+                            .student(Student.builder().studentId(studentId).build())
+                            .achievement(achievement)
+                            .currentValue((int) completedSets)
+                            .requiredValue(achievement.getConditionValue())
+                            .lastUpdated(LocalDateTime.now())
+                            .build();
+                } else {
+                    progress = progressOpt.get();
+                    progress.setCurrentValue((int) completedSets);
+                    progress.setLastUpdated(LocalDateTime.now());
+                }
+
+                progressRepository.save(progress);
+
+                // Trao thành tựu nếu đạt yêu cầu
+                if (progress.getCurrentValue() >= progress.getRequiredValue()) {
+                    awardAchievement(studentId, achievement.getAchievementId());
+                }
+            }
+        }
+    }
+
+    @Override
+    public void checkAndAssignCourseAchievements(Integer studentId) {
+        // Đếm số khóa học đã hoàn thành
+        long completedCourses = studentCourseProgressRepository
+                .countByStudent_StudentIdAndCompletionStatus(studentId, CompletionStatus.COMPLETED);
+
+        // Lấy tất cả thành tựu COURSE_COMPLETE
+        List<Achievement> courseAchievements = achievementRepository
+                .findByConditionType(ConditionType.COURSE_COMPLETE);
+
+        for (Achievement achievement : courseAchievements) {
+            // Kiểm tra xem đã trao thành tựu chưa
+            boolean lacksAchievement = lacksAchievement(studentId, achievement.getAchievementId());
+            if (!lacksAchievement) {
+                continue; // Bỏ qua nếu đã trao
+            }
+
+            // Lấy hoặc tạo StudentAchievementProgress
+            Optional<StudentAchievementProgress> progressOpt = progressRepository
+                    .findByStudent_StudentIdAndAchievement_AchievementId(studentId, achievement.getAchievementId());
+
+            StudentAchievementProgress progress;
+            if (progressOpt.isEmpty()) {
+                progress = StudentAchievementProgress.builder()
+                        .student(Student.builder().studentId(studentId).build())
+                        .achievement(achievement)
+                        .currentValue((int) completedCourses)
+                        .requiredValue(achievement.getConditionValue())
+                        .lastUpdated(LocalDateTime.now())
+                        .build();
+            } else {
+                progress = progressOpt.get();
+                progress.setCurrentValue((int) completedCourses);
+                progress.setLastUpdated(LocalDateTime.now());
+            }
+
+            progressRepository.save(progress);
+
+            // Trao thành tựu nếu đủ điều kiện
+            if (progress.getCurrentValue() >= progress.getRequiredValue()) {
+                awardAchievement(studentId, achievement.getAchievementId());
+            }
+        }
+    }
+
+    @Override
+    public void checkAndAssignFirstFavoriteAchievement(Integer studentId) {
+        Optional<Achievement> favoriteAchievementOpt = achievementRepository.findByBadgeName("Yêu từ cái nhìn đầu tiên");
+        if (favoriteAchievementOpt.isEmpty()) {
+            return;
+        }
+
+        Achievement favoriteAchievement = favoriteAchievementOpt.get();
+
+        if (lacksAchievement(studentId, favoriteAchievement.getAchievementId())) {
+            long favoriteCount = studentFavoriteRepository.countByStudent_StudentId(studentId);
+            if (favoriteCount >= 1) {
+                awardAchievement(studentId, favoriteAchievement.getAchievementId());
+            }
+        }
+    }
+
+    @Override
+    public List<StudentAchievement> getStudentAchievements(Integer studentId) {
+        return studentAchievementRepository.findByStudent_StudentId(studentId);
+    }
+
+
+
 }
