@@ -20,6 +20,7 @@ public class QuizDTO {
     private DifficultyLevel difficultyLevel;
     private Integer totalQuestions;
     private BigDecimal passingScore;
+    private Integer timeLimit;
     private boolean isPublic;
     private boolean isDeleted;
     private boolean isPremium;
