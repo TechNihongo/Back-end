@@ -192,6 +192,7 @@ public class QuizServiceImpl implements QuizService {
         quizDTO.setDifficultyLevel(quiz.getDifficultyLevel());
         quizDTO.setTotalQuestions(quiz.getTotalQuestions());
         quizDTO.setPassingScore(quiz.getPassingScore());
+        quizDTO.setTimeLimit(quiz.getTimeLimit());
         quizDTO.setPublic(quiz.isPublic());
         quizDTO.setDeleted(quiz.isDeleted());
         quizDTO.setPremium(quiz.isPremium());
