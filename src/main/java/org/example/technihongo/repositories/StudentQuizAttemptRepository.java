@@ -20,4 +20,12 @@ public interface StudentQuizAttemptRepository extends JpaRepository<StudentQuizA
     Optional<StudentQuizAttempt> findByAttemptId(Integer attemptId);
     List<StudentQuizAttempt> findByIsCompletedFalseAndDateTakenBefore(LocalDateTime expiryTime);
     boolean existsByQuiz_QuizId(Integer quizId);
-}
+
+    List<StudentQuizAttempt> findByStudentStudentIdAndQuizQuizIdOrderByDateTakenDesc(Integer studentId, Integer quizId);
+
+    long countByStudentStudentIdAndQuizQuizIdAndIsCompletedFalse(Integer studentId, Integer quizId);
+
+    List<StudentQuizAttempt> findByStudentStudentIdAndQuizQuizIdAndIsCompletedTrue(Integer studentId, Integer quizId);
+
+    List<StudentQuizAttempt> findByStudentStudentIdAndQuizQuizIdAndIsCompletedTrueAndAttemptNumberGreaterThan(
+            Integer studentId, Integer quizId, Integer attemptNumber);}
