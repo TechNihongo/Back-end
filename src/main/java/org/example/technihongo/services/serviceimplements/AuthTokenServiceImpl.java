@@ -3,6 +3,7 @@ package org.example.technihongo.services.serviceimplements;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.example.technihongo.core.security.JWTHelper;
+import org.example.technihongo.core.security.TokenBlacklist;
 import org.example.technihongo.dto.CreateLoginTokenDTO;
 import org.example.technihongo.dto.TokenStatusDTO;
 import org.example.technihongo.entities.AuthToken;
@@ -30,6 +31,8 @@ public class AuthTokenServiceImpl implements AuthTokenService {
     private UserRepository userRepository;
     @Autowired
     private JWTHelper jwtHelper;
+    @Autowired
+    private TokenBlacklist tokenBlacklist;
 
     @Override
     public void saveLoginToken(CreateLoginTokenDTO createLoginTokenDTO) {
@@ -57,6 +60,7 @@ public class AuthTokenServiceImpl implements AuthTokenService {
         if (activeTokens.size() > 2) {
             AuthToken oldestToken = activeTokens.get(0);
             oldestToken.setIsActive(false);
+            tokenBlacklist.addToken(oldestToken.getToken());
             authTokenRepository.save(oldestToken);
         }
 
@@ -70,6 +74,7 @@ public class AuthTokenServiceImpl implements AuthTokenService {
         for(AuthToken a : authTokenList){
             if(a.getExpiresAt().isBefore(LocalDateTime.now())){
                 a.setIsActive(false);
+                tokenBlacklist.addToken(a.getToken());
             }
         }
 
