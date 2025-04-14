@@ -20,5 +20,7 @@ public class QuizAttemptResponseDTO {
     private boolean isCompleted;
     private Integer attemptNumber;
     private LocalDateTime dateTaken;
+    private Integer remainingAttempts;
+    private Long remainingWaitTime;
 
 }

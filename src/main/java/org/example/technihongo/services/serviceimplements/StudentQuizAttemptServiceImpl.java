@@ -53,6 +53,13 @@ public class StudentQuizAttemptServiceImpl implements StudentQuizAttemptService 
         validateInput(studentId, quizId);
         Quiz quiz = getValidQuiz(quizId);
 
+        AttemptStatusDTO attemptStatus = getAttemptStatus(studentId, quizId);
+        if (attemptStatus.getConsecutiveAttempts() >= MAX_ATTEMPTS &&
+                attemptStatus.getRemainingWaitTime() > 0) {
+            throw new IllegalStateException("Bạn đã thử bài kiểm tra " + MAX_ATTEMPTS + " lần liên tiếp mà không vượt qua. Vui lòng chờ " +
+                    attemptStatus.getRemainingWaitTime() + " phút nữa.");
+        }
+
         Optional<StudentQuizAttempt> inProgressAttempt = studentQuizAttemptRepository
                 .findByStudentStudentIdAndQuizQuizIdAndIsCompletedFalse(studentId, quizId);
 
@@ -63,15 +70,27 @@ public class StudentQuizAttemptServiceImpl implements StudentQuizAttemptService 
                 attempt.setIsPassed(false);
                 studentQuizAttemptRepository.save(attempt);
             } else {
+                long incompleteAttempts = studentQuizAttemptRepository
+                        .countByStudentStudentIdAndQuizQuizIdAndIsCompletedFalse(studentId, quizId);
+                if (incompleteAttempts >= MAX_ATTEMPTS) {
+                    throw new IllegalStateException(
+                            "Bạn đang có " + MAX_ATTEMPTS + " bài chưa hoàn thành. Vui lòng hoàn thành hoặc đợi hết thời gian!"
+                    );
+                }
                 return buildStartQuizResponse(attempt, quiz, true);
             }
         }
 
-        List<StudentQuizAttempt> attempts = studentQuizAttemptRepository.findByStudentStudentIdAndQuizQuizId(studentId, quizId);
-        int attemptNumber = attempts.size() + 1;
-        validateAttempt(studentId, attempts, attemptNumber);
-
-        StudentQuizAttempt newAttempt = createNewAttempt(studentId, quiz, attemptNumber);
+        StudentQuizAttempt newAttempt = StudentQuizAttempt.builder()
+                .quiz(quiz)
+                .student(Student.builder().studentId(studentId).build())
+                .score(BigDecimal.ZERO)
+                .isPassed(false)
+                .isCompleted(false)
+                .timeTaken(LocalTime.of(0, 0, 0))
+                .attemptNumber(0)
+                .dateTaken(LocalDateTime.now())
+                .build();
         newAttempt = studentQuizAttemptRepository.save(newAttempt);
 
         return buildStartQuizResponse(newAttempt, quiz, false);
@@ -82,21 +101,43 @@ public class StudentQuizAttemptServiceImpl implements StudentQuizAttemptService 
         validateInput(studentId, request.getQuizId());
         Quiz quiz = getValidQuiz(request.getQuizId());
 
-        StudentQuizAttempt attempt = studentQuizAttemptRepository.findByAttemptId(request.getAttemptId())
+        StudentQuizAttempt startAttempt = studentQuizAttemptRepository.findByAttemptId(request.getAttemptId())
                 .orElseThrow(() -> new IllegalArgumentException("No active quiz attempt found. Please start the quiz first."));
 
-        validateAttemptOwnership(studentId, attempt);
-        if (attempt.getIsCompleted()) {
+        validateAttemptOwnership(studentId, startAttempt);
+        if (startAttempt.getIsCompleted()) {
             throw new IllegalArgumentException("This quiz attempt has already been completed.");
         }
-        if (isAttemptExpired(attempt)) {
-            attempt.setIsCompleted(true);
-            attempt.setIsPassed(false);
-            studentQuizAttemptRepository.save(attempt);
+        if (isAttemptExpired(startAttempt)) {
+            startAttempt.setIsCompleted(true);
+            startAttempt.setIsPassed(false);
+            studentQuizAttemptRepository.save(startAttempt);
             throw new IllegalArgumentException("This quiz attempt has expired. Please start a new attempt.");
         }
 
-        return processQuizAttempt(attempt, quiz, request);
+        // Đếm số lần thử đã hoàn thành, bỏ qua attemptNumber=0
+        List<StudentQuizAttempt> completedAttempts = studentQuizAttemptRepository
+                .findByStudentStudentIdAndQuizQuizIdAndIsCompletedTrueAndAttemptNumberGreaterThan(studentId, request.getQuizId(), 0);
+        int attemptNumber = completedAttempts.size() + 1;
+        if (shouldResetAttemptCounter(completedAttempts)) {
+            attemptNumber = 1;
+        }
+
+        // Tạo bản ghi mới cho lần thử
+        StudentQuizAttempt newAttempt = createNewAttempt(studentId, quiz, attemptNumber);
+        newAttempt = studentQuizAttemptRepository.save(newAttempt);
+
+        // Không cập nhật startAttempt trừ khi cần
+        // Giữ isCompleted=false cho startAttempt, chỉ lưu bản ghi mới
+
+        QuizAttemptResponseDTO response = processQuizAttempt(newAttempt, quiz, request);
+
+        // Cập nhật remainingAttempts và remainingWaitTime
+        AttemptStatusDTO updatedStatus = getAttemptStatus(studentId, quiz.getQuizId());
+        response.setRemainingAttempts(updatedStatus.getRemainingAttempts());
+        response.setRemainingWaitTime(updatedStatus.getRemainingWaitTime());
+
+        return response;
     }
 
     @Override
@@ -104,16 +145,34 @@ public class StudentQuizAttemptServiceImpl implements StudentQuizAttemptService 
         validateInput(studentId, quizId);
         Quiz quiz = getValidQuiz(quizId);
 
-        List<StudentQuizAttempt> attempts = studentQuizAttemptRepository.findByStudentStudentIdAndQuizQuizId(studentId, quizId);
-        int attemptNumber = attempts.size() + 1;
-        validateAttempt(studentId, attempts, attemptNumber);
+        AttemptStatusDTO attemptStatus = getAttemptStatus(studentId, quizId);
+        if (attemptStatus.getConsecutiveAttempts() >= MAX_ATTEMPTS &&
+                attemptStatus.getRemainingWaitTime() > 0) {
+            throw new IllegalStateException("Bạn đã thử bài kiểm tra " + MAX_ATTEMPTS + " lần liên tiếp mà không vượt qua. Vui lòng chờ " +
+                    attemptStatus.getRemainingWaitTime() + " phút nữa.");
+        }
+
+        // Đếm số lần thử đã hoàn thành, bỏ qua attemptNumber=0
+        List<StudentQuizAttempt> completedAttempts = studentQuizAttemptRepository
+                .findByStudentStudentIdAndQuizQuizIdAndIsCompletedTrueAndAttemptNumberGreaterThan(studentId, quizId, 0);
+        int attemptNumber = completedAttempts.size() + 1;
+        if (shouldResetAttemptCounter(completedAttempts)) {
+            attemptNumber = 1;
+        }
+
+        validateAttempt(studentId, completedAttempts, attemptNumber);
 
         StudentQuizAttempt newAttempt = createNewAttempt(studentId, quiz, attemptNumber);
         newAttempt = studentQuizAttemptRepository.save(newAttempt);
 
-        return processQuizAttempt(newAttempt, quiz, request);
-    }
+        QuizAttemptResponseDTO response = processQuizAttempt(newAttempt, quiz, request);
 
+        AttemptStatusDTO updatedStatus = getAttemptStatus(studentId, quizId);
+        response.setRemainingAttempts(updatedStatus.getRemainingAttempts());
+        response.setRemainingWaitTime(updatedStatus.getRemainingWaitTime());
+
+        return response;
+    }
 
 
     // lấy ra các lần làm quiz (nỗ lực làm bài kiểm tra) của một học sinh
@@ -245,6 +304,42 @@ public class StudentQuizAttemptServiceImpl implements StudentQuizAttemptService 
                 .build();
     }
 
+    public AttemptStatusDTO getAttemptStatus(Integer studentId, Integer quizId) {
+        List<StudentQuizAttempt> attempts = studentQuizAttemptRepository
+                .findByStudentStudentIdAndQuizQuizIdOrderByDateTakenDesc(studentId, quizId);
+
+        if (attempts.isEmpty()) {
+            return new AttemptStatusDTO(0, 0, MAX_ATTEMPTS);
+        }
+
+        int failedCompletedAttempts = 0;
+        LocalDateTime now = LocalDateTime.now();
+        for (StudentQuizAttempt attempt : attempts) {
+            if (attempt.getIsCompleted() && !attempt.getIsPassed() &&
+                    attempt.getAttemptNumber() > 0 &&
+                    Duration.between(attempt.getDateTaken(), now).toMinutes() <= WAIT_TIME_MINUTES) {
+                failedCompletedAttempts++;
+            } else {
+                break;
+            }
+        }
+
+        int remainingAttempts = MAX_ATTEMPTS - failedCompletedAttempts;
+
+        long remainingWaitTime = 0;
+        if (failedCompletedAttempts >= MAX_ATTEMPTS) {
+            LocalDateTime lastAttemptTime = attempts.stream()
+                    .filter(a -> a.getIsCompleted() && !a.getIsPassed() && a.getAttemptNumber() > 0)
+                    .map(StudentQuizAttempt::getDateTaken)
+                    .max(LocalDateTime::compareTo)
+                    .orElse(LocalDateTime.now());
+            long minutesPassed = Duration.between(lastAttemptTime, now).toMinutes();
+            remainingWaitTime = Math.max(0, WAIT_TIME_MINUTES - minutesPassed);
+        }
+
+        return new AttemptStatusDTO(failedCompletedAttempts, remainingWaitTime, remainingAttempts);
+    }
+
     @Override
     public QuizPerformanceReportDTO generatePerformanceReport(Integer studentId, Integer quizId) {
         validateInput(studentId, quizId);
@@ -335,6 +430,18 @@ public class StudentQuizAttemptServiceImpl implements StudentQuizAttemptService 
                 throw new IllegalStateException("You have reached the maximum number of attempts (" + MAX_ATTEMPTS + "). Please wait " + minutesToWait + " minutes before retrying.");
             }
         }
+    }
+
+    private boolean shouldResetAttemptCounter(List<StudentQuizAttempt> attempts) {
+        if (attempts.isEmpty()) return true;
+
+        StudentQuizAttempt lastAttempt = attempts.get(0);
+        long minutesSinceLastAttempt = Duration.between(
+                lastAttempt.getDateTaken(),
+                LocalDateTime.now()
+        ).toMinutes();
+
+        return minutesSinceLastAttempt >= WAIT_TIME_MINUTES;
     }
 
     private QuizAttemptResponseDTO processQuizAttempt(StudentQuizAttempt attempt, Quiz quiz, QuizAttemptRequestDTO request) {
@@ -449,7 +556,6 @@ public class StudentQuizAttemptServiceImpl implements StudentQuizAttemptService 
 
     private QuizAttemptResponseDTO mapToResponseDTO(StudentQuizAttempt attempt) {
         BigDecimal multipliedScore = attempt.getScore()
-                .multiply(BigDecimal.valueOf(100))
                 .setScale(2, RoundingMode.HALF_UP);
 
         return QuizAttemptResponseDTO.builder()
@@ -461,6 +567,8 @@ public class StudentQuizAttemptServiceImpl implements StudentQuizAttemptService 
                 .isCompleted(attempt.getIsCompleted())
                 .attemptNumber(attempt.getAttemptNumber())
                 .dateTaken(attempt.getDateTaken())
+                .remainingAttempts(0)
+                .remainingWaitTime(0L)
                 .build();
     }
 }

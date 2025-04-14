@@ -17,4 +17,5 @@ public interface StudentQuizAttemptService {
 
     List<StudentQuizAttempt> getTopAndRecentQuizAttempts(Integer studentId, Integer quizId);
     ReviewQuizAttemptDTO reviewQuizAttempt(Integer studentId, Integer attemptId);
+    AttemptStatusDTO getAttemptStatus(Integer studentId, Integer quizId);
 }
