@@ -353,6 +353,11 @@ public class StudentCourseRatingController {
                     .message("Rating retrieved successfully")
                     .data(rating)
                     .build());
+        } catch (IllegalStateException e) {
+            return  ResponseEntity.ok(ApiResponse.builder()
+                    .success(true)
+                    .message(e.getMessage())
+                    .build());
         } catch (IllegalArgumentException e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ApiResponse.builder()
