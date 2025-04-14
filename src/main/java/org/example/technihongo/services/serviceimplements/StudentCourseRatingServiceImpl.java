@@ -1,5 +1,6 @@
 package org.example.technihongo.services.serviceimplements;
 
+import org.example.technihongo.dto.PageResponseDTO;
 import org.example.technihongo.dto.StudentCourseRatingDTO;
 import org.example.technihongo.dto.StudentCourseRatingRequest;
 import org.example.technihongo.entities.Course;
@@ -90,7 +91,7 @@ public class StudentCourseRatingServiceImpl implements StudentCourseRatingServic
     }
 
     @Override
-    public Page<StudentCourseRatingDTO> getAllRatingsForCourse(Integer courseId, int pageNo, int pageSize, String sortBy, String sortDir){
+    public PageResponseDTO<StudentCourseRatingDTO> getAllRatingsForCourse(Integer courseId, int pageNo, int pageSize, String sortBy, String sortDir){
         Course course = courseRepository.findByCourseId(courseId);
         if (course == null) {
             throw new ResourceNotFoundException("Course not found with ID: " + courseId);
@@ -109,11 +110,18 @@ public class StudentCourseRatingServiceImpl implements StudentCourseRatingServic
                 .map(this::mapToDTO)
                 .collect(Collectors.toList());
 
-        return new PageImpl<>(ratingDTOs, pageable, ratingsPage.getTotalElements());
+        return PageResponseDTO.<StudentCourseRatingDTO>builder()
+                .content(ratingDTOs)
+                .pageNo(ratingsPage.getNumber())
+                .pageSize(ratingsPage.getSize())
+                .totalElements(ratingsPage.getTotalElements())
+                .totalPages(ratingsPage.getTotalPages())
+                .last(ratingsPage.isLast())
+                .build();
     }
 
     @Override
-    public Page<String> getAllReviewsForCourse(Integer courseId, int pageNo, int pageSize, String sortBy, String sortDir){
+    public PageResponseDTO<String> getAllReviewsForCourse(Integer courseId, int pageNo, int pageSize, String sortBy, String sortDir){
         Course course = courseRepository.findByCourseId(courseId);
         if (course == null) {
             throw new ResourceNotFoundException("Course not found with ID: " + courseId);
@@ -133,7 +141,14 @@ public class StudentCourseRatingServiceImpl implements StudentCourseRatingServic
                 .filter(review -> review != null && !review.isEmpty())
                 .collect(Collectors.toList());
 
-        return new PageImpl<>(reviews, pageable, ratingsPage.getTotalElements());
+        return PageResponseDTO.<String>builder()
+                .content(reviews)
+                .pageNo(ratingsPage.getNumber())
+                .pageSize(ratingsPage.getSize())
+                .totalElements(ratingsPage.getTotalElements())
+                .totalPages(ratingsPage.getTotalPages())
+                .last(ratingsPage.isLast())
+                .build();
     }
 
     @Override
