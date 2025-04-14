@@ -1,5 +1,6 @@
 package org.example.technihongo.services.interfaces;
 
+import org.example.technihongo.dto.PageResponseDTO;
 import org.example.technihongo.dto.StudentCourseRatingDTO;
 import org.example.technihongo.dto.StudentCourseRatingRequest;
 import org.springframework.data.domain.Page;
@@ -14,7 +15,7 @@ public interface StudentCourseRatingService {
     StudentCourseRatingDTO updateRating(Integer ratingId, Integer studentId, StudentCourseRatingRequest request);
     void deleteRating(Integer ratingId);
     BigDecimal getAverageRatingForCourse(Integer courseId);
-    Page<StudentCourseRatingDTO> getAllRatingsForCourse(Integer courseId, int pageNo, int pageSize, String sortBy, String sortDir);
-    Page<String> getAllReviewsForCourse(Integer courseId, int pageNo, int pageSize, String sortBy, String sortDir);
+    PageResponseDTO<StudentCourseRatingDTO> getAllRatingsForCourse(Integer courseId, int pageNo, int pageSize, String sortBy, String sortDir);
+    PageResponseDTO<String> getAllReviewsForCourse(Integer courseId, int pageNo, int pageSize, String sortBy, String sortDir);
     StudentCourseRatingDTO getRatingByStudentAndCourse(Integer studentId, Integer courseId);
 }

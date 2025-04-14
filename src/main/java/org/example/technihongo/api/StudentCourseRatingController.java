@@ -3,6 +3,7 @@ package org.example.technihongo.api;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.example.technihongo.core.security.JwtUtil;
+import org.example.technihongo.dto.PageResponseDTO;
 import org.example.technihongo.dto.StudentCourseRatingDTO;
 import org.example.technihongo.dto.StudentCourseRatingRequest;
 import org.example.technihongo.enums.ActivityType;
@@ -290,10 +291,10 @@ public class StudentCourseRatingController {
             @RequestParam(defaultValue = "rating") String sortBy,
             @RequestParam(defaultValue = "desc") String sortDir) {
         try {
-            Page<StudentCourseRatingDTO> ratings = studentCourseRatingService.getAllRatingsForCourse(courseId, pageNo, pageSize, sortBy, sortDir);
+            PageResponseDTO<StudentCourseRatingDTO> ratings = studentCourseRatingService.getAllRatingsForCourse(courseId, pageNo, pageSize, sortBy, sortDir);
             return ResponseEntity.ok(ApiResponse.builder()
                     .success(true)
-                    .message(ratings.isEmpty() ? "No ratings found for this course" : "Ratings retrieved successfully")
+                    .message(ratings.getContent().isEmpty() ? "No ratings found for this course" : "Ratings retrieved successfully")
                     .data(ratings)
                     .build());
         } catch (IllegalArgumentException e) {
@@ -325,10 +326,10 @@ public class StudentCourseRatingController {
             @RequestParam(defaultValue = "ratingId") String sortBy,
             @RequestParam(defaultValue = "asc") String sortDir) {
         try {
-            Page<String> reviews = studentCourseRatingService.getAllReviewsForCourse(courseId, pageNo, pageSize, sortBy, sortDir);
+            PageResponseDTO<String> reviews = studentCourseRatingService.getAllReviewsForCourse(courseId, pageNo, pageSize, sortBy, sortDir);
             return ResponseEntity.ok(ApiResponse.builder()
                     .success(true)
-                    .message(reviews.isEmpty() ? "No reviews found for this course" : "Reviews retrieved successfully")
+                    .message(reviews.getContent().isEmpty() ? "No reviews found for this course" : "Reviews retrieved successfully")
                     .data(reviews)
                     .build());
         } catch (IllegalArgumentException e) {
