@@ -30,10 +30,6 @@ public class StudentDailyLearningLogServiceImpl implements StudentDailyLearningL
     private final AchievementService achievementService;
 
     public void trackStudentDailyLearningLog(Integer studentId, Integer studyTimeInput) {
-        if (studyTimeInput <= 0) {
-            return; // Bỏ qua nếu không có thời gian học
-        }
-
         LocalDate today = LocalDate.now();
 
         Student student = studentRepository.findById(studentId)
