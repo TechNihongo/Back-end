@@ -139,39 +139,6 @@ public class StudentQuizAttemptController {
         }
     }
 
-    @PostMapping("/retry/{quizId}")
-    public ResponseEntity<ApiResponse> retryFailedQuiz(
-            @RequestHeader("Authorization") String authorizationHeader,
-            @PathVariable Integer quizId,
-            @Valid @RequestBody QuizAttemptRequestDTO request) {
-        try {
-            Integer studentId = extractStudentId(authorizationHeader);
-            QuizAttemptResponseDTO response = studentQuizAttemptService.retryFailedQuiz(studentId, quizId, request);
-            return ResponseEntity.ok(ApiResponse.builder()
-                    .success(true)
-                    .message("Quiz retried successfully")
-                    .data(response)
-                    .build());
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(ApiResponse.builder()
-                            .success(false)
-                            .message(e.getMessage())
-                            .build());
-        } catch (IllegalStateException e) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(ApiResponse.builder()
-                            .success(false)
-                            .message(e.getMessage())
-                            .build());
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(ApiResponse.builder()
-                            .success(false)
-                            .message("Internal Server Error: " + e.getMessage())
-                            .build());
-        }
-    }
 
 
     // lấy ra các lần làm quiz (nỗ lực làm bài kiểm tra) của một học sinh
@@ -242,6 +209,41 @@ public class StudentQuizAttemptController {
                             .build());
         }
     }
+
+    @GetMapping("/attemptStatus/{quizId}")
+    public ResponseEntity<ApiResponse> getAttemptStatus(
+            @RequestHeader("Authorization") String authorizationHeader,
+            @PathVariable Integer quizId) {
+        try {
+            Integer studentId = extractStudentId(authorizationHeader);
+            AttemptStatusDTO attemptStatus = studentQuizAttemptService.getAttemptStatus(studentId, quizId);
+            return ResponseEntity.ok(ApiResponse.builder()
+                    .success(true)
+                    .message("Quiz attempt Status retrieved successfully")
+                    .data(attemptStatus)
+                    .build());
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ApiResponse.builder()
+                            .success(false)
+                            .message(e.getMessage())
+                            .build());
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(ApiResponse.builder()
+                            .success(false)
+                            .message(e.getMessage())
+                            .build());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponse.builder()
+                            .success(false)
+                            .message("Internal Server Error: " + e.getMessage())
+                            .build());
+        }
+    }
+
+
 
     private Integer extractStudentId(String authorizationHeader) throws Exception {
         if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
