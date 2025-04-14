@@ -27,5 +27,10 @@ public interface StudentQuizAttemptRepository extends JpaRepository<StudentQuizA
 
     List<StudentQuizAttempt> findByStudentStudentIdAndQuizQuizIdAndIsCompletedTrue(Integer studentId, Integer quizId);
 
+    boolean existsByStudentStudentIdAndQuizQuizIdAndAttemptNumber(Integer studentId, Integer quizId, Integer attemptNumber);
+
     List<StudentQuizAttempt> findByStudentStudentIdAndQuizQuizIdAndIsCompletedTrueAndAttemptNumberGreaterThan(
-            Integer studentId, Integer quizId, Integer attemptNumber);}
+            Integer studentId, Integer quizId, Integer attemptNumber);
+
+    List<StudentQuizAttempt> findByStudentStudentIdAndQuizQuizIdAndAttemptNumberGreaterThan(Integer studentId, Integer quizId, int i);
+}
