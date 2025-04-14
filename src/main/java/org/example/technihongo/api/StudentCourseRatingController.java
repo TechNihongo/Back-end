@@ -14,6 +14,7 @@ import org.example.technihongo.services.interfaces.StudentCourseRatingService;
 import org.example.technihongo.services.interfaces.StudentService;
 import org.example.technihongo.services.interfaces.UserActivityLogService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -282,9 +283,14 @@ public class StudentCourseRatingController {
     }
 
     @GetMapping("/course/ratings/{courseId}")
-    public ResponseEntity<ApiResponse> getAllRatingsForCourse(@PathVariable Integer courseId) {
+    public ResponseEntity<ApiResponse> getAllRatingsForCourse(
+            @PathVariable Integer courseId,
+            @RequestParam(defaultValue = "0") int pageNo,
+            @RequestParam(defaultValue = "10") int pageSize,
+            @RequestParam(defaultValue = "rating") String sortBy,
+            @RequestParam(defaultValue = "desc") String sortDir) {
         try {
-            List<StudentCourseRatingDTO> ratings = studentCourseRatingService.getAllRatingsForCourse(courseId);
+            Page<StudentCourseRatingDTO> ratings = studentCourseRatingService.getAllRatingsForCourse(courseId, pageNo, pageSize, sortBy, sortDir);
             return ResponseEntity.ok(ApiResponse.builder()
                     .success(true)
                     .message(ratings.isEmpty() ? "No ratings found for this course" : "Ratings retrieved successfully")
@@ -312,9 +318,14 @@ public class StudentCourseRatingController {
     }
 
     @GetMapping("/course/reviews/{courseId}")
-    public ResponseEntity<ApiResponse> getAllReviewsForCourse(@PathVariable Integer courseId) {
+    public ResponseEntity<ApiResponse> getAllReviewsForCourse(
+            @PathVariable Integer courseId,
+            @RequestParam(defaultValue = "0") int pageNo,
+            @RequestParam(defaultValue = "10") int pageSize,
+            @RequestParam(defaultValue = "ratingId") String sortBy,
+            @RequestParam(defaultValue = "asc") String sortDir) {
         try {
-            List<String> reviews = studentCourseRatingService.getAllReviewsForCourse(courseId);
+            Page<String> reviews = studentCourseRatingService.getAllReviewsForCourse(courseId, pageNo, pageSize, sortBy, sortDir);
             return ResponseEntity.ok(ApiResponse.builder()
                     .success(true)
                     .message(reviews.isEmpty() ? "No reviews found for this course" : "Reviews retrieved successfully")

@@ -11,6 +11,7 @@ import org.example.technihongo.exception.UnauthorizedAccessException;
 import org.example.technihongo.repositories.*;
 import org.example.technihongo.services.interfaces.StudentCourseRatingService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -89,29 +90,50 @@ public class StudentCourseRatingServiceImpl implements StudentCourseRatingServic
     }
 
     @Override
-    public List<StudentCourseRatingDTO> getAllRatingsForCourse(Integer courseId) {
+    public Page<StudentCourseRatingDTO> getAllRatingsForCourse(Integer courseId, int pageNo, int pageSize, String sortBy, String sortDir){
         Course course = courseRepository.findByCourseId(courseId);
         if (course == null) {
             throw new ResourceNotFoundException("Course not found with ID: " + courseId);
         }
 
-        List<StudentCourseRating> ratings = studentCourseRatingRepository.findByCourseCourseId(courseId);
-        return ratings.stream()
+//        List<StudentCourseRating> ratings = studentCourseRatingRepository.findByCourseCourseId(courseId);
+//        return ratings.stream()
+//                .map(this::mapToDTO)
+//                .collect(Collectors.toList());
+        Sort sort = sortDir.equalsIgnoreCase("asc") ? Sort.by(sortBy).ascending() : Sort.by(sortBy).descending();
+
+        Pageable pageable = PageRequest.of(pageNo, pageSize, sort);
+
+        Page<StudentCourseRating> ratingsPage = studentCourseRatingRepository.findByCourse_CourseId(courseId, pageable);
+        List<StudentCourseRatingDTO> ratingDTOs = ratingsPage.getContent().stream()
                 .map(this::mapToDTO)
                 .collect(Collectors.toList());
+
+        return new PageImpl<>(ratingDTOs, pageable, ratingsPage.getTotalElements());
     }
 
     @Override
-    public List<String> getAllReviewsForCourse(Integer courseId) {
+    public Page<String> getAllReviewsForCourse(Integer courseId, int pageNo, int pageSize, String sortBy, String sortDir){
         Course course = courseRepository.findByCourseId(courseId);
         if (course == null) {
             throw new ResourceNotFoundException("Course not found with ID: " + courseId);
         }
-        List<StudentCourseRating> ratings = studentCourseRatingRepository.findByCourseCourseId(courseId);
-        return ratings.stream()
+//        List<StudentCourseRating> ratings = studentCourseRatingRepository.findByCourseCourseId(courseId);
+//        return ratings.stream()
+//                .map(StudentCourseRating::getReview)
+//                .filter(review -> review != null && !review.isEmpty())
+//                .collect(Collectors.toList());
+        Sort sort = sortDir.equalsIgnoreCase("asc") ? Sort.by(sortBy).ascending() : Sort.by(sortBy).descending();
+
+        Pageable pageable = PageRequest.of(pageNo, pageSize, sort);
+
+        Page<StudentCourseRating> ratingsPage = studentCourseRatingRepository.findByCourse_CourseId(courseId, pageable);
+        List<String> reviews = ratingsPage.getContent().stream()
                 .map(StudentCourseRating::getReview)
                 .filter(review -> review != null && !review.isEmpty())
                 .collect(Collectors.toList());
+
+        return new PageImpl<>(reviews, pageable, ratingsPage.getTotalElements());
     }
 
     @Override
