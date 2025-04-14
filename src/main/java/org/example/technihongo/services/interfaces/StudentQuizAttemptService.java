@@ -13,7 +13,6 @@ public interface StudentQuizAttemptService {
 
     QuizPerformanceReportDTO generatePerformanceReport(Integer studentId, Integer quizId);
 
-    QuizAttemptResponseDTO retryFailedQuiz(Integer studentId, Integer quizId, QuizAttemptRequestDTO request);
 
     List<StudentQuizAttempt> getTopAndRecentQuizAttempts(Integer studentId, Integer quizId);
     ReviewQuizAttemptDTO reviewQuizAttempt(Integer studentId, Integer attemptId);
