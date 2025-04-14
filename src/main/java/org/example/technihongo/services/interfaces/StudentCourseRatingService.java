@@ -2,6 +2,7 @@ package org.example.technihongo.services.interfaces;
 
 import org.example.technihongo.dto.StudentCourseRatingDTO;
 import org.example.technihongo.dto.StudentCourseRatingRequest;
+import org.springframework.data.domain.Page;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -13,7 +14,7 @@ public interface StudentCourseRatingService {
     StudentCourseRatingDTO updateRating(Integer ratingId, Integer studentId, StudentCourseRatingRequest request);
     void deleteRating(Integer ratingId);
     BigDecimal getAverageRatingForCourse(Integer courseId);
-    List<StudentCourseRatingDTO> getAllRatingsForCourse(Integer courseId);
-    List<String> getAllReviewsForCourse(Integer courseId);
+    Page<StudentCourseRatingDTO> getAllRatingsForCourse(Integer courseId, int pageNo, int pageSize, String sortBy, String sortDir);
+    Page<String> getAllReviewsForCourse(Integer courseId, int pageNo, int pageSize, String sortBy, String sortDir);
     StudentCourseRatingDTO getRatingByStudentAndCourse(Integer studentId, Integer courseId);
 }
