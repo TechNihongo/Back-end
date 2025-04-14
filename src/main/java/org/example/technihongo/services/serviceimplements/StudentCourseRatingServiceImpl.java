@@ -5,12 +5,10 @@ import org.example.technihongo.dto.StudentCourseRatingRequest;
 import org.example.technihongo.entities.Course;
 import org.example.technihongo.entities.Student;
 import org.example.technihongo.entities.StudentCourseRating;
+import org.example.technihongo.entities.User;
 import org.example.technihongo.exception.ResourceNotFoundException;
 import org.example.technihongo.exception.UnauthorizedAccessException;
-import org.example.technihongo.repositories.CourseRepository;
-import org.example.technihongo.repositories.StudentCourseProgressRepository;
-import org.example.technihongo.repositories.StudentCourseRatingRepository;
-import org.example.technihongo.repositories.StudentRepository;
+import org.example.technihongo.repositories.*;
 import org.example.technihongo.services.interfaces.StudentCourseRatingService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -35,6 +33,8 @@ public class StudentCourseRatingServiceImpl implements StudentCourseRatingServic
 
     @Autowired
     private StudentCourseProgressRepository studentCourseProgressRepository;
+    @Autowired
+    private UserRepository userRepository;
 
 
     @Override
@@ -123,7 +123,7 @@ public class StudentCourseRatingServiceImpl implements StudentCourseRatingServic
             throw new ResourceNotFoundException("Course not found with ID: " + courseId);
         }
         StudentCourseRating rating = studentCourseRatingRepository.findByStudentStudentIdAndCourseCourseId(studentId, courseId)
-                .orElseThrow(() -> new ResourceNotFoundException("No rating found for student ID: " + studentId + " and course ID: " + courseId));
+                .orElseThrow(() -> new IllegalStateException("No rating found for student ID: " + studentId + " and course ID: " + courseId));
         return mapToDTO(rating);
     }
 
@@ -203,9 +203,16 @@ public class StudentCourseRatingServiceImpl implements StudentCourseRatingServic
     }
 
     private StudentCourseRatingDTO mapToDTO(StudentCourseRating rating) {
+        User user = userRepository.findByStudentStudentId(rating.getStudent().getStudentId());
+        if(user == null){
+            throw new ResourceNotFoundException("User not found!");
+        }
+
         StudentCourseRatingDTO dto = new StudentCourseRatingDTO();
         dto.setRatingId(rating.getRatingId());
         dto.setStudentId(rating.getStudent().getStudentId());
+        dto.setUserName(user.getUserName());
+        dto.setProfileImg(user.getProfileImg());
         dto.setCourseId(rating.getCourse().getCourseId());
         dto.setRating(rating.getRating());
         dto.setReview(rating.getReview());

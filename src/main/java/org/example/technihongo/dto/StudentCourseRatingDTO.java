@@ -12,6 +12,8 @@ import lombok.Setter;
 public class StudentCourseRatingDTO {
     private Integer ratingId;
     private Integer studentId;
+    private String userName;
+    private String profileImg;
     private Integer courseId;
     private Integer rating;
     private String review;
