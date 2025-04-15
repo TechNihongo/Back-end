@@ -22,5 +22,6 @@ public class QuizAttemptResponseDTO {
     private LocalDateTime dateTaken;
     private Integer remainingAttempts;
     private Long remainingWaitTime;
+    private String message;
 
 }
