@@ -2,6 +2,8 @@ package org.example.technihongo.repositories;
 
 import org.example.technihongo.entities.StudentQuizAttempt;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
@@ -37,4 +39,15 @@ public interface StudentQuizAttemptRepository extends JpaRepository<StudentQuizA
     boolean existsByStudentStudentIdAndQuizQuizIdAndIsCompletedTrueAndAttemptNumberGreaterThan(Integer studentId, Integer quizId, int i);
 
     boolean existsByStudentStudentIdAndQuizQuizIdAndIsPassedTrueAndIsCompletedTrue(Integer studentId, Integer quizId);
+
+    @Query(value = "SELECT CAST(q.date_taken AS DATE) AS attemptDay, AVG(q.score) AS avgScore " +
+            "FROM StudentQuizAttempt q " +
+            "WHERE q.student_id = :studentId " +
+            "AND q.attempt_number != 0 " +
+            "AND q.date_taken >= :startDate " +
+            "GROUP BY CAST(q.date_taken AS DATE)", nativeQuery = true)
+    List<Object[]> findAverageScoreByDay(
+            @Param("studentId") Integer studentId,
+            @Param("startDate") LocalDateTime startDate
+    );
 }
