@@ -5,6 +5,7 @@ import org.example.technihongo.core.security.JwtUtil;
 import org.example.technihongo.dto.HandleViolationRequestDTO;
 import org.example.technihongo.dto.PageResponseDTO;
 import org.example.technihongo.dto.ReportViolationRequestDTO;
+import org.example.technihongo.dto.ViolationSummaryDTO;
 import org.example.technihongo.entities.Course;
 import org.example.technihongo.entities.StudentViolation;
 import org.example.technihongo.enums.ActivityType;
@@ -189,6 +190,56 @@ public class StudentViolationController {
                     .body(ApiResponse.builder()
                             .success(false)
                             .message("Handle report failed: " + e.getMessage())
+                            .build());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponse.builder()
+                            .success(false)
+                            .message("Internal Server Error: " + e.getMessage())
+                            .build());
+        }
+    }
+
+    @GetMapping("/summary")
+    public ResponseEntity<ApiResponse> getViolationSummary(
+            @RequestParam String classifyBy,
+            @RequestParam(required = false) String status,
+            @RequestParam Integer entityId,
+            @RequestParam(defaultValue = "0") int pageNo,
+            @RequestParam(defaultValue = "10") int pageSize,
+            @RequestParam(defaultValue = "createdAt") String sortBy,
+            @RequestParam(defaultValue = "desc") String sortDir){
+        try{
+            ViolationSummaryDTO dto = studentViolationService.getViolationSummary(
+                    classifyBy, status, entityId, pageNo, pageSize, sortBy, sortDir);
+            if (dto == null) {
+                return ResponseEntity.ok(ApiResponse.builder()
+                        .success(false)
+                        .message("Violation not found!")
+                        .build());
+            } else if (dto.getDescriptions().getContent().isEmpty()) {
+                return ResponseEntity.ok(ApiResponse.builder()
+                        .success(true)
+                        .message("Violation descriptions are empty!")
+                        .build());
+            } else {
+                return ResponseEntity.ok(ApiResponse.builder()
+                        .success(true)
+                        .message("Get Violation List")
+                        .data(dto)
+                        .build());
+            }
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ApiResponse.builder()
+                            .success(false)
+                            .message(e.getMessage())
+                            .build());
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(ApiResponse.builder()
+                            .success(false)
+                            .message(e.getMessage())
                             .build());
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)

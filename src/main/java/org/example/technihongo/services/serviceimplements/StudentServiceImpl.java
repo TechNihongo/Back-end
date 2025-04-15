@@ -1,5 +1,6 @@
 package org.example.technihongo.services.serviceimplements;
 
+import org.example.technihongo.core.mail.EmailService;
 import org.example.technihongo.dto.ProfileDTO;
 import org.example.technihongo.dto.UpdateProfileDTO;
 import org.example.technihongo.entities.DifficultyLevel;
@@ -13,8 +14,13 @@ import org.example.technihongo.repositories.StudentRepository;
 import org.example.technihongo.repositories.UserRepository;
 import org.example.technihongo.services.interfaces.StudentService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalTime;
+import java.time.temporal.ChronoUnit;
+import java.util.List;
 
 
 @Service
@@ -28,6 +34,8 @@ public class StudentServiceImpl implements StudentService {
 
     @Autowired
     private DifficultyLevelRepository difficultyLevelRepository;
+    @Autowired
+    private EmailService emailService;
 
     
     @Override
@@ -176,5 +184,18 @@ public class StudentServiceImpl implements StudentService {
             return null;
         }
         else return studentRepository.findByUser_UserId(userId).getStudentId();
+    }
+
+    @Scheduled(cron = "0 0 * * * *") // Chạy mỗi phút
+    @Transactional(readOnly = true)
+    public void sendDailyReminders() {
+        LocalTime now = LocalTime.now().truncatedTo(ChronoUnit.MINUTES);
+
+        List<Student> students = studentRepository.findAllWithReminderEnabled();
+        for (Student student : students) {
+            if (student.getReminderTime() != null && student.getReminderTime().equals(now)) {
+                emailService.sendReminderEmail(student);
+            }
+        }
     }
 }
