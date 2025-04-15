@@ -186,7 +186,8 @@ public class StudentServiceImpl implements StudentService {
         else return studentRepository.findByUser_UserId(userId).getStudentId();
     }
 
-    @Scheduled(cron = "0 0 * * * *") // Chạy mỗi phút
+    @Scheduled(cron = "0 0 * * * *")
+//@Scheduled(fixedRate = 60000) //mỗi phút
     @Transactional(readOnly = true)
     public void sendDailyReminders() {
         LocalTime now = LocalTime.now().truncatedTo(ChronoUnit.MINUTES);
