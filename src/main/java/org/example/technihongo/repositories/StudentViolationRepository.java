@@ -1,6 +1,5 @@
 package org.example.technihongo.repositories;
 
-import org.example.technihongo.dto.ViolationSummaryProjection;
 import org.example.technihongo.entities.StudentViolation;
 import org.example.technihongo.enums.ViolationStatus;
 import org.springframework.data.domain.Page;
