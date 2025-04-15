@@ -20,7 +20,7 @@ public class EmailService {
         message.setTo(toEmail);
         message.setSubject(subject);
         message.setText(body);
-        message.setFrom("songlongdiamond105@gmail.com");
+        message.setFrom("technihongo.work@gmail.com");
 
         mailSender.send(message);
     }
@@ -35,7 +35,7 @@ public class EmailService {
         message.setTo(email);
         message.setSubject(subject);
         message.setText(body);
-        message.setFrom("songlongdiamond105@gmail.com");
+        message.setFrom("technihongo.work@gmail.com");
 
         mailSender.send(message);
     }
