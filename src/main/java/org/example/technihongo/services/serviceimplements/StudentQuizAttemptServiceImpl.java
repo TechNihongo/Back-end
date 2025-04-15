@@ -60,20 +60,14 @@ public class StudentQuizAttemptServiceImpl implements StudentQuizAttemptService 
         validateInput(studentId, quizId);
         Quiz quiz = getValidQuiz(quizId);
 
+        // Kiểm tra trạng thái để ngăn startQuiz nếu đã hết lượt và đang trong thời gian cool down
         AttemptStatusDTO attemptStatus = getAttemptStatus(studentId, quizId);
-        if (attemptStatus.getConsecutiveAttempts() >= MAX_ATTEMPTS &&
-                attemptStatus.getRemainingWaitTime() > 0) {
-            throw new IllegalStateException("Bạn đã thử bài kiểm tra " + MAX_ATTEMPTS + " lần liên tiếp mà không vượt qua. Vui lòng chờ " +
+        if (attemptStatus.getRemainingAttempts() <= 0 && attemptStatus.getRemainingWaitTime() > 0) {
+            throw new IllegalStateException("Bạn đã dùng hết số lần thử. Vui lòng chờ " +
                     attemptStatus.getRemainingWaitTime() + " phút nữa.");
         }
 
-        // Kiểm tra xem đã có lần thử attemptNumber=1 chưa
-        boolean hasFirstAttempt = studentQuizAttemptRepository
-                .existsByStudentStudentIdAndQuizQuizIdAndAttemptNumber(studentId, quizId, 1);
-        if (hasFirstAttempt) {
-            throw new IllegalStateException("Bạn đã thực hiện lần thử đầu tiên. Vui lòng sử dụng retry nếu muốn thử lại.");
-        }
-
+        // Kiểm tra các lần thử đang tiến hành
         Optional<StudentQuizAttempt> inProgressAttempt = studentQuizAttemptRepository
                 .findByStudentStudentIdAndQuizQuizIdAndIsCompletedFalse(studentId, quizId);
 
@@ -95,6 +89,7 @@ public class StudentQuizAttemptServiceImpl implements StudentQuizAttemptService 
             }
         }
 
+        // Tạo lần thử khởi tạo (attemptNumber=0)
         StudentQuizAttempt newAttempt = StudentQuizAttempt.builder()
                 .quiz(quiz)
                 .student(Student.builder().studentId(studentId).build())
@@ -115,61 +110,61 @@ public class StudentQuizAttemptServiceImpl implements StudentQuizAttemptService 
         validateInput(studentId, request.getQuizId());
         Quiz quiz = getValidQuiz(request.getQuizId());
 
+        // Kiểm tra trạng thái để ngăn attemptQuiz nếu đã hết lượt và đang trong thời gian cool down
+        AttemptStatusDTO attemptStatus = getAttemptStatus(studentId, request.getQuizId());
+        if (attemptStatus.getRemainingAttempts() <= 0 && attemptStatus.getRemainingWaitTime() > 0) {
+            throw new IllegalStateException("Bạn đã dùng hết số lần thử. Vui lòng chờ " +
+                    attemptStatus.getRemainingWaitTime() + " phút nữa.");
+        }
+
+        boolean isFirstAttempt = true;
+
+        // Kiểm tra xem có lần thử hoàn thành nào không
+        boolean hasCompletedAttempt = studentQuizAttemptRepository
+                .existsByStudentStudentIdAndQuizQuizIdAndIsCompletedTrueAndAttemptNumberGreaterThan(studentId, request.getQuizId(), 0);
+
+        if (hasCompletedAttempt) {
+            isFirstAttempt = false;
+        }
+
         // Xử lý kiểm tra cho lần thử đầu tiên
-        StudentQuizAttempt startAttempt = null;
-        if (request.getAttemptId() != null) {
-            startAttempt = studentQuizAttemptRepository.findByAttemptId(request.getAttemptId())
-                    .orElse(null);
+        if (isFirstAttempt) {
+            // Validate startAttempt
+            StudentQuizAttempt startAttempt = studentQuizAttemptRepository.findByAttemptId(request.getAttemptId())
+                    .orElseThrow(() -> new IllegalArgumentException("No active quiz attempt found. Please start the quiz first."));
 
-            if (startAttempt != null) {
-                validateAttemptOwnership(studentId, startAttempt);
-                if (startAttempt.getIsCompleted()) {
-                    throw new IllegalArgumentException("This quiz attempt has already been completed.");
-                }
-                if (isAttemptExpired(startAttempt)) {
-                    startAttempt.setIsCompleted(true);
-                    startAttempt.setIsPassed(false);
-                    studentQuizAttemptRepository.save(startAttempt);
-                    throw new IllegalArgumentException("This quiz attempt has expired. Please start a new attempt.");
-                }
-
-                // Đánh dấu startAttempt là hoàn thành
+            validateAttemptOwnership(studentId, startAttempt);
+            if (startAttempt.getIsCompleted()) {
+                throw new IllegalArgumentException("This quiz attempt has already been completed.");
+            }
+            if (isAttemptExpired(startAttempt)) {
                 startAttempt.setIsCompleted(true);
                 startAttempt.setIsPassed(false);
                 studentQuizAttemptRepository.save(startAttempt);
+                throw new IllegalArgumentException("This quiz attempt has expired. Please start a new attempt.");
             }
-        }
 
-        // Kiểm tra giới hạn và thời gian chờ
-        AttemptStatusDTO attemptStatus = getAttemptStatus(studentId, request.getQuizId());
-        if (attemptStatus.getConsecutiveAttempts() >= MAX_ATTEMPTS &&
-                attemptStatus.getRemainingWaitTime() > 0) {
-            throw new IllegalStateException("Bạn đã thử bài kiểm tra " + MAX_ATTEMPTS + " lần liên tiếp mà không vượt qua. Vui lòng chờ " +
-                    attemptStatus.getRemainingWaitTime() + " phút nữa.");
+            // Đánh dấu startAttempt là hoàn thành
+            startAttempt.setIsCompleted(true);
+            startAttempt.setIsPassed(false);
+            studentQuizAttemptRepository.save(startAttempt);
         }
 
         // Xác định attemptNumber
         int attemptNumber;
-        List<StudentQuizAttempt> completedAttempts = studentQuizAttemptRepository
-                .findByStudentStudentIdAndQuizQuizIdAndIsCompletedTrueAndAttemptNumberGreaterThan(studentId, request.getQuizId(), 0);
-
-        if (completedAttempts.isEmpty()) {
+        if (isFirstAttempt) {
             attemptNumber = 1;
         } else {
-            // Tìm attemptNumber lớn nhất hiện tại và tăng lên 1
-            attemptNumber = completedAttempts.stream()
-                    .mapToInt(StudentQuizAttempt::getAttemptNumber)
-                    .max()
-                    .orElse(0) + 1;
+            List<StudentQuizAttempt> completedAttempts = studentQuizAttemptRepository
+                    .findByStudentStudentIdAndQuizQuizIdAndIsCompletedTrueAndAttemptNumberGreaterThan(studentId, request.getQuizId(), 0);
 
+            attemptNumber = completedAttempts.size() + 1;
             if (attemptNumber > MAX_ATTEMPTS) {
-                // Kiểm tra xem có cần reset counter không
-                boolean shouldReset = shouldResetAttemptCounter(completedAttempts);
-                if (shouldReset) {
-                    attemptNumber = 1;
-                } else {
-                    throw new IllegalStateException("Bạn đã đạt số lần thử tối đa (" + MAX_ATTEMPTS + ").");
-                }
+                throw new IllegalStateException("Bạn đã đạt số lần thử tối đa (" + MAX_ATTEMPTS + "). Vui lòng chờ " +
+                        attemptStatus.getRemainingWaitTime() + " phút nữa.");
+            }
+            if (shouldResetAttemptCounter(completedAttempts)) {
+                attemptNumber = 1;
             }
         }
 
@@ -177,13 +172,24 @@ public class StudentQuizAttemptServiceImpl implements StudentQuizAttemptService 
         StudentQuizAttempt newAttempt = createNewAttempt(studentId, quiz, attemptNumber);
         newAttempt = studentQuizAttemptRepository.save(newAttempt);
 
+        // Kiểm tra xem đã pass trước đó chưa để thêm thông báo
+        boolean hasPassedBefore = studentQuizAttemptRepository
+                .existsByStudentStudentIdAndQuizQuizIdAndIsPassedTrueAndIsCompletedTrue(studentId, request.getQuizId());
+
         // Xử lý câu trả lời và tính điểm
         QuizAttemptResponseDTO response = processQuizAttempt(newAttempt, quiz, request);
 
-        // Cập nhật trạng thái
-        AttemptStatusDTO updatedStatus = getAttemptStatus(studentId, request.getQuizId());
-        response.setRemainingAttempts(updatedStatus.getRemainingAttempts());
-        response.setRemainingWaitTime(updatedStatus.getRemainingWaitTime());
+        // Cập nhật remainingAttempts
+        int newRemainingAttempts = Math.max(0, attemptStatus.getRemainingAttempts() - 1);
+        response.setRemainingAttempts(newRemainingAttempts);
+        response.setRemainingWaitTime(attemptStatus.getRemainingWaitTime());
+
+        // Thêm thông báo nếu đã pass trước đó
+        if (hasPassedBefore) {
+            response.setMessage("Mặc dù bạn đã pass, nhưng hãy cố hoàn thành bài học nhé!");
+        } else {
+            response.setMessage("Quiz attempted successfully");
+        }
 
         return response;
     }
@@ -319,24 +325,23 @@ public class StudentQuizAttemptServiceImpl implements StudentQuizAttemptService 
             return new AttemptStatusDTO(0, 0, MAX_ATTEMPTS);
         }
 
-        int failedCompletedAttempts = 0;
+        int completedAttempts = 0;
         LocalDateTime now = LocalDateTime.now();
         for (StudentQuizAttempt attempt : attempts) {
-            if (attempt.getIsCompleted() && !attempt.getIsPassed() &&
-                    attempt.getAttemptNumber() > 0 &&
+            if (attempt.getIsCompleted() && attempt.getAttemptNumber() > 0 &&
                     Duration.between(attempt.getDateTaken(), now).toMinutes() <= WAIT_TIME_MINUTES) {
-                failedCompletedAttempts++;
+                completedAttempts++;
             } else {
                 break;
             }
         }
 
-        int remainingAttempts = MAX_ATTEMPTS - failedCompletedAttempts;
+        int remainingAttempts = MAX_ATTEMPTS - completedAttempts;
 
         long remainingWaitTime = 0;
-        if (failedCompletedAttempts >= MAX_ATTEMPTS) {
+        if (remainingAttempts <= 0) {
             LocalDateTime lastAttemptTime = attempts.stream()
-                    .filter(a -> a.getIsCompleted() && !a.getIsPassed() && a.getAttemptNumber() > 0)
+                    .filter(a -> a.getIsCompleted() && a.getAttemptNumber() > 0)
                     .map(StudentQuizAttempt::getDateTaken)
                     .max(LocalDateTime::compareTo)
                     .orElse(LocalDateTime.now());
@@ -344,7 +349,7 @@ public class StudentQuizAttemptServiceImpl implements StudentQuizAttemptService 
             remainingWaitTime = Math.max(0, WAIT_TIME_MINUTES - minutesPassed);
         }
 
-        return new AttemptStatusDTO(failedCompletedAttempts, remainingWaitTime, remainingAttempts);
+        return new AttemptStatusDTO(completedAttempts, remainingWaitTime, remainingAttempts);
     }
 
     @Override
@@ -445,14 +450,6 @@ public class StudentQuizAttemptServiceImpl implements StudentQuizAttemptService 
     private boolean shouldResetAttemptCounter(List<StudentQuizAttempt> attempts) {
         if (attempts.isEmpty()) return true;
 
-        // Nếu đã có một lần thử thành công (isPassed=true), không reset counter
-        boolean hasPassedAttempt = attempts.stream()
-                .anyMatch(StudentQuizAttempt::getIsPassed);
-        if (hasPassedAttempt) {
-            return false;
-        }
-
-        // Kiểm tra thời gian
         StudentQuizAttempt lastAttempt = attempts.stream()
                 .max(Comparator.comparing(StudentQuizAttempt::getDateTaken))
                 .orElse(null);
@@ -554,9 +551,12 @@ public class StudentQuizAttemptServiceImpl implements StudentQuizAttemptService 
         attempt.setIsCompleted(true);
         attempt = studentQuizAttemptRepository.save(attempt);
 
-        // Cập nhật log và thống kê
-        if (studentQuizAttemptRepository.countByStudentStudentIdAndQuizQuizIdAndIsPassedAndIsCompleted(
-                attempt.getStudent().getStudentId(), quiz.getQuizId(), true, true) == 1) {
+        // Chỉ cập nhật log và thống kê cho lần pass đầu tiên
+        boolean isFirstPass = isPassed && !studentQuizAttemptRepository
+                .existsByStudentStudentIdAndQuizQuizIdAndIsPassedTrueAndIsCompletedTrue(
+                        attempt.getStudent().getStudentId(), quiz.getQuizId());
+
+        if (isFirstPass) {
             Optional<StudentDailyLearningLog> dailyLogOpt = dailyLogRepository
                     .findByStudentStudentIdAndLogDate(attempt.getStudent().getStudentId(), LocalDate.now());
             if (dailyLogOpt.isPresent()) {
