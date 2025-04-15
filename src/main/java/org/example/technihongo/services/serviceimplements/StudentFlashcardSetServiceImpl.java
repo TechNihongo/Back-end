@@ -106,7 +106,17 @@ public class StudentFlashcardSetServiceImpl implements StudentFlashcardSetServic
         if (!flashcardSet.getCreator().getStudentId().equals(studentId)) {
             throw new UnauthorizedAccessException("You do not have permission to delete this flashcard set.");
         }
-        flashcardSetRepository.deleteById(flashcardSetId);
+//        flashcardSetRepository.deleteById(flashcardSetId);
+        flashcardSet.setDeleted(true);
+        flashcardSetRepository.save(flashcardSet);
+    }
+
+    @Override
+    public void setViolatedFlashcardSet(Integer flashcardSetId) {
+        StudentFlashcardSet flashcardSet = getActiveFlashcardSet(flashcardSetId);
+        flashcardSet.setPublic(false);
+        flashcardSet.setViolated(true);
+        flashcardSetRepository.save(flashcardSet);
     }
 
     @Override

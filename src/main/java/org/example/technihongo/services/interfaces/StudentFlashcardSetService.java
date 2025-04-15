@@ -11,7 +11,7 @@ public interface StudentFlashcardSetService {
     FlashcardSetResponseDTO createFlashcardSet(Integer studentId, FlashcardSetRequestDTO request);
     FlashcardSetResponseDTO updateFlashcardSet(Integer studentId, Integer flashcardSetId, FlashcardSetRequestDTO request);
     void deleteFlashcardSet(Integer studentId, Integer flashcardSetId);
-
+    void setViolatedFlashcardSet(Integer flashcardSetId);
 
 
     List<FlashcardSetResponseDTO> getFlashcardSetsByStudentId(Integer studentId);
