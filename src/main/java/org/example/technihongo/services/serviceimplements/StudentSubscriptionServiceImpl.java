@@ -11,6 +11,7 @@ import org.example.technihongo.entities.SubscriptionPlan;
 import org.example.technihongo.enums.PaymentMethodCode;
 import org.example.technihongo.enums.PaymentMethodType;
 import org.example.technihongo.enums.TransactionStatus;
+import org.example.technihongo.exception.ResourceNotFoundException;
 import org.example.technihongo.repositories.PaymentMethodRepository;
 import org.example.technihongo.repositories.PaymentTransactionRepository;
 import org.example.technihongo.repositories.StudentSubscriptionRepository;
@@ -53,6 +54,13 @@ public class StudentSubscriptionServiceImpl implements StudentSubscriptionServic
 
     @Override
     public RenewSubscriptionResponseDTO initiateRenewal(Integer studentId, RenewSubscriptionRequestDTO request) {
+        // Kiểm tra số lần gia hạn
+        List<StudentSubscription> allSubscriptions = subscriptionRepository.findAllByStudent_StudentId(studentId, Pageable.unpaged()).getContent();
+        long renewalCount = allSubscriptions.size() - 1; // Trừ đi subscription đầu tiên (không tính là gia hạn)
+        if (renewalCount >= 3) {
+            throw new ResourceNotFoundException("Hãy giành thời gian và học thật kỹ khóa học trước khi gia hạn thêm nhé");
+        }
+
         StudentSubscription currentSubscription = subscriptionRepository
                 .findByStudent_StudentIdAndIsActiveTrue(studentId);
         if (currentSubscription == null) {
