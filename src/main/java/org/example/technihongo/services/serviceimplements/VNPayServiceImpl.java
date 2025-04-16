@@ -10,6 +10,7 @@ import org.example.technihongo.entities.*;
 import org.example.technihongo.enums.PaymentMethodCode;
 import org.example.technihongo.enums.PaymentMethodType;
 import org.example.technihongo.enums.TransactionStatus;
+import org.example.technihongo.exception.ResourceNotFoundException;
 import org.example.technihongo.repositories.*;
 import org.example.technihongo.services.interfaces.AchievementService;
 import org.example.technihongo.services.interfaces.VNPayService;
@@ -186,6 +187,12 @@ public class VNPayServiceImpl implements VNPayService {
     @Override
     public RenewSubscriptionResponseDTO initiateRenewalVNPay(Integer studentId, RenewSubscriptionRequestDTO requestDTO, HttpServletRequest request) {
         logger.info("Initiating VNPay renewal for studentId: {}, subPlanId: {}", studentId, requestDTO.getSubPlanId());
+
+        List<StudentSubscription> allSubscriptions = studentSubscriptionRepository.findAllByStudent_StudentId(studentId, Pageable.unpaged()).getContent();
+        long renewalCount = allSubscriptions.size() - 1; // Trừ đi subscription đầu tiên (không tính là gia hạn)
+        if (renewalCount >= 3) {
+            throw new ResourceNotFoundException("Hãy dành thời gian và học thật kỹ khóa học trước khi gia hạn thêm nhé");
+        }
 
         StudentSubscription currentSubscription = studentSubscriptionRepository
                 .findByStudent_StudentIdAndIsActiveTrue(studentId);
