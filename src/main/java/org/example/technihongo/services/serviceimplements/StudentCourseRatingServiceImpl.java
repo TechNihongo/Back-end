@@ -48,6 +48,11 @@ public class StudentCourseRatingServiceImpl implements StudentCourseRatingServic
     public StudentCourseRatingDTO getRatingById(Integer ratingId) {
         StudentCourseRating rating = studentCourseRatingRepository.findById(ratingId)
                 .orElseThrow(() -> new RuntimeException("Rating not found"));
+
+        if (rating.isDeleted()) {
+            throw new RuntimeException("Đánh giá đã bị xóa.");
+        }
+
         return mapToDTO(rating);
     }
 
@@ -55,6 +60,7 @@ public class StudentCourseRatingServiceImpl implements StudentCourseRatingServic
     public List<StudentCourseRatingDTO> getAllRatings() {
         List<StudentCourseRating> ratings = studentCourseRatingRepository.findAll();
         return ratings.stream()
+                .filter(rating -> !rating.isDeleted())
                 .map(this::mapToDTO)
                 .collect(Collectors.toList());
     }
@@ -68,7 +74,10 @@ public class StudentCourseRatingServiceImpl implements StudentCourseRatingServic
     public void deleteRating(Integer ratingId) {
         StudentCourseRating rating = studentCourseRatingRepository.findById(ratingId)
                 .orElseThrow(() -> new ResourceNotFoundException("Rating not found with ID: " + ratingId));
-        studentCourseRatingRepository.delete(rating);
+
+        rating.setDeleted(true);
+        studentCourseRatingRepository.save(rating);
+//        studentCourseRatingRepository.delete(rating);
     }
 
     @Override
@@ -77,7 +86,10 @@ public class StudentCourseRatingServiceImpl implements StudentCourseRatingServic
         if (course == null) {
             throw new ResourceNotFoundException("Course not found with ID: " + courseId);
         }
-        List<StudentCourseRating> ratings = studentCourseRatingRepository.findByCourseCourseId(courseId);
+        List<StudentCourseRating> ratings = studentCourseRatingRepository.findByCourseCourseId(courseId).stream()
+                .filter(rating -> !rating.isDeleted())
+                .toList();
+
         if (ratings.isEmpty()) {
             return BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP);
         }
@@ -107,6 +119,7 @@ public class StudentCourseRatingServiceImpl implements StudentCourseRatingServic
 
         Page<StudentCourseRating> ratingsPage = studentCourseRatingRepository.findByCourse_CourseId(courseId, pageable);
         List<StudentCourseRatingDTO> ratingDTOs = ratingsPage.getContent().stream()
+                .filter(rating -> !rating.isDeleted())
                 .map(this::mapToDTO)
                 .collect(Collectors.toList());
 
@@ -137,6 +150,7 @@ public class StudentCourseRatingServiceImpl implements StudentCourseRatingServic
 
         Page<StudentCourseRating> ratingsPage = studentCourseRatingRepository.findByCourse_CourseId(courseId, pageable);
         List<String> reviews = ratingsPage.getContent().stream()
+                .filter(rating -> !rating.isDeleted())
                 .map(StudentCourseRating::getReview)
                 .filter(review -> review != null && !review.isEmpty())
                 .collect(Collectors.toList());
@@ -161,6 +175,9 @@ public class StudentCourseRatingServiceImpl implements StudentCourseRatingServic
         }
         StudentCourseRating rating = studentCourseRatingRepository.findByStudentStudentIdAndCourseCourseId(studentId, courseId)
                 .orElseThrow(() -> new IllegalStateException("No rating found for student ID: " + studentId + " and course ID: " + courseId));
+        if (rating.isDeleted()) {
+            throw new ResourceNotFoundException("Đánh giá đã bị xóa.");
+        }
         return mapToDTO(rating);
     }
 
@@ -188,6 +205,7 @@ public class StudentCourseRatingServiceImpl implements StudentCourseRatingServic
                 .course(course)
                 .rating(request.getRating())
                 .review(request.getReview())
+                .isDeleted(false)
                 .build();
 
         StudentCourseRating savedRating = studentCourseRatingRepository.save(rating);
@@ -199,6 +217,10 @@ public class StudentCourseRatingServiceImpl implements StudentCourseRatingServic
 
         StudentCourseRating rating = studentCourseRatingRepository.findById(ratingId)
                 .orElseThrow(() -> new ResourceNotFoundException("Rating not found with ID: " + ratingId));
+
+        if (rating.isDeleted()) {
+            throw new UnauthorizedAccessException("Đánh giá đã bị xóa.");
+        }
 
         if (!rating.getStudent().getStudentId().equals(studentId)) {
             throw new UnauthorizedAccessException("You are not authorized to update this rating.");
