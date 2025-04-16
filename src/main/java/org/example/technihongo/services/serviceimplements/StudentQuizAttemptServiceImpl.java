@@ -135,12 +135,14 @@ public class StudentQuizAttemptServiceImpl implements StudentQuizAttemptService 
                 .findByStudentStudentIdAndQuizQuizIdAndIsCompletedTrueAndAttemptNumberGreaterThan(studentId, request.getQuizId(), 0);
 
         int attemptNumber = completedAttempts.size() + 1;
-        if (attemptNumber > MAX_ATTEMPTS) {
-            throw new IllegalStateException("Bạn đã đạt số lần thử tối đa (" + MAX_ATTEMPTS + "). Vui lòng chờ " +
-                    attemptStatus.getRemainingWaitTime() + " phút nữa.");
-        }
         if (shouldResetAttemptCounter(completedAttempts)) {
             attemptNumber = 1;
+        }
+
+        // Kiểm tra số lần thử tối đa
+        if (attemptNumber > MAX_ATTEMPTS && attemptStatus.getRemainingWaitTime() > 0) {
+            throw new IllegalStateException("Bạn đã đạt số lần thử tối đa (" + MAX_ATTEMPTS + "). Vui lòng chờ " +
+                    attemptStatus.getRemainingWaitTime() + " phút nữa.");
         }
 
         // Tạo lần thử mới
@@ -302,19 +304,29 @@ public class StudentQuizAttemptServiceImpl implements StudentQuizAttemptService 
 
         int completedAttempts = 0;
         LocalDateTime now = LocalDateTime.now();
+        boolean withinCycle = false;
+
+        // Đếm các lần thử hoàn thành trong chu kỳ hiện tại (trong 30 phút)
         for (StudentQuizAttempt attempt : attempts) {
-            if (attempt.getIsCompleted() && attempt.getAttemptNumber() > 0 &&
-                    Duration.between(attempt.getDateTaken(), now).toMinutes() <= WAIT_TIME_MINUTES) {
-                completedAttempts++;
-            } else {
-                break;
+            if (attempt.getIsCompleted() && attempt.getAttemptNumber() > 0) {
+                long minutesSinceAttempt = Duration.between(attempt.getDateTaken(), now).toMinutes();
+                if (minutesSinceAttempt <= WAIT_TIME_MINUTES) {
+                    completedAttempts++;
+                    withinCycle = true;
+                } else {
+                    break; // Thoát nếu gặp lần thử ngoài chu kỳ
+                }
             }
         }
 
         int remainingAttempts = MAX_ATTEMPTS - completedAttempts;
-
         long remainingWaitTime = 0;
-        if (remainingAttempts <= 0) {
+
+        // Nếu không còn lần thử nào trong chu kỳ hiện tại, reset remainingAttempts
+        if (!withinCycle && completedAttempts == 0) {
+            remainingAttempts = MAX_ATTEMPTS;
+        } else if (remainingAttempts <= 0) {
+            // Tính thời gian chờ nếu đã hết lần thử
             LocalDateTime lastAttemptTime = attempts.stream()
                     .filter(a -> a.getIsCompleted() && a.getAttemptNumber() > 0)
                     .map(StudentQuizAttempt::getDateTaken)
