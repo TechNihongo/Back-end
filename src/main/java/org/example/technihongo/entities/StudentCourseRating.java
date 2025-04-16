@@ -35,6 +35,9 @@ public class StudentCourseRating {
     @Column(name = "review", length = 50)
     private String review;
 
+    @Column(name = "is_deleted")
+    private boolean isDeleted = false;
+
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
