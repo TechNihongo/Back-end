@@ -10,7 +10,6 @@ import org.example.technihongo.entities.*;
 import org.example.technihongo.enums.PaymentMethodCode;
 import org.example.technihongo.enums.PaymentMethodType;
 import org.example.technihongo.enums.TransactionStatus;
-import org.example.technihongo.exception.ResourceNotFoundException;
 import org.example.technihongo.repositories.*;
 import org.example.technihongo.services.interfaces.AchievementService;
 import org.example.technihongo.services.interfaces.VNPayService;
@@ -188,10 +187,11 @@ public class VNPayServiceImpl implements VNPayService {
     public RenewSubscriptionResponseDTO initiateRenewalVNPay(Integer studentId, RenewSubscriptionRequestDTO requestDTO, HttpServletRequest request) {
         logger.info("Initiating VNPay renewal for studentId: {}, subPlanId: {}", studentId, requestDTO.getSubPlanId());
 
-        List<StudentSubscription> allSubscriptions = studentSubscriptionRepository.findAllByStudent_StudentId(studentId, Pageable.unpaged()).getContent();
-        long renewalCount = allSubscriptions.size() - 1; // Trừ đi subscription đầu tiên (không tính là gia hạn)
+        List<StudentSubscription> allSubscriptions = studentSubscriptionRepository
+                .findAllByStudent_StudentIdAndIsActiveTrueOrEndDateAfter(studentId, LocalDateTime.now(), Pageable.unpaged());
+        long renewalCount = allSubscriptions.size() - 1; // Trừ subscription đầu tiên
         if (renewalCount >= 3) {
-            throw new ResourceNotFoundException("Hãy dành thời gian và học thật kỹ khóa học trước khi gia hạn thêm nhé");
+            throw new RuntimeException("Hãy dành thời gian và học thật kỹ khóa học trước khi gia hạn thêm nhé");
         }
 
         StudentSubscription currentSubscription = studentSubscriptionRepository
@@ -283,11 +283,26 @@ public class VNPayServiceImpl implements VNPayService {
             logger.info("Current subscription found: ID={}, EndDate={}",
                     currentSubscription.getSubscriptionId(), currentSubscription.getEndDate());
 
-            SubscriptionPlan plan = currentSubscription.getSubscriptionPlan();
+            // Tìm SubscriptionPlan dựa trên transaction_amount
+            BigDecimal transactionAmount = transaction.getTransactionAmount();
+            List<SubscriptionPlan> matchingPlans = subscriptionPlanRepository.findByPriceAndIsActiveTrue(transactionAmount);
+
+            if (matchingPlans.isEmpty()) {
+                logger.warn("No active subscription plan found for transaction amount: {}, falling back to current subscription plan", transactionAmount);
+                matchingPlans = List.of(currentSubscription.getSubscriptionPlan());
+            }
+            if (matchingPlans.size() > 1) {
+                throw new RuntimeException("Multiple subscription plans found for transaction amount: " + transactionAmount);
+            }
+
+            SubscriptionPlan plan = matchingPlans.get(0);
+            logger.info("Using SubscriptionPlan with subPlanId: {}, price: {}",
+                    plan.getSubPlanId(), plan.getPrice());
+
             LocalDateTime latestEndDate = findLatestEndDate(currentSubscription.getStudent().getStudentId());
             StudentSubscription newSubscription = StudentSubscription.builder()
                     .student(currentSubscription.getStudent())
-                    .subscriptionPlan(plan)
+                    .subscriptionPlan(plan) // Sử dụng plan từ transaction_amount
                     .startDate(latestEndDate)
                     .endDate(latestEndDate.plusDays(plan.getDurationDays()))
                     .isActive(false)

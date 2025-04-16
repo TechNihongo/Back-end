@@ -11,7 +11,6 @@ import org.example.technihongo.entities.SubscriptionPlan;
 import org.example.technihongo.enums.PaymentMethodCode;
 import org.example.technihongo.enums.PaymentMethodType;
 import org.example.technihongo.enums.TransactionStatus;
-import org.example.technihongo.exception.ResourceNotFoundException;
 import org.example.technihongo.repositories.PaymentMethodRepository;
 import org.example.technihongo.repositories.PaymentTransactionRepository;
 import org.example.technihongo.repositories.StudentSubscriptionRepository;
@@ -55,10 +54,11 @@ public class StudentSubscriptionServiceImpl implements StudentSubscriptionServic
     @Override
     public RenewSubscriptionResponseDTO initiateRenewal(Integer studentId, RenewSubscriptionRequestDTO request) {
         // Kiểm tra số lần gia hạn
-        List<StudentSubscription> allSubscriptions = subscriptionRepository.findAllByStudent_StudentId(studentId, Pageable.unpaged()).getContent();
-        long renewalCount = allSubscriptions.size() - 1; // Trừ đi subscription đầu tiên (không tính là gia hạn)
+        List<StudentSubscription> allSubscriptions = subscriptionRepository
+                .findAllByStudent_StudentIdAndIsActiveTrueOrEndDateAfter(studentId, LocalDateTime.now(), Pageable.unpaged());
+        long renewalCount = allSubscriptions.size() - 1; // Trừ subscription đầu tiên
         if (renewalCount >= 3) {
-            throw new ResourceNotFoundException("Hãy giành thời gian và học thật kỹ khóa học trước khi gia hạn thêm nhé");
+            throw new RuntimeException("Hãy dành thời gian và học thật kỹ khóa học trước khi gia hạn thêm nhé");
         }
 
         StudentSubscription currentSubscription = subscriptionRepository
@@ -82,7 +82,8 @@ public class StudentSubscriptionServiceImpl implements StudentSubscriptionServic
             throw new IllegalStateException("MoMo payment method is not available or inactive");
         }
 
-        String orderId = "RENEW-" + System.currentTimeMillis();
+        // Nhúng subPlanId vào externalOrderId
+        String orderId = "RENEW-" + System.currentTimeMillis() + "-" + request.getSubPlanId();
 
         PaymentTransaction transaction = PaymentTransaction.builder()
                 .subscription(currentSubscription)
@@ -128,11 +129,27 @@ public class StudentSubscriptionServiceImpl implements StudentSubscriptionServic
             log.info("Current subscription found: ID={}, EndDate={}",
                     currentSubscription.getSubscriptionId(), currentSubscription.getEndDate());
 
-            SubscriptionPlan plan = currentSubscription.getSubscriptionPlan();
+            // Trích xuất subPlanId từ externalOrderId
+            String[] orderIdParts = orderId.split("-");
+            if (orderIdParts.length < 3) {
+                throw new RuntimeException("Invalid externalOrderId format: " + orderId);
+            }
+            Integer subPlanId;
+            try {
+                subPlanId = Integer.parseInt(orderIdParts[orderIdParts.length - 1]);
+            } catch (NumberFormatException e) {
+                throw new RuntimeException("Invalid subPlanId in externalOrderId: " + orderId);
+            }
+
+            // Lấy SubscriptionPlan từ subPlanId
+            SubscriptionPlan plan = subscriptionPlanRepository.findById(subPlanId)
+                    .orElseThrow(() -> new RuntimeException("Subscription plan not found: " + subPlanId));
+            log.info("Using SubscriptionPlan with subPlanId: {}", subPlanId);
+
             LocalDateTime latestEndDate = findLatestEndDate(currentSubscription.getStudent().getStudentId());
             StudentSubscription newSubscription = StudentSubscription.builder()
                     .student(currentSubscription.getStudent())
-                    .subscriptionPlan(plan)
+                    .subscriptionPlan(plan) // Sử dụng plan từ subPlanId
                     .startDate(latestEndDate)
                     .endDate(latestEndDate.plusDays(plan.getDurationDays()))
                     .isActive(false)

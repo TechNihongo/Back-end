@@ -27,4 +27,7 @@ public interface StudentSubscriptionRepository extends JpaRepository<StudentSubs
     Page<StudentSubscription> findAllByStudent_StudentId(Integer studentId, Pageable pageable);
 
     List<StudentSubscription> findByStudentStudentIdAndIsActive(Integer studentId, Boolean isActive);
+
+    List<StudentSubscription> findAllByStudent_StudentIdAndIsActiveTrueOrEndDateAfter(
+            Integer studentId, LocalDateTime endDate, Pageable pageable);
 }
