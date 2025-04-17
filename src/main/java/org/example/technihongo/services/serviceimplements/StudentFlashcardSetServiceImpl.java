@@ -1,5 +1,6 @@
 package org.example.technihongo.services.serviceimplements;
 
+import org.example.technihongo.core.mail.EmailService;
 import org.example.technihongo.dto.*;
 import org.example.technihongo.entities.*;
 import org.example.technihongo.enums.ViolationStatus;
@@ -40,6 +41,8 @@ public class StudentFlashcardSetServiceImpl implements StudentFlashcardSetServic
     private AchievementService achievementService;
     @Autowired
     private StudentViolationRepository studentViolationRepository;
+    @Autowired
+    private EmailService emailService;
 
     @Override
     public FlashcardSetResponseDTO createFlashcardSet(Integer studentId, FlashcardSetRequestDTO request) {
@@ -122,6 +125,7 @@ public class StudentFlashcardSetServiceImpl implements StudentFlashcardSetServic
     @Override
     @Transactional
     public FlashcardSetViolationResponseDTO setViolatedFlashcardSet(Integer flashcardSetId, Integer violationCount) {
+        // Tìm StudentFlashcardSet
         StudentFlashcardSet flashcardSet = flashcardSetRepository.findById(flashcardSetId)
                 .orElseThrow(() -> new ResourceNotFoundException("Flashcard Set not found with id: " + flashcardSetId));
 
@@ -129,35 +133,41 @@ public class StudentFlashcardSetServiceImpl implements StudentFlashcardSetServic
             throw new ResourceNotFoundException("Flashcard Set has been deleted and cannot be accessed.");
         }
 
+        Student student = flashcardSet.getCreator();
+
+        // Tìm nội dung của action taken từ vi phạm đã xác nhận (nếu có)
+        StudentViolation violation = studentViolationRepository.findByStudentFlashcardSetStudentSetIdAndStatus(
+                flashcardSetId, ViolationStatus.RESOLVED);
+        String actionTaken = violation != null && violation.getActionTaken() != null
+                ? violation.getActionTaken()
+                : "Nội dung không phù hợp với quy tắc cộng đồng";
+
+        // Chuẩn bị response
         FlashcardSetViolationResponseDTO response = new FlashcardSetViolationResponseDTO();
         response.setStudentSetId(flashcardSetId);
 
+        // Đánh dấu là bị vi phạm
+        flashcardSet.setViolated(true);
+
         if (violationCount == 1) {
-            // Lần 1: Cảnh báo
-            flashcardSet.setViolated(true);
-            flashcardSet.setDeleted(false);
             flashcardSet.setPublic(false);
-            response.setMessage("Bộ flashcard của bạn bị report, vui lòng chỉnh sửa trong 24 giờ.");
-        } else if (violationCount == 2) {
-            // Lần 2: Xóa
-            flashcardSet.setViolated(true);
-            flashcardSet.setDeleted(true);
-            response.setMessage("Bộ flashcard của bạn đã bị xóa do vi phạm lần thứ hai.");
-        } else {
-            // Lần 3 trở đi: Xóa
-            flashcardSet.setViolated(true);
+            response.setMessage("Bộ flashcard của bạn bị report, vui lòng chỉnh sửa lại nội dung trong 24 giờ.");
+        } else if (violationCount >= 2) {
             flashcardSet.setDeleted(true);
             response.setMessage("Flashcard của bạn đã bị báo cáo, chúng tôi đã xác nhận và xóa FlashcardSet của bạn.");
         }
 
-        flashcardSet = flashcardSetRepository.save(flashcardSet);
+        // Gửi email thông báo
+        emailService.sendViolationEmail(student, flashcardSet.getTitle(), actionTaken, violationCount);
+
+        // Lưu thay đổi
+        flashcardSetRepository.save(flashcardSet);
         return response;
     }
 
     @Override
     public List<FlashcardSetResponseDTO> getFlashcardSetsByStudentId(Integer studentId) {
         List<StudentFlashcardSet> flashcardSets = flashcardSetRepository.findByCreatorAndPublicStatus(studentId, true);
-        flashcardSets.forEach(this::checkViolationStatus);
         return flashcardSets.stream()
                 .map(this::convertToFlashcardSetResponseDTO)
                 .collect(Collectors.toList());
@@ -166,7 +176,6 @@ public class StudentFlashcardSetServiceImpl implements StudentFlashcardSetServic
     @Override
     public List<FlashcardSetResponseDTO> getFlashcardSetsByPublicStatus() {
         List<StudentFlashcardSet> flashcardSets = flashcardSetRepository.findAllPublicSetsOrderByViewsDesc();
-        flashcardSets.forEach(this::checkViolationStatus);
         return flashcardSets.stream()
                 .map(this::convertToFlashcardSetResponseDTO)
                 .collect(Collectors.toList());
@@ -189,7 +198,6 @@ public class StudentFlashcardSetServiceImpl implements StudentFlashcardSetServic
         StudentFlashcardSet flashcardSet = flashcardSetRepository.findById(flashcardSetId)
                 .orElseThrow(() -> new ResourceNotFoundException("Student Flashcard Set not found with ID: " + flashcardSetId));
 
-        flashcardSet = checkViolationStatus(flashcardSet);
         if (flashcardSet.isDeleted()) {
             throw new ResourceNotFoundException("Flashcard Set has been deleted and cannot be accessed.");
         }
@@ -227,7 +235,18 @@ public class StudentFlashcardSetServiceImpl implements StudentFlashcardSetServic
         if (!flashcardSet.getCreator().getStudentId().equals(studentId)) {
             throw new UnauthorizedAccessException("You do not have permission to update visibility of this flashcard set.");
         }
+        if (isPublic && flashcardSet.isViolated()) {
+            StudentViolation violation = studentViolationRepository.findByStudentFlashcardSetStudentSetIdAndStatus(
+                    flashcardSetId, ViolationStatus.RESOLVED);
+            if (violation != null && violation.getViolationHandledAt() != null) {
+                LocalDateTime deadline = violation.getViolationHandledAt().plusDays(1);
+                if (LocalDateTime.now().isAfter(deadline)) {
+                    throw new RuntimeException("Đã quá thời hạn chỉnh sửa, bộ flashcard không thể mở public.");
+                }
+            }
+        }
         flashcardSet.setPublic(isPublic);
+        flashcardSet.setUpdatedAt(LocalDateTime.now());
         flashcardSet = flashcardSetRepository.save(flashcardSet);
         return convertToFlashcardSetResponseDTO(flashcardSet);
     }
@@ -267,7 +286,7 @@ public class StudentFlashcardSetServiceImpl implements StudentFlashcardSetServic
     @Override
     public List<FlashcardSetResponseDTO> studentFlashcardList(Integer studentId) {
         List<StudentFlashcardSet> flashcardSets = flashcardSetRepository.findByCreatorStudentId(studentId);
-        flashcardSets.forEach(this::checkViolationStatus);
+
         return flashcardSets.stream()
                 .filter(set -> !set.isDeleted())
                 .map(this::convertToFlashcardSetResponseDTO)
@@ -369,7 +388,6 @@ public class StudentFlashcardSetServiceImpl implements StudentFlashcardSetServic
         StudentFlashcardSet sourceSet = flashcardSetRepository.findById(studentSetIdToClone)
                 .orElseThrow(() -> new ResourceNotFoundException("Student Flashcard Set not found with ID: " + studentSetIdToClone));
 
-        sourceSet = checkViolationStatus(sourceSet);
         if (sourceSet.isDeleted()) {
             throw new ResourceNotFoundException("Student Flashcard Set has been deleted");
         }
@@ -491,16 +509,12 @@ public class StudentFlashcardSetServiceImpl implements StudentFlashcardSetServic
         return responseDTO;
     }
 
-    private StudentFlashcardSet checkViolationStatus(StudentFlashcardSet flashcardSet) {
 
-        return flashcardSet;
-    }
 
     private StudentFlashcardSet getActiveFlashcardSet(Integer flashcardSetId) {
         StudentFlashcardSet flashcardSet = flashcardSetRepository.findById(flashcardSetId)
                 .orElseThrow(() -> new ResourceNotFoundException("Flashcard Set not found with id: " + flashcardSetId));
 
-        flashcardSet = checkViolationStatus(flashcardSet);
 
         if (flashcardSet.isDeleted()) {
             throw new ResourceNotFoundException("Flashcard Set has been deleted and cannot be accessed.");

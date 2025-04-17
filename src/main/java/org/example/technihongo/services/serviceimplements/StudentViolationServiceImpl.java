@@ -1,14 +1,16 @@
 package org.example.technihongo.services.serviceimplements;
 
 import lombok.RequiredArgsConstructor;
+import org.example.technihongo.core.mail.EmailService;
 import org.example.technihongo.dto.*;
 import org.example.technihongo.entities.*;
 import org.example.technihongo.enums.ViolationStatus;
+import org.example.technihongo.exception.ResourceNotFoundException;
+import org.example.technihongo.exception.UnauthorizedAccessException;
 import org.example.technihongo.repositories.StudentCourseRatingRepository;
 import org.example.technihongo.repositories.StudentFlashcardSetRepository;
 import org.example.technihongo.repositories.StudentViolationRepository;
 import org.example.technihongo.repositories.UserRepository;
-import org.example.technihongo.services.interfaces.StudentFlashcardSetService;
 import org.example.technihongo.services.interfaces.StudentViolationService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -34,8 +36,10 @@ public class StudentViolationServiceImpl implements StudentViolationService {
     private StudentCourseRatingRepository studentCourseRatingRepository;
     @Autowired
     private UserRepository userRepository;
+    @Autowired
+    private EmailService emailService;
 
-    private final StudentFlashcardSetService studentFlashcardSetService;
+
 
     @Override
     public PageResponseDTO<StudentViolation> getAllStudentViolations(String classifyBy, String status, int pageNo, int pageSize, String sortBy, String sortDir) {
@@ -66,7 +70,8 @@ public class StudentViolationServiceImpl implements StudentViolationService {
     }
 
     @Override
-    public StudentViolation reportViolation(Integer reportedBy, ReportViolationRequestDTO request) {
+    @Transactional
+    public ReportViolationResponseDTO reportViolation(Integer reportedBy, ReportViolationRequestDTO request) {
         String classifyBy = request.getClassifyBy();
         if (!"FlashcardSet".equalsIgnoreCase(classifyBy) && !"Rating".equalsIgnoreCase(classifyBy)) {
             throw new RuntimeException("classifyBy must be 'FlashcardSet' or 'Rating'!");
@@ -79,14 +84,6 @@ public class StudentViolationServiceImpl implements StudentViolationService {
 
         User user = userRepository.findById(reportedBy)
                 .orElseThrow(() -> new RuntimeException("User not found with ID: " + reportedBy));
-
-        // Kiểm tra spam report
-        if ("FlashcardSet".equalsIgnoreCase(classifyBy)) {
-            boolean alreadyReported = studentViolationRepository.existsByReportedByUserIdAndStudentFlashcardSetStudentSetId(reportedBy, contentId);
-            if (alreadyReported) {
-                throw new RuntimeException("Bạn đã report bộ flashcard này rồi.");
-            }
-        }
 
         StudentViolation violation = StudentViolation.builder()
                 .description(request.getDescription())
@@ -106,112 +103,147 @@ public class StudentViolationServiceImpl implements StudentViolationService {
             violation.setStudentFlashcardSet(null);
         }
 
-        return studentViolationRepository.save(violation);
+        studentViolationRepository.save(violation);
+
+        ReportViolationResponseDTO response = new ReportViolationResponseDTO();
+        response.setMessage("Thông báo đã được gửi tới Admin, cảm ơn bạn đã đóng góp cho app của chúng tôi");
+        return response;
     }
 
     @Override
     @Transactional
     public HandleViolationResponseDTO handleViolation(Integer violationId, Integer handledBy, HandleViolationRequestDTO request) {
-
-
         // Tìm vi phạm chính
         StudentViolation violation = studentViolationRepository.findByViolationId(violationId);
         if (violation == null) {
-            throw new RuntimeException("Không tìm thấy StudentViolation với ID: " + violationId);
+            throw new ResourceNotFoundException("Không tìm thấy StudentViolation với ID: " + violationId);
         }
 
         // Kiểm tra xem vi phạm có còn ở trạng thái PENDING không
         if (!violation.getStatus().equals(ViolationStatus.PENDING)) {
-            throw new RuntimeException("Vi phạm đã được xử lý trước đó.");
+            throw new IllegalStateException("Vi phạm đã được xử lý trước đó.");
         }
 
         // Xác thực trạng thái
         String statusStr = request.getStatus();
         if (!"RESOLVED".equalsIgnoreCase(statusStr) && !"DISMISSED".equalsIgnoreCase(statusStr)) {
-            throw new RuntimeException("Trạng thái phải là 'RESOLVED' hoặc 'DISMISSED'.");
+            throw new IllegalArgumentException("Trạng thái phải là 'RESOLVED' hoặc 'DISMISSED'.");
         }
         ViolationStatus status = ViolationStatus.valueOf(statusStr.toUpperCase());
 
-        // Xác thực handledBy
-        if (handledBy == null) {
-            throw new IllegalArgumentException("handledBy không được để trống.");
-        }
-        User admin = userRepository.findById(handledBy)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy người dùng với ID: " + handledBy));
-        if (!admin.getRole().getRoleId().equals(1)) {
-            throw new RuntimeException("Chỉ ADMIN mới được xử lý vi phạm");
-        }
+        // Xác thực handledBy - đảm bảo là admin
+        User admin = validateAdmin(handledBy);
 
         // Chuẩn bị response
         HandleViolationResponseDTO response = new HandleViolationResponseDTO();
         response.setViolationId(violationId);
 
-        // Xử lý DISMISSED
+        // Xử lý DISMISSED - trường hợp bác bỏ vi phạm
         if (status == ViolationStatus.DISMISSED) {
-            violation.setHandledBy(admin);
-            violation.setActionTaken(request.getActionTaken());
-            violation.setStatus(status);
-            violation.setResolvedAt(LocalDateTime.now());
-            studentViolationRepository.save(violation);
+            updateViolationStatus(violation, admin, request.getActionTaken(), status);
             response.setMessage("Vi phạm đã bị bác bỏ.");
-            return response; // Trả về HandleViolationResponseDTO
+            return response;
         }
 
-        // Xử lý vi phạm cho FlashcardSet
+        // Xử lý RESOLVED - trường hợp xác nhận vi phạm
         if (violation.getStudentFlashcardSet() != null) {
             StudentFlashcardSet flashcardSet = violation.getStudentFlashcardSet();
             Student student = flashcardSet.getCreator();
 
-            // Tăng violationCount
-            int violationCount = student.getViolationCount() != null ? student.getViolationCount() : 0;
-            violationCount++;
-            student.setViolationCount(violationCount);
-            userRepository.save(student.getUser()); // Lưu Student thông qua User
+            // Tăng violationCount cho student (xử lý ở mức student)
+            int violationCount = incrementStudentViolationCount(student);
 
-            // Gọi StudentFlashcardSetService để cập nhật trạng thái và lấy message
-            FlashcardSetViolationResponseDTO flashcardResponse = studentFlashcardSetService.setViolatedFlashcardSet(
-                    flashcardSet.getStudentSetId(), violationCount);
+            // Xử lý flashcard set theo mức độ vi phạm
+            FlashcardSetViolationResponseDTO flashcardResponse = processFlashcardSetViolation(
+                    flashcardSet, student, violationCount, request.getActionTaken());
             response.setMessage(flashcardResponse.getMessage());
 
-
-            // Đặt violationHandledAt cho lần 1
+            // Đặt thời gian xử lý vi phạm nếu là lần đầu
             if (violationCount == 1) {
                 violation.setViolationHandledAt(LocalDateTime.now());
             }
-        } else {
-            // Xử lý cho Rating (nếu cần)
+        } else if (violation.getStudentCourseRating() != null) {
+            // Xử lý cho Rating (có thể bổ sung code tương tự như trên)
             response.setMessage("Vi phạm cho Rating đã được xử lý.");
         }
 
-        // Cập nhật vi phạm chính
-        violation.setHandledBy(admin);
-        violation.setActionTaken(request.getActionTaken());
-        violation.setStatus(status);
-        violation.setResolvedAt(LocalDateTime.now());
+        // Cập nhật trạng thái vi phạm chính
+        updateViolationStatus(violation, admin, request.getActionTaken(), status);
 
         // Tìm và xử lý các vi phạm PENDING liên quan
         List<StudentViolation> relatedViolations = findRelatedPendingViolations(violation);
         for (StudentViolation relatedViolation : relatedViolations) {
-            relatedViolation.setStatus(status);
-            relatedViolation.setHandledBy(admin);
-            relatedViolation.setActionTaken(
-                    String.format("Tự động xử lý cùng với vi phạm ID %d: %s", violationId, request.getActionTaken())
+            updateViolationStatus(
+                    relatedViolation,
+                    admin,
+                    String.format("Tự động xử lý cùng với vi phạm ID %d: %s", violationId, request.getActionTaken()),
+                    status
             );
-            relatedViolation.setResolvedAt(LocalDateTime.now());
-            StudentFlashcardSet flashcardSet = violation.getStudentFlashcardSet();
-            Student student = flashcardSet.getCreator();
-            int violationCount = student.getViolationCount() != null ? student.getViolationCount() : 0;
-            // Đặt violationHandledAt cho các vi phạm liên quan nếu là lần 1
-            if (violationCount == 1) {
-                relatedViolation.setViolationHandledAt(LocalDateTime.now());
-            }
         }
 
         studentViolationRepository.save(violation);
-        studentViolationRepository.saveAll(relatedViolations);
+        if (!relatedViolations.isEmpty()) {
+            studentViolationRepository.saveAll(relatedViolations);
+        }
 
         return response;
     }
+
+    private void updateViolationStatus(StudentViolation violation, User admin, String actionTaken, ViolationStatus status) {
+        violation.setHandledBy(admin);
+        violation.setActionTaken(actionTaken);
+        violation.setStatus(status);
+        violation.setResolvedAt(LocalDateTime.now());
+    }
+
+    private int incrementStudentViolationCount(Student student) {
+        int violationCount = student.getViolationCount() != null ? student.getViolationCount() : 0;
+        violationCount++;
+        student.setViolationCount(violationCount);
+        userRepository.save(student.getUser());
+        return violationCount;
+    }
+
+    private User validateAdmin(Integer userId) {
+        if (userId == null) {
+            throw new IllegalArgumentException("userId không được để trống.");
+        }
+        User admin = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy người dùng với ID: " + userId));
+        if (!admin.getRole().getRoleId().equals(1)) {
+            throw new UnauthorizedAccessException("Chỉ ADMIN mới được xử lý vi phạm");
+        }
+        return admin;
+    }
+
+    private FlashcardSetViolationResponseDTO processFlashcardSetViolation(
+            StudentFlashcardSet flashcardSet, Student student, int violationCount, String actionTaken) {
+
+        FlashcardSetViolationResponseDTO response = new FlashcardSetViolationResponseDTO();
+        response.setStudentSetId(flashcardSet.getStudentSetId());
+
+        // Đánh dấu là bị vi phạm
+        flashcardSet.setViolated(true);
+
+        // Xử lý theo số lần vi phạm
+        if (violationCount == 1) {
+            flashcardSet.setPublic(false);
+            response.setMessage("Bộ flashcard của bạn bị report, vui lòng chỉnh sửa trong 24 giờ.");
+        } else if (violationCount >= 2) {
+            flashcardSet.setDeleted(true);
+            response.setMessage("Bộ flashcard của bạn đã bị xóa do vi phạm lần thứ " + violationCount + ".");
+        }
+
+        // Gửi email thông báo
+        emailService.sendViolationEmail(student, flashcardSet.getTitle(), actionTaken, violationCount);
+
+        // Lưu thay đổi
+        studentFlashcardSetRepository.save(flashcardSet);
+
+        return response;
+    }
+
+
 
     @Override
     @Transactional(readOnly = true)

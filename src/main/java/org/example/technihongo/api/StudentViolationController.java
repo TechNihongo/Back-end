@@ -77,7 +77,7 @@ public class StudentViolationController {
                 String token = authorizationHeader.substring(7);
                 Integer reportedBy = jwtUtil.extractUserId(token);
 
-                StudentViolation violation = studentViolationService.reportViolation(reportedBy, request);
+                ReportViolationResponseDTO response = studentViolationService.reportViolation(reportedBy, request);
 
                 if(request.getClassifyBy().equalsIgnoreCase("FlashcardSet")) {
                     String ipAddress = httpRequest.getRemoteAddr();
@@ -107,7 +107,7 @@ public class StudentViolationController {
                 return ResponseEntity.ok(ApiResponse.builder()
                         .success(true)
                         .message("Violation reported successfully")
-                        .data(violation)
+                        .data(response)
                         .build());
             }
             else {

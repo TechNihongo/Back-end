@@ -4,9 +4,6 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.example.technihongo.core.security.JwtUtil;
 import org.example.technihongo.dto.*;
-import org.example.technihongo.entities.Student;
-import org.example.technihongo.entities.StudentFlashcardSet;
-import org.example.technihongo.entities.User;
 import org.example.technihongo.enums.ActivityType;
 import org.example.technihongo.enums.ContentType;
 import org.example.technihongo.exception.ResourceNotFoundException;
@@ -646,18 +643,8 @@ public class StudentFlashcardSetController {
             if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
                 String token = authorizationHeader.substring(7);
                 Integer userId = jwtUtil.extractUserId(token);
-                User user = userRepository.findById(userId)
-                        .orElseThrow(() -> new ResourceNotFoundException("User not found with ID: " + userId));
-                if (!user.getRole().getRoleId().equals(1)) {
-                    throw new UnauthorizedAccessException("Only admin can mark flashcard set as violated");
-                }
 
-                StudentFlashcardSet flashcardSet = studentFlashcardSetRepository.findById(flashcardSetId)
-                        .orElseThrow(() -> new ResourceNotFoundException("Flashcard Set not found with id: " + flashcardSetId));
-                Student student = flashcardSet.getCreator();
-                int violationCount = student.getViolationCount() != null ? student.getViolationCount() : 0;
-
-                FlashcardSetViolationResponseDTO response = studentFlashcardSetService.setViolatedFlashcardSet(flashcardSetId, violationCount + 1);
+                FlashcardSetViolationResponseDTO response = studentFlashcardSetService.setViolatedFlashcardSet(flashcardSetId, userId);
 
                 return ResponseEntity.ok(ApiResponse.builder()
                         .success(true)
