@@ -3,14 +3,16 @@ package org.example.technihongo.api;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.example.technihongo.core.security.JwtUtil;
-import org.example.technihongo.dto.CreateFlashcardSetFromResourceDTO;
-import org.example.technihongo.dto.FlashcardSetRequestDTO;
-import org.example.technihongo.dto.FlashcardSetResponseDTO;
-import org.example.technihongo.dto.UpdateFlashcardOrderDTO;
+import org.example.technihongo.dto.*;
+import org.example.technihongo.entities.Student;
+import org.example.technihongo.entities.StudentFlashcardSet;
+import org.example.technihongo.entities.User;
 import org.example.technihongo.enums.ActivityType;
 import org.example.technihongo.enums.ContentType;
 import org.example.technihongo.exception.ResourceNotFoundException;
 import org.example.technihongo.exception.UnauthorizedAccessException;
+import org.example.technihongo.repositories.StudentFlashcardSetRepository;
+import org.example.technihongo.repositories.UserRepository;
 import org.example.technihongo.response.ApiResponse;
 import org.example.technihongo.services.interfaces.StudentFlashcardSetProgressService;
 import org.example.technihongo.services.interfaces.StudentFlashcardSetService;
@@ -37,6 +39,10 @@ public class StudentFlashcardSetController {
     private StudentFlashcardSetProgressService studentFlashcardSetProgressService;
     @Autowired
     private UserActivityLogService userActivityLogService;
+    @Autowired
+    private UserRepository userRepository;
+    @Autowired
+    private StudentFlashcardSetRepository studentFlashcardSetRepository;
 
     @PostMapping("/create")
     public ResponseEntity<ApiResponse> createFlashcardSet(
@@ -637,18 +643,34 @@ public class StudentFlashcardSetController {
             @RequestHeader("Authorization") String authorizationHeader,
             @PathVariable("setId") Integer flashcardSetId) {
         try {
-            studentFlashcardSetService.setViolatedFlashcardSet(flashcardSetId);
+            if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
+                String token = authorizationHeader.substring(7);
+                Integer userId = jwtUtil.extractUserId(token);
+                User user = userRepository.findById(userId)
+                        .orElseThrow(() -> new ResourceNotFoundException("User not found with ID: " + userId));
+                if (!user.getRole().getRoleId().equals(1)) {
+                    throw new UnauthorizedAccessException("Only admin can mark flashcard set as violated");
+                }
 
-            return ResponseEntity.ok(ApiResponse.builder()
-                    .success(true)
-                    .message("Flashcard set marked as violated successfully")
-                    .build());
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(ApiResponse.builder()
-                            .success(false)
-                            .message(e.getMessage())
-                            .build());
+                StudentFlashcardSet flashcardSet = studentFlashcardSetRepository.findById(flashcardSetId)
+                        .orElseThrow(() -> new ResourceNotFoundException("Flashcard Set not found with id: " + flashcardSetId));
+                Student student = flashcardSet.getCreator();
+                int violationCount = student.getViolationCount() != null ? student.getViolationCount() : 0;
+
+                FlashcardSetViolationResponseDTO response = studentFlashcardSetService.setViolatedFlashcardSet(flashcardSetId, violationCount + 1);
+
+                return ResponseEntity.ok(ApiResponse.builder()
+                        .success(true)
+                        .message(response.getMessage())
+                        .data(response)
+                        .build());
+            } else {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(ApiResponse.builder()
+                                .success(false)
+                                .message("Unauthorized")
+                                .build());
+            }
         } catch (UnauthorizedAccessException e) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ApiResponse.builder()

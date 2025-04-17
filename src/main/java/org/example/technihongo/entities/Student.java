@@ -3,13 +3,10 @@ package org.example.technihongo.entities;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
-import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import org.example.technihongo.enums.OccupationStatus;
 import org.hibernate.annotations.UpdateTimestamp;
 
-
-import java.sql.Time;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 
@@ -46,6 +43,9 @@ public class Student {
 
     @Column(name = "reminder_time")
     private LocalTime reminderTime;
+
+    @Column(name = "violation_count")
+    private Integer violationCount = 0;
 
     @ManyToOne
     @JoinColumn(name = "level_id", referencedColumnName = "level_id")

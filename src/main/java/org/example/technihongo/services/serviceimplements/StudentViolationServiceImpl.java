@@ -2,25 +2,24 @@ package org.example.technihongo.services.serviceimplements;
 
 import lombok.RequiredArgsConstructor;
 import org.example.technihongo.dto.*;
-import org.example.technihongo.entities.StudentCourseRating;
-import org.example.technihongo.entities.StudentFlashcardSet;
-import org.example.technihongo.entities.StudentViolation;
-import org.example.technihongo.entities.User;
+import org.example.technihongo.entities.*;
 import org.example.technihongo.enums.ViolationStatus;
 import org.example.technihongo.repositories.StudentCourseRatingRepository;
 import org.example.technihongo.repositories.StudentFlashcardSetRepository;
 import org.example.technihongo.repositories.StudentViolationRepository;
 import org.example.technihongo.repositories.UserRepository;
+import org.example.technihongo.services.interfaces.StudentFlashcardSetService;
 import org.example.technihongo.services.interfaces.StudentViolationService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.*;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.Comparator;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 
@@ -35,6 +34,8 @@ public class StudentViolationServiceImpl implements StudentViolationService {
     private StudentCourseRatingRepository studentCourseRatingRepository;
     @Autowired
     private UserRepository userRepository;
+
+    private final StudentFlashcardSetService studentFlashcardSetService;
 
     @Override
     public PageResponseDTO<StudentViolation> getAllStudentViolations(String classifyBy, String status, int pageNo, int pageSize, String sortBy, String sortDir) {
@@ -79,6 +80,14 @@ public class StudentViolationServiceImpl implements StudentViolationService {
         User user = userRepository.findById(reportedBy)
                 .orElseThrow(() -> new RuntimeException("User not found with ID: " + reportedBy));
 
+        // Kiểm tra spam report
+        if ("FlashcardSet".equalsIgnoreCase(classifyBy)) {
+            boolean alreadyReported = studentViolationRepository.existsByReportedByUserIdAndStudentFlashcardSetStudentSetId(reportedBy, contentId);
+            if (alreadyReported) {
+                throw new RuntimeException("Bạn đã report bộ flashcard này rồi.");
+            }
+        }
+
         StudentViolation violation = StudentViolation.builder()
                 .description(request.getDescription())
                 .reportedBy(user)
@@ -102,7 +111,9 @@ public class StudentViolationServiceImpl implements StudentViolationService {
 
     @Override
     @Transactional
-    public StudentViolation handleViolation(Integer violationId, Integer handledBy, HandleViolationRequestDTO request) {
+    public HandleViolationResponseDTO handleViolation(Integer violationId, Integer handledBy, HandleViolationRequestDTO request) {
+
+
         // Tìm vi phạm chính
         StudentViolation violation = studentViolationRepository.findByViolationId(violationId);
         if (violation == null) {
@@ -127,6 +138,50 @@ public class StudentViolationServiceImpl implements StudentViolationService {
         }
         User admin = userRepository.findById(handledBy)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy người dùng với ID: " + handledBy));
+        if (!admin.getRole().getRoleId().equals(1)) {
+            throw new RuntimeException("Chỉ ADMIN mới được xử lý vi phạm");
+        }
+
+        // Chuẩn bị response
+        HandleViolationResponseDTO response = new HandleViolationResponseDTO();
+        response.setViolationId(violationId);
+
+        // Xử lý DISMISSED
+        if (status == ViolationStatus.DISMISSED) {
+            violation.setHandledBy(admin);
+            violation.setActionTaken(request.getActionTaken());
+            violation.setStatus(status);
+            violation.setResolvedAt(LocalDateTime.now());
+            studentViolationRepository.save(violation);
+            response.setMessage("Vi phạm đã bị bác bỏ.");
+            return response; // Trả về HandleViolationResponseDTO
+        }
+
+        // Xử lý vi phạm cho FlashcardSet
+        if (violation.getStudentFlashcardSet() != null) {
+            StudentFlashcardSet flashcardSet = violation.getStudentFlashcardSet();
+            Student student = flashcardSet.getCreator();
+
+            // Tăng violationCount
+            int violationCount = student.getViolationCount() != null ? student.getViolationCount() : 0;
+            violationCount++;
+            student.setViolationCount(violationCount);
+            userRepository.save(student.getUser()); // Lưu Student thông qua User
+
+            // Gọi StudentFlashcardSetService để cập nhật trạng thái và lấy message
+            FlashcardSetViolationResponseDTO flashcardResponse = studentFlashcardSetService.setViolatedFlashcardSet(
+                    flashcardSet.getStudentSetId(), violationCount);
+            response.setMessage(flashcardResponse.getMessage());
+
+
+            // Đặt violationHandledAt cho lần 1
+            if (violationCount == 1) {
+                violation.setViolationHandledAt(LocalDateTime.now());
+            }
+        } else {
+            // Xử lý cho Rating (nếu cần)
+            response.setMessage("Vi phạm cho Rating đã được xử lý.");
+        }
 
         // Cập nhật vi phạm chính
         violation.setHandledBy(admin);
@@ -134,25 +189,28 @@ public class StudentViolationServiceImpl implements StudentViolationService {
         violation.setStatus(status);
         violation.setResolvedAt(LocalDateTime.now());
 
-        // Tìm các vi phạm PENDING liên quan
+        // Tìm và xử lý các vi phạm PENDING liên quan
         List<StudentViolation> relatedViolations = findRelatedPendingViolations(violation);
-
-        // Xử lý các vi phạm liên quan (ví dụ: tự động giải quyết)
         for (StudentViolation relatedViolation : relatedViolations) {
-            relatedViolation.setStatus(status); // Sử dụng cùng trạng thái với vi phạm chính
+            relatedViolation.setStatus(status);
             relatedViolation.setHandledBy(admin);
             relatedViolation.setActionTaken(
-                    String.format("Tự động xử lý cùng với vi phạm ID %d: %s",
-                            violationId, request.getActionTaken())
+                    String.format("Tự động xử lý cùng với vi phạm ID %d: %s", violationId, request.getActionTaken())
             );
             relatedViolation.setResolvedAt(LocalDateTime.now());
+            StudentFlashcardSet flashcardSet = violation.getStudentFlashcardSet();
+            Student student = flashcardSet.getCreator();
+            int violationCount = student.getViolationCount() != null ? student.getViolationCount() : 0;
+            // Đặt violationHandledAt cho các vi phạm liên quan nếu là lần 1
+            if (violationCount == 1) {
+                relatedViolation.setViolationHandledAt(LocalDateTime.now());
+            }
         }
 
-        // Lưu vi phạm chính và các vi phạm liên quan
         studentViolationRepository.save(violation);
         studentViolationRepository.saveAll(relatedViolations);
 
-        return violation;
+        return response;
     }
 
     @Override
