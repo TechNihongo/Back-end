@@ -9,6 +9,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Repository
@@ -65,4 +66,10 @@ public interface StudentViolationRepository extends JpaRepository<StudentViolati
     @Query("SELECT COUNT(v) FROM StudentViolation v " +
             "WHERE v.studentCourseRating.ratingId = :ratingId")
     long countByStudentCourseRatingId(@Param("ratingId") Integer ratingId);
+
+    boolean existsByReportedByUserIdAndStudentFlashcardSetStudentSetId(Integer reportedBy, Integer contentId);
+
+    List<StudentViolation> findByStatusAndViolationHandledAtBefore(ViolationStatus violationStatus, LocalDateTime oneDayAgo);
+
+    StudentViolation findByStudentFlashcardSetStudentSetIdAndStatus(Integer flashcardSetId, ViolationStatus violationStatus);
 }

@@ -1,16 +1,11 @@
 package org.example.technihongo.services.serviceimplements;
 
 import org.example.technihongo.dto.*;
-import org.example.technihongo.entities.Flashcard;
-import org.example.technihongo.entities.LearningResource;
-import org.example.technihongo.entities.Student;
-import org.example.technihongo.entities.StudentFlashcardSet;
+import org.example.technihongo.entities.*;
+import org.example.technihongo.enums.ViolationStatus;
 import org.example.technihongo.exception.ResourceNotFoundException;
 import org.example.technihongo.exception.UnauthorizedAccessException;
-import org.example.technihongo.repositories.FlashcardRepository;
-import org.example.technihongo.repositories.LearningResourceRepository;
-import org.example.technihongo.repositories.StudentFlashcardSetRepository;
-import org.example.technihongo.repositories.StudentRepository;
+import org.example.technihongo.repositories.*;
 import org.example.technihongo.services.interfaces.AchievementService;
 import org.example.technihongo.services.interfaces.StudentFlashcardSetService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,6 +17,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -42,6 +38,8 @@ public class StudentFlashcardSetServiceImpl implements StudentFlashcardSetServic
     private LearningResourceRepository learningResourceRepository;
     @Autowired
     private AchievementService achievementService;
+    @Autowired
+    private StudentViolationRepository studentViolationRepository;
 
     @Override
     public FlashcardSetResponseDTO createFlashcardSet(Integer studentId, FlashcardSetRequestDTO request) {
@@ -72,13 +70,23 @@ public class StudentFlashcardSetServiceImpl implements StudentFlashcardSetServic
         StudentFlashcardSet flashcardSet = flashcardSetRepository.findById(flashcardSetId)
                 .orElseThrow(() -> new RuntimeException("FlashcardSet not found"));
 
-        flashcardSet = checkViolationStatus(flashcardSet);
         if (flashcardSet.isDeleted()) {
             throw new ResourceNotFoundException("Flashcard Set has been deleted and cannot be accessed.");
         }
 
         if (!flashcardSet.getCreator().getStudentId().equals(studentId)) {
             throw new UnauthorizedAccessException("You do not have permission to update this flashcard set.");
+        }
+
+        if (request.getIsPublic() != null && request.getIsPublic() && flashcardSet.isViolated()) {
+            StudentViolation violation = studentViolationRepository.findByStudentFlashcardSetStudentSetIdAndStatus(
+                    flashcardSetId, ViolationStatus.RESOLVED);
+            if (violation != null && violation.getViolationHandledAt() != null) {
+                LocalDateTime deadline = violation.getViolationHandledAt().plusDays(1);
+                if (LocalDateTime.now().isAfter(deadline)) {
+                    throw new RuntimeException("Đã quá thời hạn chỉnh sửa, bộ flashcard không thể mở public.");
+                }
+            }
         }
 
         if (request.getTitle() != null) {
@@ -94,6 +102,7 @@ public class StudentFlashcardSetServiceImpl implements StudentFlashcardSetServic
         Pageable pageable = PageRequest.of(0, Integer.MAX_VALUE);
         Page<Flashcard> flashcardPage = flashcardRepository.findByStudentFlashCardSetStudentSetId(flashcardSetId, pageable);
         flashcardSet.setTotalCards((int) flashcardPage.getTotalElements());
+        flashcardSet.setUpdatedAt(LocalDateTime.now());
 
         flashcardSet = flashcardSetRepository.save(flashcardSet);
         return convertToFlashcardSetResponseDTO(flashcardSet);
@@ -106,17 +115,43 @@ public class StudentFlashcardSetServiceImpl implements StudentFlashcardSetServic
         if (!flashcardSet.getCreator().getStudentId().equals(studentId)) {
             throw new UnauthorizedAccessException("You do not have permission to delete this flashcard set.");
         }
-//        flashcardSetRepository.deleteById(flashcardSetId);
         flashcardSet.setDeleted(true);
         flashcardSetRepository.save(flashcardSet);
     }
 
     @Override
-    public void setViolatedFlashcardSet(Integer flashcardSetId) {
-        StudentFlashcardSet flashcardSet = getActiveFlashcardSet(flashcardSetId);
-        flashcardSet.setPublic(false);
-        flashcardSet.setViolated(true);
-        flashcardSetRepository.save(flashcardSet);
+    @Transactional
+    public FlashcardSetViolationResponseDTO setViolatedFlashcardSet(Integer flashcardSetId, Integer violationCount) {
+        StudentFlashcardSet flashcardSet = flashcardSetRepository.findById(flashcardSetId)
+                .orElseThrow(() -> new ResourceNotFoundException("Flashcard Set not found with id: " + flashcardSetId));
+
+        if (flashcardSet.isDeleted()) {
+            throw new ResourceNotFoundException("Flashcard Set has been deleted and cannot be accessed.");
+        }
+
+        FlashcardSetViolationResponseDTO response = new FlashcardSetViolationResponseDTO();
+        response.setStudentSetId(flashcardSetId);
+
+        if (violationCount == 1) {
+            // Lần 1: Cảnh báo
+            flashcardSet.setViolated(true);
+            flashcardSet.setDeleted(false);
+            flashcardSet.setPublic(false);
+            response.setMessage("Bộ flashcard của bạn bị report, vui lòng chỉnh sửa trong 24 giờ.");
+        } else if (violationCount == 2) {
+            // Lần 2: Xóa
+            flashcardSet.setViolated(true);
+            flashcardSet.setDeleted(true);
+            response.setMessage("Bộ flashcard của bạn đã bị xóa do vi phạm lần thứ hai.");
+        } else {
+            // Lần 3 trở đi: Xóa
+            flashcardSet.setViolated(true);
+            flashcardSet.setDeleted(true);
+            response.setMessage("Flashcard của bạn đã bị báo cáo, chúng tôi đã xác nhận và xóa FlashcardSet của bạn.");
+        }
+
+        flashcardSet = flashcardSetRepository.save(flashcardSet);
+        return response;
     }
 
     @Override
@@ -457,10 +492,7 @@ public class StudentFlashcardSetServiceImpl implements StudentFlashcardSetServic
     }
 
     private StudentFlashcardSet checkViolationStatus(StudentFlashcardSet flashcardSet) {
-        if (flashcardSet.isViolated() && !flashcardSet.isDeleted()) {
-            flashcardSet.setDeleted(true);
-            return flashcardSetRepository.save(flashcardSet);
-        }
+
         return flashcardSet;
     }
 

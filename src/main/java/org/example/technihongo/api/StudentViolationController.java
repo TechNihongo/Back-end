@@ -2,11 +2,7 @@ package org.example.technihongo.api;
 
 import jakarta.servlet.http.HttpServletRequest;
 import org.example.technihongo.core.security.JwtUtil;
-import org.example.technihongo.dto.HandleViolationRequestDTO;
-import org.example.technihongo.dto.PageResponseDTO;
-import org.example.technihongo.dto.ReportViolationRequestDTO;
-import org.example.technihongo.dto.ViolationSummaryDTO;
-import org.example.technihongo.entities.Course;
+import org.example.technihongo.dto.*;
 import org.example.technihongo.entities.StudentViolation;
 import org.example.technihongo.enums.ActivityType;
 import org.example.technihongo.enums.ContentType;
@@ -142,7 +138,7 @@ public class StudentViolationController {
         }
     }
 
-    @PutMapping("/handle/{violationId}")
+    @PatchMapping("/handle/{violationId}")
     public ResponseEntity<ApiResponse> handleViolation(
             @RequestHeader("Authorization") String authorizationHeader,
             HttpServletRequest httpRequest,
@@ -153,7 +149,7 @@ public class StudentViolationController {
                 String token = authorizationHeader.substring(7);
                 Integer handledBy = jwtUtil.extractUserId(token);
 
-                StudentViolation updatedViolation = studentViolationService.handleViolation(violationId, handledBy, request);
+                HandleViolationResponseDTO response = studentViolationService.handleViolation(violationId, handledBy, request);
 
                 String ipAddress = httpRequest.getRemoteAddr();
                 String userAgent = httpRequest.getHeader("User-Agent");
@@ -168,11 +164,10 @@ public class StudentViolationController {
 
                 return ResponseEntity.ok(ApiResponse.builder()
                         .success(true)
-                        .message("Violation handled successfully")
-                        .data(updatedViolation)
+                        .message(response.getMessage())
+                        .data(response)
                         .build());
-            }
-            else {
+            } else {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                         .body(ApiResponse.builder()
                                 .success(false)

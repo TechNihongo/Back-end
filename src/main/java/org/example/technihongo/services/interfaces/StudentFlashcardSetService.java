@@ -1,9 +1,6 @@
 package org.example.technihongo.services.interfaces;
 
-import org.example.technihongo.dto.CreateFlashcardSetFromResourceDTO;
-import org.example.technihongo.dto.FlashcardSetRequestDTO;
-import org.example.technihongo.dto.FlashcardSetResponseDTO;
-import org.example.technihongo.dto.UpdateFlashcardOrderDTO;
+import org.example.technihongo.dto.*;
 
 import java.util.List;
 
@@ -11,7 +8,7 @@ public interface StudentFlashcardSetService {
     FlashcardSetResponseDTO createFlashcardSet(Integer studentId, FlashcardSetRequestDTO request);
     FlashcardSetResponseDTO updateFlashcardSet(Integer studentId, Integer flashcardSetId, FlashcardSetRequestDTO request);
     void deleteFlashcardSet(Integer studentId, Integer flashcardSetId);
-    void setViolatedFlashcardSet(Integer flashcardSetId);
+    FlashcardSetViolationResponseDTO setViolatedFlashcardSet(Integer flashcardSetId, Integer violationCount);
 
 
     List<FlashcardSetResponseDTO> getFlashcardSetsByStudentId(Integer studentId);

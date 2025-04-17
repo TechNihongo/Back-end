@@ -53,5 +53,8 @@ public class StudentViolation {
 
     @Column(name = "resolved_at")
     private LocalDateTime resolvedAt;
+
+    @Column(name = "violation_handled_at")
+    private LocalDateTime violationHandledAt;
 }
 
