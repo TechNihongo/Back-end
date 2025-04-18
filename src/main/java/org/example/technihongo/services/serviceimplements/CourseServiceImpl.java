@@ -79,15 +79,15 @@ public class CourseServiceImpl implements CourseService {
     @Override
     public Course createCourse(Integer creatorId, CreateCourseDTO createCourseDTO) {
         if(userRepository.findByUserId(creatorId) == null){
-            throw new RuntimeException("Creator ID not found!");
+            throw new RuntimeException("Không tìm thấy ID người tạo!");
         }
 
         if(domainRepository.findByDomainId(createCourseDTO.getDomainId()) == null){
-            throw new RuntimeException("Domain ID not found!");
+            throw new RuntimeException("Không tìm thấy ID Domain!");
         }
 
         if(difficultyLevelRepository.findByLevelId(createCourseDTO.getDifficultyLevelId()) == null){
-            throw new RuntimeException("DifficultyLevel ID not found!");
+            throw new RuntimeException("Không tìm thấy ID Độ khó!");
         }
 
         Course course = courseRepository.save(Course.builder()
@@ -108,32 +108,32 @@ public class CourseServiceImpl implements CourseService {
     @Override
     public void updateCourse(Integer courseId, UpdateCourseDTO updateCourseDTO) {
         if(courseRepository.findByCourseId(courseId) == null){
-            throw new RuntimeException("Course ID not found!");
+            throw new RuntimeException("Không tìm thấy ID khóa học!");
         }
 
         Domain domain = domainRepository.findByDomainId(updateCourseDTO.getDomainId());
         if(domain == null){
-            throw new RuntimeException("Domain ID not found!");
+            throw new RuntimeException("Không tìm thấy ID Domain!");
         }
         if(domain.getParentDomain() == null){
-            throw new RuntimeException("Cannot assign parent domains!");
+            throw new RuntimeException("Không được gắn Domain cha!");
         }
 
         if(difficultyLevelRepository.findByLevelId(updateCourseDTO.getDifficultyLevelId()) == null){
-            throw new RuntimeException("DifficultyLevel ID not found!");
+            throw new RuntimeException("Không tìm thấy ID Độ khó!");
         }
 
         if(studyPlanRepository.findByCourse_CourseId(courseId).stream()
                 .noneMatch(s -> s.isDefault() && s.isActive())){
-            throw new RuntimeException("No default StudyPlan found!");
+            throw new RuntimeException("Không tìm thấy StudyPlan mặc định!");
         }
 
         boolean hasStudents = studentStudyPlanRepository.findAll().stream()
                 .anyMatch(s -> s.getStudyPlan().getCourse().getCourseId().equals(courseId)
                             && s.getStatus().equals(StudyPlanStatus.ACTIVE));
-
-        if (Boolean.FALSE.equals(updateCourseDTO.getIsPublic()) && hasStudents) {
-            throw new RuntimeException("Cannot deactivate Course because students are currently enrolled.");
+//        Boolean.FALSE.equals(updateCourseDTO.getIsPublic()) &&
+        if (hasStudents) {
+            throw new RuntimeException("Không thể cập nhật khóa học đang có người học.");
         }
 
         Course course = courseRepository.findByCourseId(courseId);
@@ -145,7 +145,7 @@ public class CourseServiceImpl implements CourseService {
         course.setThumbnailUrl(updateCourseDTO.getThumbnailUrl());
         course.setEstimatedDuration(updateCourseDTO.getEstimatedDuration());
         course.setPublicStatus(updateCourseDTO.getIsPublic());
-        course.setPremium(updateCourseDTO.getIsPremium());
+//        course.setPremium(updateCourseDTO.getIsPremium());
         course.setUpdateAt(LocalDateTime.now());
 
         courseRepository.save(course);

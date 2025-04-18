@@ -94,7 +94,7 @@ public class LearningResourceController {
 
                     return ResponseEntity.ok(ApiResponse.builder()
                             .success(true)
-                            .message("Get LearningResource")
+                            .message("Lấy LearningResource")
                             .data(learningResource)
                             .build());
                 }
@@ -107,7 +107,7 @@ public class LearningResourceController {
 
                     return ResponseEntity.ok(ApiResponse.builder()
                             .success(true)
-                            .message("Get LearningResource")
+                            .message("Lấy LearningResource")
                             .data(learningResource)
                             .build());
                 }
@@ -116,7 +116,7 @@ public class LearningResourceController {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                         .body(ApiResponse.builder()
                                 .success(false)
-                                .message("Unauthorized")
+                                .message("Không có quyền")
                                 .build());
             }
         } catch (IllegalArgumentException e) {
@@ -129,7 +129,7 @@ public class LearningResourceController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(ApiResponse.builder()
                             .success(false)
-                            .message("Failed to get LearningResource: " + e.getMessage())
+                            .message("Lấy LearningResource thất bại: " + e.getMessage())
                             .build());
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)

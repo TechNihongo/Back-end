@@ -203,29 +203,56 @@ public class StudentCourseRatingController {
             HttpServletRequest httpRequest,
             @PathVariable Integer ratingId) {
         try {
-            Integer studentId = extractStudentId(authorizationHeader);
-            StudentCourseRatingDTO rating = studentCourseRatingService.getRatingById(ratingId);
-            if (!studentId.equals(rating.getStudentId())) {
-                throw new UnauthorizedAccessException("You can only delete your own rating.");
+            if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
+                String token = authorizationHeader.substring(7);
+                int roleId = jwtUtil.extractUserRoleId(token);
+
+                if (roleId == 3) {
+                    Integer studentId = extractStudentId(authorizationHeader);
+                    StudentCourseRatingDTO rating = studentCourseRatingService.getRatingById(ratingId);
+                    if (!studentId.equals(rating.getStudentId())) {
+                        throw new UnauthorizedAccessException("Bạn chỉ có thể xóa đánh giá của bạn.");
+                    }
+
+                    studentCourseRatingService.deleteRating(ratingId);
+
+                    String ipAddress = httpRequest.getRemoteAddr();
+                    String userAgent = httpRequest.getHeader("User-Agent");
+                    userActivityLogService.trackUserActivityLog(
+                            extractUserId(authorizationHeader),
+                            ActivityType.DELETE,
+                            ContentType.StudentCourseRating,
+                            ratingId,
+                            ipAddress,
+                            userAgent
+                    );
+
+                    return ResponseEntity.ok(ApiResponse.builder()
+                            .success(true)
+                            .message("Xóa đánh giá thành công")
+                            .build());
+                } else if (roleId == 1) {
+                    studentCourseRatingService.deleteRating(ratingId);
+                    return ResponseEntity.ok(ApiResponse.builder()
+                            .success(true)
+                            .message("Xóa đánh giá thành công")
+                            .build());
+                }
+                else {
+                    return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                            .body(ApiResponse.builder()
+                                    .success(false)
+                                    .message("Không có quyền")
+                                    .build());
+                }
             }
-
-            studentCourseRatingService.deleteRating(ratingId);
-
-            String ipAddress = httpRequest.getRemoteAddr();
-            String userAgent = httpRequest.getHeader("User-Agent");
-            userActivityLogService.trackUserActivityLog(
-                    extractUserId(authorizationHeader),
-                    ActivityType.DELETE,
-                    ContentType.StudentCourseRating,
-                    ratingId,
-                    ipAddress,
-                    userAgent
-            );
-
-            return ResponseEntity.ok(ApiResponse.builder()
-                    .success(true)
-                    .message("Rating deleted successfully")
-                    .build());
+            else {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(ApiResponse.builder()
+                                .success(false)
+                                .message("Không có quyền")
+                                .build());
+            }
         } catch (IllegalArgumentException e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ApiResponse.builder()

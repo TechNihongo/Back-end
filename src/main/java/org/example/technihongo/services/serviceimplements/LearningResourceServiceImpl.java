@@ -41,29 +41,29 @@ public class LearningResourceServiceImpl implements LearningResourceService {
     @Override
     public LearningResource getLearningResourceById(Integer learningResourceId) {
         return learningResourceRepository.findById(learningResourceId)
-                .orElseThrow(() -> new RuntimeException("Learning resource ID not found!"));
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy Learning resource ID!"));
     }
 
     @Override
     public LearningResource getPublicLearningResourceById(Integer userId, Integer learningResourceId) {
         LearningResource resource = learningResourceRepository.findByResourceId(learningResourceId);
         if(resource == null || !resource.isPublic()) {
-            throw new RuntimeException("Learning resource ID not found!");
+            throw new RuntimeException("Không tìm thấy Learning resource ID!");
         }
 
         User user = userRepository.findByUserId(userId);
         if(user == null){
-            throw new RuntimeException("User ID not found!");
+            throw new RuntimeException("Không tìm thất User ID!");
         }
 
         if(user.getRole().getRoleId() == 3){
             Student student = studentRepository.findByUser_UserId(user.getUserId());
             if(student == null){
-                throw new RuntimeException("Student not found for this user!");
+                throw new RuntimeException("Không tìm thấy Student!");
             }
 
             if(!studentSubscriptionRepository.existsByStudent_StudentIdAndIsActive(student.getStudentId(), true)){
-                throw new RuntimeException("Student not allowed to view this learning resource!");
+                throw new RuntimeException("Student không được phép xem Learning Resource này!");
             }
         }
 

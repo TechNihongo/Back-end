@@ -227,7 +227,7 @@ public class CourseController {
 
                 return ResponseEntity.ok(ApiResponse.builder()
                         .success(true)
-                        .message("Course created successfully!")
+                        .message("Tạo khóa học thành công!")
                         .data(course)
                         .build());
             }
@@ -235,7 +235,7 @@ public class CourseController {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                         .body(ApiResponse.builder()
                                 .success(false)
-                                .message("Unauthorized")
+                                .message("Không có quyền")
                                 .build());
             }
 
@@ -249,7 +249,7 @@ public class CourseController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(ApiResponse.builder()
                             .success(false)
-                            .message("Failed to create course: " + e.getMessage())
+                            .message("Tạo khóa học thất bại: " + e.getMessage())
                             .build());
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
@@ -286,14 +286,14 @@ public class CourseController {
 
                 return ResponseEntity.ok(ApiResponse.builder()
                         .success(true)
-                        .message("Course updated successfully")
+                        .message("Cập nhật khóa học thành công")
                         .build());
             }
             else {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                         .body(ApiResponse.builder()
                                 .success(false)
-                                .message("Unauthorized")
+                                .message("Không có quyền")
                                 .build());
             }
         } catch (IllegalArgumentException e) {
@@ -306,7 +306,7 @@ public class CourseController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(ApiResponse.builder()
                             .success(false)
-                            .message("Failed to update course: " + e.getMessage())
+                            .message("Cập nhật khóa học thất bại: " + e.getMessage())
                             .build());
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
@@ -399,7 +399,7 @@ public class CourseController {
 
     @GetMapping("/all/paginated")
     public ResponseEntity<ApiResponse> getAllCoursesPaginated(
-            @RequestHeader("Authorization") String authorizationHeader,
+            @RequestHeader(value = "Authorization", required = false) String authorizationHeader,
             @RequestParam(defaultValue = "0") int pageNo,
             @RequestParam(defaultValue = "10") int pageSize,
             @RequestParam(defaultValue = "courseId") String sortBy,
@@ -416,13 +416,13 @@ public class CourseController {
                     PageResponseDTO<Course> courseList = courseService.courseListPaginated(keyword, domainId, difficultyLevelId, pageNo, pageSize, sortBy, sortDir);
                     if (courseList.getContent().isEmpty()) {
                         return ResponseEntity.ok(ApiResponse.builder()
-                                .success(false)
-                                .message("List courses is empty!")
+                                .success(true)
+                                .message("Danh sách khóa học trống!")
                                 .build());
                     } else {
                         return ResponseEntity.ok(ApiResponse.builder()
                                 .success(true)
-                                .message("Get All Courses")
+                                .message("Lấy danh sách khóa học")
                                 .data(courseList)
                                 .build());
                     }
@@ -430,8 +430,8 @@ public class CourseController {
                     PageResponseDTO<Course> courseList = courseService.getPublicCoursesPaginated(keyword, domainId, difficultyLevelId, pageNo, pageSize, sortBy, sortDir);
                     if (courseList.getContent().isEmpty()) {
                         return ResponseEntity.ok(ApiResponse.builder()
-                                .success(false)
-                                .message("List courses is empty!")
+                                .success(true)
+                                .message("Danh sách khóa học trống!")
                                 .build());
                     } else {
                         return ResponseEntity.ok(ApiResponse.builder()
@@ -446,7 +446,7 @@ public class CourseController {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                         .body(ApiResponse.builder()
                                 .success(false)
-                                .message("Unauthorized")
+                                .message("Không có quyền")
                                 .build());
             }
         } catch (IllegalArgumentException e) {
@@ -459,7 +459,7 @@ public class CourseController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(ApiResponse.builder()
                             .success(false)
-                            .message("Failed to get courses: " + e.getMessage())
+                            .message("Lấy danh sách khóa học thất bại: " + e.getMessage())
                             .build());
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
