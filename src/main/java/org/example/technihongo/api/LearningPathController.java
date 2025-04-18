@@ -43,13 +43,13 @@ public class LearningPathController {
                     List<LearningPath> learningPaths = learningPathService.getAllLearningPaths(keyword, domainId);
                     if (learningPaths.isEmpty()) {
                         return ResponseEntity.ok(ApiResponse.builder()
-                                .success(false)
-                                .message("List LearningPath is empty!")
+                                .success(true)
+                                .message("Danh sách lộ trình trống!")
                                 .build());
                     } else {
                         return ResponseEntity.ok(ApiResponse.builder()
                                 .success(true)
-                                .message("Get All LearningPaths")
+                                .message("Lấy danh sách lộ trình")
                                 .data(learningPaths)
                                 .build());
                     }
@@ -57,8 +57,8 @@ public class LearningPathController {
                     List<LearningPath> learningPaths = learningPathService.getPublicLearningPaths(keyword, domainId);
                     if (learningPaths.isEmpty()) {
                         return ResponseEntity.ok(ApiResponse.builder()
-                                .success(false)
-                                .message("List LearningPaths is empty!")
+                                .success(true)
+                                .message("Danh sách lộ trình trống!")
                                 .build());
                     } else {
                         return ResponseEntity.ok(ApiResponse.builder()
@@ -73,7 +73,7 @@ public class LearningPathController {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                         .body(ApiResponse.builder()
                                 .success(false)
-                                .message("Unauthorized")
+                                .message("Không có quyền")
                                 .build());
             }
         } catch (IllegalArgumentException e) {
