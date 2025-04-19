@@ -9,7 +9,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "StudentLessonProgress")
+@Table(name = "[StudentLessonProgress]")
 @Getter
 @Setter
 @NoArgsConstructor

@@ -40,6 +40,9 @@ public class LearningResourceServiceImpl implements LearningResourceService {
 
     @Override
     public LearningResource getLearningResourceById(Integer learningResourceId) {
+        if(learningResourceId == null){
+            throw new RuntimeException("LearningResource ID không thể null");
+        }
         return learningResourceRepository.findById(learningResourceId)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy Learning resource ID!"));
     }

@@ -1,9 +1,6 @@
 package org.example.technihongo.services.interfaces;
 
-import org.example.technihongo.dto.CreateLessonDTO;
-import org.example.technihongo.dto.PageResponseDTO;
-import org.example.technihongo.dto.UpdateLessonDTO;
-import org.example.technihongo.dto.UpdateLessonOrderDTO;
+import org.example.technihongo.dto.*;
 import org.example.technihongo.entities.Lesson;
 
 import java.util.List;
@@ -20,4 +17,7 @@ public interface LessonService {
     void checkLessonProgressPrerequisite(Integer studentId, Integer lessonId);
     Integer getCourseIdByLessonId(Integer lessonId);
     void setLessonOrder(Integer studyPlanId, Integer lessonId, Integer newOrder);
+    PageResponseDTO<LessonDTO> getLessonListByStudyPlanIdWithProgress(Integer studyPlanId, Integer studentId,
+                                                                      int pageNo, int pageSize, String sortBy,
+                                                                      String sortDir, String keyword);
 }

@@ -50,7 +50,7 @@ public class LessonResourceController {
                     if (lessonResourceList.isEmpty()) {
                         return ResponseEntity.ok(ApiResponse.builder()
                                 .success(false)
-                                .message("List LessonResources is empty!")
+                                .message("Danh sách LessonResources trống!")
                                 .build());
                     } else {
                         return ResponseEntity.ok(ApiResponse.builder()
@@ -68,7 +68,7 @@ public class LessonResourceController {
                     if (dto.isEmpty()) {
                         return ResponseEntity.ok(ApiResponse.builder()
                                 .success(false)
-                                .message("List Active LessonResources is empty!")
+                                .message("Danh sách Active LessonResources trống!!")
                                 .build());
                     } else {
                         return ResponseEntity.ok(ApiResponse.builder()
@@ -83,7 +83,7 @@ public class LessonResourceController {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                         .body(ApiResponse.builder()
                                 .success(false)
-                                .message("Unauthorized")
+                                .message("Không có quyền")
                                 .build());
             }
         } catch (IllegalArgumentException e) {
@@ -96,7 +96,7 @@ public class LessonResourceController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(ApiResponse.builder()
                             .success(false)
-                            .message("Get LessonResources failed: " + e.getMessage())
+                            .message("Lấy danh sách LessonResources thất bại: " + e.getMessage())
                             .build());
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
@@ -181,7 +181,7 @@ public class LessonResourceController {
 
                 return ResponseEntity.ok(ApiResponse.builder()
                         .success(true)
-                        .message("LessonResource created successfully!")
+                        .message("Thêm LessonResource thành công!")
                         .data(lessonResource)
                         .build());
             }
@@ -189,7 +189,7 @@ public class LessonResourceController {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                         .body(ApiResponse.builder()
                                 .success(false)
-                                .message("Unauthorized")
+                                .message("Không có quyền")
                                 .build());
             }
         } catch (IllegalArgumentException e) {
@@ -202,7 +202,7 @@ public class LessonResourceController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(ApiResponse.builder()
                             .success(false)
-                            .message("Failed to create LessonResource: " + e.getMessage())
+                            .message("Thêm LessonResource thất bại: " + e.getMessage())
                             .build());
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
