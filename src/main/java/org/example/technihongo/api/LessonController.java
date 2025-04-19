@@ -4,6 +4,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.example.technihongo.core.security.JwtUtil;
 import org.example.technihongo.dto.*;
+import org.example.technihongo.entities.Course;
 import org.example.technihongo.entities.Lesson;
 import org.example.technihongo.enums.ActivityType;
 import org.example.technihongo.enums.ContentType;
@@ -127,24 +128,63 @@ public class LessonController {
     @GetMapping("/study-plan/paginated/{id}")
     public ResponseEntity<ApiResponse> getLessonListByStudyPlanIdPaginated(
             @PathVariable Integer id,
+            @RequestHeader(value = "Authorization", required = false) String authorizationHeader,
             @RequestParam(defaultValue = "0") int pageNo,
             @RequestParam(defaultValue = "10") int pageSize,
             @RequestParam(defaultValue = "lessonId") String sortBy,
             @RequestParam(defaultValue = "asc") String sortDir,
             @RequestParam(defaultValue = "") String keyword) throws Exception {
         try{
-            PageResponseDTO<Lesson> lessonList = lessonService.getLessonListByStudyPlanIdPaginated(id, pageNo, pageSize, sortBy, sortDir, keyword);
-            if(lessonList.getContent().isEmpty()){
-                return ResponseEntity.ok(ApiResponse.builder()
-                        .success(false)
-                        .message("List lessons is empty!")
-                        .build());
-            }else{
-                return ResponseEntity.ok(ApiResponse.builder()
-                        .success(true)
-                        .message("Get Lesson List")
-                        .data(lessonList)
-                        .build());
+            if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
+                String token = authorizationHeader.substring(7);
+                int roleId = jwtUtil.extractUserRoleId(token);
+
+                if (roleId == 1 || roleId == 2) {
+                    PageResponseDTO<Lesson> lessonList = lessonService.getLessonListByStudyPlanIdPaginated(id, pageNo, pageSize, sortBy, sortDir, keyword);
+                    if (lessonList.getContent().isEmpty()) {
+                        return ResponseEntity.ok(ApiResponse.builder()
+                                .success(true)
+                                .message("Danh sách Lesson trống!")
+                                .build());
+                    } else {
+                        return ResponseEntity.ok(ApiResponse.builder()
+                                .success(true)
+                                .message("Lấy danh sách Lesson")
+                                .data(lessonList)
+                                .build());
+                    }
+                }
+                else {
+                    Integer studentId = extractStudentId(authorizationHeader);
+                    PageResponseDTO<LessonDTO> lessonList = lessonService.getLessonListByStudyPlanIdWithProgress(id, studentId, pageNo, pageSize, sortBy, sortDir, keyword);
+                    if (lessonList.getContent().isEmpty()) {
+                        return ResponseEntity.ok(ApiResponse.builder()
+                                .success(true)
+                                .message("Danh sách Lesson trống!")
+                                .build());
+                    } else {
+                        return ResponseEntity.ok(ApiResponse.builder()
+                                .success(true)
+                                .message("Lấy danh sách Lesson")
+                                .data(lessonList)
+                                .build());
+                    }
+                }
+            }
+            else {
+                PageResponseDTO<Lesson> lessonList = lessonService.getLessonListByStudyPlanIdPaginated(id, pageNo, pageSize, sortBy, sortDir, keyword);
+                if (lessonList.getContent().isEmpty()) {
+                    return ResponseEntity.ok(ApiResponse.builder()
+                            .success(true)
+                            .message("Danh sách Lesson trống")
+                            .build());
+                } else {
+                    return ResponseEntity.ok(ApiResponse.builder()
+                            .success(true)
+                            .message("Lấy danh sách Lesson")
+                            .data(lessonList)
+                            .build());
+                }
             }
         } catch (IllegalArgumentException e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
@@ -156,7 +196,7 @@ public class LessonController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(ApiResponse.builder()
                             .success(false)
-                            .message("Failed to get lessons: " + e.getMessage())
+                            .message("Lấy danh sách lesson thất bại: " + e.getMessage())
                             .build());
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
@@ -340,5 +380,14 @@ public class LessonController {
                             .message("Internal Server Error: " + e.getMessage())
                             .build());
         }
+    }
+
+    private Integer extractStudentId(String authorizationHeader) {
+        if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
+            String token = authorizationHeader.substring(7);
+            Integer userId = jwtUtil.extractUserId(token);
+            return studentService.getStudentIdByUserId(userId);
+        }
+        throw new IllegalArgumentException("Authorization header is missing or invalid.");
     }
 }

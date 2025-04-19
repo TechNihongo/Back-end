@@ -443,11 +443,19 @@ public class CourseController {
                 }
             }
             else {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                        .body(ApiResponse.builder()
-                                .success(false)
-                                .message("Không có quyền")
-                                .build());
+                PageResponseDTO<Course> courseList = courseService.getPublicCoursesPaginated(keyword, domainId, difficultyLevelId, pageNo, pageSize, sortBy, sortDir);
+                if (courseList.getContent().isEmpty()) {
+                    return ResponseEntity.ok(ApiResponse.builder()
+                            .success(true)
+                            .message("Danh sách khóa học trống!")
+                            .build());
+                } else {
+                    return ResponseEntity.ok(ApiResponse.builder()
+                            .success(true)
+                            .message("Get All Public Courses")
+                            .data(courseList)
+                            .build());
+                }
             }
         } catch (IllegalArgumentException e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)

@@ -44,19 +44,27 @@ public class LessonResourceServiceImpl implements LessonResourceService {
 
     @Override
     public List<LessonResource> getLessonResourceListByLessonId(Integer lessonId) {
+        if(lessonId == null){
+            throw new RuntimeException("Lesson ID không thể null");
+        }
+
         lessonRepository.findById(lessonId)
-                .orElseThrow(() -> new RuntimeException("Lesson ID not found"));
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy ID Lesson"));
 
         return lessonResourceRepository.findByLesson_LessonIdOrderByTypeOrderAsc(lessonId);
     }
 
     @Override
     public List<LessonResourceDTO> getActiveLessonResourceListByLessonId(Integer studentId, Integer lessonId) {
+        if(lessonId == null){
+            throw new RuntimeException("Lesson ID không thể null");
+        }
+
         lessonRepository.findById(lessonId)
-                .orElseThrow(() -> new RuntimeException("Lesson ID not found"));
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy ID Lesson"));
 
         studentRepository.findById(studentId)
-                .orElseThrow(() -> new RuntimeException("Student ID not found"));
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy ID Student"));
 
         List<LessonResource> resources = lessonResourceRepository
                 .findByLesson_LessonIdOrderByTypeOrderAsc(lessonId)
@@ -116,62 +124,66 @@ public class LessonResourceServiceImpl implements LessonResourceService {
     @Override
     public LessonResource getLessonResourceById(Integer lessonResourceId) {
         return lessonResourceRepository.findById(lessonResourceId)
-                .orElseThrow(() -> new RuntimeException("LessonResource ID not found"));
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy ID LessonResource"));
     }
 
     @Override
     public LessonResource getActiveLessonResourceById(Integer lessonResourceId) {
         return lessonResourceRepository.findById(lessonResourceId)
                 .filter(LessonResource::isActive)
-                .orElseThrow(() -> new RuntimeException("LessonResource ID not found"));
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy ID LessonResource"));
     }
 
     @Override
     public LessonResource createLessonResource(CreateLessonResourceDTO createLessonResourceDTO) {
+        if(createLessonResourceDTO.getLessonId() == null){
+            throw new RuntimeException("Lesson ID không thể null");
+        }
+
         lessonRepository.findById(createLessonResourceDTO.getLessonId())
-                .orElseThrow(() -> new RuntimeException("Lesson ID not found"));
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy ID Lesson"));
 
         Integer l = createLessonResourceDTO.getResourceId();
         Integer s = createLessonResourceDTO.getSystemSetId();
         Integer q = createLessonResourceDTO.getQuizId();
 
         if(l == null && s == null && q == null){
-            throw new RuntimeException("Content ID not found!");
+            throw new RuntimeException("Không tìm thấy ID của loại Content (Quiz, LearningResource, SystemFlashcardSet)!");
         }
 
         if((l != null && s != null) || (l != null && q != null) || (q != null && s != null)){
-            throw new RuntimeException("Only one content can be created!");
+            throw new RuntimeException("Chỉ có thể tạo 1 loại Content (Quiz, LearningResource, SystemFlashcardSet)!");
         }
 
         LearningResource learningResource = learningResourceRepository.findByResourceId(l);
         if(l != null && learningResource == null){
-            throw new RuntimeException("LearningResource ID not found!!");
+            throw new RuntimeException("Không tìm thấy ID LearningResource!");
         }
 
         SystemFlashcardSet systemFlashcardSet = systemFlashcardSetRepository.findBySystemSetId(s);
         if(s != null && systemFlashcardSet == null){
-            throw new RuntimeException("SystemFlashcardSet ID not found!!");
+            throw new RuntimeException("Không tìm thấy ID SystemFlashcardSet!");
         }
 
         Quiz quiz = quizRepository.findByQuizId(q);
         if(q != null && quiz == null){
-            throw new RuntimeException("Quiz ID not found!!");
+            throw new RuntimeException("Không tìm thấy ID Quiz!");
         }
 
         Lesson lesson = lessonRepository.findByLessonId(createLessonResourceDTO.getLessonId());
         if(l != null && lessonResourceRepository.existsByLesson_LessonIdAndLearningResource_ResourceId(
                 lesson.getLessonId(), l)){
-            throw new RuntimeException("This LearningResource already exists in lesson!");
+            throw new RuntimeException("LearningResource này đã tồn tại trong lesson!");
         }
 
         if(s != null && lessonResourceRepository.existsByLesson_LessonIdAndSystemFlashCardSet_SystemSetId(
                 lesson.getLessonId(), s)){
-            throw new RuntimeException("This SystemFlashcardSet already exists in lesson!");
+            throw new RuntimeException("SystemFlashcardSet này đã tồn tại trong lesson!");
         }
 
         if(q != null && lessonResourceRepository.existsByLesson_LessonIdAndQuiz_QuizId(
                 lesson.getLessonId(), q)){
-            throw new RuntimeException("This Quiz already exists in lesson!");
+            throw new RuntimeException("Quiz này đã tồn tại trong lesson!");
         }
 
         LessonResource lessonResource;

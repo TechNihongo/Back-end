@@ -2,19 +2,13 @@ package org.example.technihongo.services.serviceimplements;
 
 import lombok.RequiredArgsConstructor;
 import org.apache.tomcat.util.digester.Rule;
-import org.example.technihongo.dto.CreateLessonDTO;
-import org.example.technihongo.dto.PageResponseDTO;
-import org.example.technihongo.dto.UpdateLessonDTO;
-import org.example.technihongo.dto.UpdateLessonOrderDTO;
+import org.example.technihongo.dto.*;
 import org.example.technihongo.entities.Course;
 import org.example.technihongo.entities.StudentLessonProgress;
 import org.example.technihongo.entities.StudyPlan;
 import org.example.technihongo.entities.Lesson;
 import org.example.technihongo.enums.CompletionStatus;
-import org.example.technihongo.repositories.CourseRepository;
-import org.example.technihongo.repositories.StudentLessonProgressRepository;
-import org.example.technihongo.repositories.StudyPlanRepository;
-import org.example.technihongo.repositories.LessonRepository;
+import org.example.technihongo.repositories.*;
 import org.example.technihongo.services.interfaces.LessonService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -25,8 +19,11 @@ import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @Service
@@ -41,6 +38,8 @@ public class LessonServiceImpl implements LessonService {
     private StudentLessonProgressRepository studentLessonProgressRepository;
     @Autowired
     private CourseRepository courseRepository;
+    @Autowired
+    private StudentRepository studentRepository;
 
     @Override
     public Optional<Lesson> getLessonById(Integer lessonId) {
@@ -106,8 +105,12 @@ public class LessonServiceImpl implements LessonService {
 
     @Override
     public PageResponseDTO<Lesson> getLessonListByStudyPlanIdPaginated(Integer studyPlanId, int pageNo, int pageSize, String sortBy, String sortDir, String keyword) {
+        if(studyPlanId == null){
+            throw new RuntimeException("StudyPlan ID không thể null");
+        }
+
         studyPlanRepository.findById(studyPlanId)
-                .orElseThrow(() -> new RuntimeException("StudyPlan ID not found!"));
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy ID StudyPlan!"));
 
         Sort sort = sortDir.equalsIgnoreCase(Sort.Direction.ASC.name())
                 ? Sort.by(sortBy).ascending()
@@ -196,8 +199,69 @@ public class LessonServiceImpl implements LessonService {
         lessonRepository.saveAll(lessons);
     }
 
+    @Override
+    public PageResponseDTO<LessonDTO> getLessonListByStudyPlanIdWithProgress(Integer studyPlanId, Integer studentId, int pageNo, int pageSize, String sortBy, String sortDir, String keyword) {
+        if(studyPlanId == null){
+            throw new RuntimeException("StudyPlan ID không thể null");
+        }
+
+        studyPlanRepository.findById(studyPlanId)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy ID StudyPlan!"));
+        studentRepository.findById(studentId)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy ID Student!"));
+
+        Sort sort = sortDir.equalsIgnoreCase(Sort.Direction.ASC.name())
+                ? Sort.by(sortBy).ascending()
+                : Sort.by(sortBy).descending();
+
+        Pageable pageable = PageRequest.of(pageNo, pageSize, sort);
+
+        Page<Lesson> lessonPage;
+        if (keyword != null && !keyword.trim().isEmpty()) {
+            lessonPage = lessonRepository.findByStudyPlan_StudyPlanIdAndTitleContainingIgnoreCase(studyPlanId, keyword, pageable);
+        } else {
+            lessonPage = lessonRepository.findByStudyPlan_StudyPlanId(studyPlanId, pageable);
+        }
+
+        List<StudentLessonProgress> progressList = studentLessonProgressRepository
+                .findByStudentStudentIdAndLesson_StudyPlanStudyPlanId(studentId, studyPlanId);
+
+        Map<Integer, BigDecimal> progressMap = new HashMap<>();
+        for (StudentLessonProgress progress : progressList) {
+            Integer lessonId = progress.getLesson().getLessonId();
+            BigDecimal completionPercentage = progress.getCompletionPercentage();
+            progressMap.put(lessonId, completionPercentage);
+        }
+
+        Page<LessonDTO> lessonDTOPage = lessonPage.map(lesson -> {
+            BigDecimal studentProgress = progressMap.getOrDefault(lesson.getLessonId(), BigDecimal.ZERO);
+            return new LessonDTO(
+                    lesson.getLessonId(),
+                    lesson.getStudyPlan(),
+                    lesson.getTitle(),
+                    lesson.getLessonOrder(),
+                    studentProgress,
+                    lesson.getCreatedAt(),
+                    lesson.getUpdatedAt()
+            );
+        });
+
+        return getPageResponseDTO2(lessonDTOPage);
+    }
+
     private PageResponseDTO<Lesson> getPageResponseDTO(Page<Lesson> page) {
         return PageResponseDTO.<Lesson>builder()
+                .content(page.getContent())
+                .pageNo(page.getNumber())
+                .pageSize(page.getSize())
+                .totalElements(page.getTotalElements())
+                .totalPages(page.getTotalPages())
+                .last(page.isLast())
+                .build();
+    }
+
+    private PageResponseDTO<LessonDTO> getPageResponseDTO2(Page<LessonDTO> page) {
+        return PageResponseDTO.<LessonDTO>builder()
                 .content(page.getContent())
                 .pageNo(page.getNumber())
                 .pageSize(page.getSize())
