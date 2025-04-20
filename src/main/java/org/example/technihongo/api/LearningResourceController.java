@@ -5,7 +5,7 @@ import lombok.RequiredArgsConstructor;
 import org.example.technihongo.core.security.JwtUtil;
 import org.example.technihongo.dto.LearningResourceDTO;
 import org.example.technihongo.dto.LearningResourceStatusDTO;
-import org.example.technihongo.entities.LearningResource;;
+import org.example.technihongo.entities.LearningResource;
 import org.example.technihongo.enums.ActivityType;
 import org.example.technihongo.enums.ContentType;
 import org.example.technihongo.response.ApiResponse;

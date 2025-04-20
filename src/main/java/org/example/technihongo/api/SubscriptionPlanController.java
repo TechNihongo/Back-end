@@ -163,7 +163,7 @@ public class SubscriptionPlanController {
     }
 
     @GetMapping("/detail/{planId}")
-    public ResponseEntity<ApiResponse> getSubscriptionPlanById(@PathVariable Integer planId){
+    public ResponseEntity<ApiResponse> getSubscriptionPlanById(@PathVariable Integer planId) {
         try {
             SubscriptionPlan subscriptionPlan = subscriptionPlanService.getSubscriptionPlanById(planId);
             return ResponseEntity.ok(ApiResponse.builder()
@@ -171,6 +171,12 @@ public class SubscriptionPlanController {
                     .message("Get Subscription Plan")
                     .data(subscriptionPlan)
                     .build());
+        } catch (ResourceNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(ApiResponse.builder()
+                            .success(false)
+                            .message("Subscription Plan not found: " + e.getMessage())
+                            .build());
         } catch (IllegalArgumentException e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ApiResponse.builder()
@@ -181,7 +187,7 @@ public class SubscriptionPlanController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(ApiResponse.builder()
                             .success(false)
-                            .message("Failed to get StudyPlan: " + e.getMessage())
+                            .message("Failed to get Subscription Plan: " + e.getMessage())
                             .build());
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
