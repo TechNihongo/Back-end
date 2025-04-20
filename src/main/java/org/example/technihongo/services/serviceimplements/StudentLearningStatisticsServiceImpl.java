@@ -17,7 +17,10 @@ public class StudentLearningStatisticsServiceImpl implements StudentLearningStat
 
     @Override
     public StudentLearningStatistics viewStudentLearningStatistics(Integer studentId) {
+        if(studentId == null){
+            throw new RuntimeException("Student ID không thể null");
+        }
         return studentLearningStatisticsRepository.findByStudentStudentId(studentId)
-                .orElseThrow(() -> new RuntimeException("Student ID not found!"));
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy Student ID!"));
     }
 }

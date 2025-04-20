@@ -198,14 +198,14 @@ public class StudentCourseProgressController {
 
                 return ResponseEntity.ok(ApiResponse.builder()
                         .success(true)
-                        .message("Course enrolled successfully")
+                        .message("Đăng kí tham gia khóa học thành công")
                         .data(null)
                         .build());
             } else {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                         .body(ApiResponse.builder()
                                 .success(false)
-                                .message("Unauthorized")
+                                .message("Không có quyền")
                                 .build());
             }
         } catch (IllegalArgumentException e) {
@@ -218,7 +218,7 @@ public class StudentCourseProgressController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(ApiResponse.builder()
                             .success(false)
-                            .message("Failed to enroll course: " + e.getMessage())
+                            .message("Đăng kí tham gia khóa học thất bại: " + e.getMessage())
                             .build());
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)

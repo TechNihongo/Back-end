@@ -11,7 +11,6 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 public class StudentCourseRatingRequest {
-
     private Integer courseId;
     private Integer rating;
     private String review;

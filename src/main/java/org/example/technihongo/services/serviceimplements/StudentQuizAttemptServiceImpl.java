@@ -542,7 +542,7 @@ public class StudentQuizAttemptServiceImpl implements StudentQuizAttemptService 
         attempt = studentQuizAttemptRepository.save(attempt);
 
         // Chỉ cập nhật log và thống kê cho lần pass đầu tiên
-        boolean isFirstPass = isPassed && !studentQuizAttemptRepository
+        boolean isFirstPass = isPassed && studentQuizAttemptRepository
                 .existsByStudentStudentIdAndQuizQuizIdAndIsPassedTrueAndIsCompletedTrue(
                         attempt.getStudent().getStudentId(), quiz.getQuizId());
 
