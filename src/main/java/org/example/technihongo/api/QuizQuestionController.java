@@ -260,13 +260,13 @@ public class QuizQuestionController {
             List<QuestionWithOptionsDTO2> questions = quizQuestionService.getAllQuestionsAndOptionsByQuizId(quizId);
             if (questions.isEmpty()) {
                 return ResponseEntity.ok(ApiResponse.builder()
-                        .success(false)
-                        .message("No questions found for this quiz.")
+                        .success(true)
+                        .message("Không tìm thấy câu hỏi nào trong Quiz này.")
                         .build());
             }
             return ResponseEntity.ok(ApiResponse.builder()
                     .success(true)
-                    .message("Questions and options retrieved successfully.")
+                    .message("Câu hỏi và đáp án truy xuất thành công.")
                     .data(questions)
                     .build());
         } catch (IllegalArgumentException e) {

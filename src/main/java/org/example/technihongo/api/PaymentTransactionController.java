@@ -391,20 +391,20 @@ public class PaymentTransactionController {
 
                 return ResponseEntity.ok(ApiResponse.builder()
                         .success(true)
-                        .message("Payment history retrieved successfully!")
+                        .message("Truy xuất lịch sử thanh toán thành công!")
                         .data(history)
                         .build());
             } else {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                         .body(ApiResponse.builder()
                                 .success(false)
-                                .message("Unauthorized")
+                                .message("Không có quyền")
                                 .build());
             }
         } catch (RuntimeException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ApiResponse.builder()
                     .success(false)
-                    .message("Failed to retrieve payment history: " + e.getMessage())
+                    .message("Truy xuất lịch sử thanh toán thất bại: " + e.getMessage())
                     .build());
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(ApiResponse.builder()

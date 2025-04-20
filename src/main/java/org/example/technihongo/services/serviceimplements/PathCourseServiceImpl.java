@@ -38,8 +38,12 @@ public class PathCourseServiceImpl implements PathCourseService {
 
     @Override
     public PageResponseDTO<PathCourse> getPathCoursesByLearningPathId(Integer pathId, int pageNo, int pageSize, String sortBy, String sortDir) {
+        if(pathId == null){
+            throw new RuntimeException("LearningPath ID không thể null");
+        }
+
         if(learningPathRepository.findByPathId(pathId) == null){
-            throw new RuntimeException("LearningPath ID not found!");
+            throw new RuntimeException("Không tìm thấy ID LearningPath");
         }
 
         Sort sort = sortDir.equalsIgnoreCase(Sort.Direction.ASC.name())
@@ -53,8 +57,12 @@ public class PathCourseServiceImpl implements PathCourseService {
 
     @Override
     public PageResponseDTO<PathCourse> getPublicPathCourseListByLearningPathId(Integer pathId, int pageNo, int pageSize, String sortBy, String sortDir) {
-        if (learningPathRepository.findByPathId(pathId) == null) {
-            throw new RuntimeException("LearningPath ID not found!");
+        if(pathId == null){
+            throw new RuntimeException("LearningPath ID không thể null");
+        }
+
+        if(learningPathRepository.findByPathId(pathId) == null){
+            throw new RuntimeException("Không tìm thấy ID LearningPath");
         }
 
         Sort sort = sortDir.equalsIgnoreCase(Sort.Direction.ASC.name())
@@ -77,7 +85,7 @@ public class PathCourseServiceImpl implements PathCourseService {
     public PathCourse createPathCourse(CreatePathCourseDTO createPathCourseDTO) {
         LearningPath learningPath = learningPathRepository.findByPathId(createPathCourseDTO.getPathId());
         if (learningPath == null) {
-            throw new RuntimeException("LearningPath ID not found!");
+            throw new RuntimeException("Không tìm thấy ID LearningPath");
         }
 
         Course course = courseRepository.findByCourseId(createPathCourseDTO.getCourseId());
@@ -109,15 +117,19 @@ public class PathCourseServiceImpl implements PathCourseService {
 
     @Override
     public void updatePathCourseOrder(Integer pathId, UpdatePathCourseOrderDTO updatePathCourseOrderDTO) {
+        if(pathId == null){
+            throw new RuntimeException("LearningPath ID không thể null");
+        }
+
         if (learningPathRepository.findByPathId(pathId) == null) {
-            throw new RuntimeException("LearningPath ID not found!");
+            throw new RuntimeException("Không tìm thấy ID LearningPath");
         }
 
         List<PathCourse> pathCourses = pathCourseRepository.findByLearningPath_PathId(pathId);
         List<UpdatePathCourseOrderDTO.PathCourseOrderItem> newOrders = updatePathCourseOrderDTO.getNewPathCourseOrders();
 
         if (pathCourses.size() != newOrders.size()) {
-            throw new RuntimeException("PathCourse count does not match newOrder!");
+            throw new RuntimeException("Số lượng PathCourse không đúng với thứ tự mới!");
         }
 
         Set<Integer> existingIds = pathCourses.stream()
@@ -125,7 +137,7 @@ public class PathCourseServiceImpl implements PathCourseService {
                 .collect(Collectors.toSet());
         for (UpdatePathCourseOrderDTO.PathCourseOrderItem item : newOrders) {
             if (!existingIds.contains(item.getPathCourseId())) {
-                throw new RuntimeException("Invalid pathCourseId: " + item.getPathCourseId());
+                throw new RuntimeException("PathCourseId không hợp lệ: " + item.getPathCourseId());
             }
         }
 
@@ -133,7 +145,7 @@ public class PathCourseServiceImpl implements PathCourseService {
             PathCourse pathCourse = pathCourses.stream()
                     .filter(pc -> pc.getPathCourseId().equals(item.getPathCourseId()))
                     .findFirst()
-                    .orElseThrow(() -> new RuntimeException("PathCourse not found!"));
+                    .orElseThrow(() -> new RuntimeException("Không tìm thấy PathCourse!"));
             pathCourse.setCourseOrder(item.getCourseOrder());
         }
 
@@ -184,7 +196,7 @@ public class PathCourseServiceImpl implements PathCourseService {
     @Override
     public void setPathCourseOrder(Integer pathId, Integer pathCourseId, Integer newOrder) {
         learningPathRepository.findById(pathId)
-                .orElseThrow(() -> new RuntimeException("LearningPath ID not found"));
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy ID LearningPath"));
 
         pathCourseRepository.findById(pathCourseId)
                 .orElseThrow(() -> new RuntimeException("PathCourse ID not found"));

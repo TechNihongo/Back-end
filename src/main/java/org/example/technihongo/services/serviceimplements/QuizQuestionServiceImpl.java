@@ -194,8 +194,12 @@ public class QuizQuestionServiceImpl implements QuizQuestionService {
 
     @Override
     public List<QuestionWithOptionsDTO2> getAllQuestionsAndOptionsByQuizId(Integer quizId) {
+        if(quizId == null){
+            throw new RuntimeException("Quiz ID không thể null");
+        }
+
         quizRepository.findById(quizId)
-                .orElseThrow(() -> new RuntimeException("Quiz not found with ID: " + quizId));
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy Quiz với ID: " + quizId));
 
         List<QuizQuestion> quizQuestions = quizQuestionRepository.findByQuiz_QuizId(quizId);
 
