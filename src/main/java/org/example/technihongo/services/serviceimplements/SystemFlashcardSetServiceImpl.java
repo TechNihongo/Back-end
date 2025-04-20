@@ -5,6 +5,7 @@ import org.example.technihongo.dto.SystemFlashcardSetRequestDTO;
 import org.example.technihongo.dto.SystemFlashcardSetResponseDTO;
 import org.example.technihongo.dto.UpdateFlashcardOrderDTO;
 import org.example.technihongo.entities.*;
+import org.example.technihongo.enums.DifficultyLevelEnum;
 import org.example.technihongo.exception.ResourceNotFoundException;
 import org.example.technihongo.exception.UnauthorizedAccessException;
 import org.example.technihongo.repositories.*;
@@ -188,19 +189,26 @@ public class SystemFlashcardSetServiceImpl implements SystemFlashcardSetService 
     }
 
     @Override
-    public SystemFlashcardSetResponseDTO getAllFlashcardsInSet(Integer userId, Integer flashcardSetId) {
-        SystemFlashcardSet flashcardSet = getActiveFlashcardSet(flashcardSetId);
-
-        if (!flashcardSet.isPublic() && !flashcardSet.getCreator().getUserId().equals(userId)) {
-            throw new UnauthorizedAccessException("You do not have permission to access this flashcard set.");
+    public SystemFlashcardSetResponseDTO getAllFlashcardsInSet(Integer userId, Integer systemFlashcardSetId) {
+        SystemFlashcardSet flashcardSet = systemFlashcardSetRepository.findBySystemSetId(systemFlashcardSetId);
+        if (flashcardSet == null) {
+            throw new ResourceNotFoundException("FlashcardSet not found with Id: " + systemFlashcardSetId);
         }
 
+        if (flashcardSet.isDeleted()) {
+            throw new ResourceNotFoundException("FlashcardSet has been deleted and cannot be accessed.");
+        }
+
+
+
         Pageable pageable = PageRequest.of(0, Integer.MAX_VALUE, Sort.by("cardOrder").ascending());
-        Page<Flashcard> flashcardPage = flashcardRepository.findBySystemFlashCardSetSystemSetId(flashcardSetId, pageable);
+        Page<Flashcard> flashcardPage = flashcardRepository.findBySystemFlashCardSetSystemSetId(systemFlashcardSetId, pageable);
+
         flashcardSet.setTotalCards((int) flashcardPage.getTotalElements());
         systemFlashcardSetRepository.save(flashcardSet);
 
         SystemFlashcardSetResponseDTO responseDTO = new SystemFlashcardSetResponseDTO();
+        responseDTO.setSystemSetId(flashcardSet.getSystemSetId());
         responseDTO.setContentManagerId(flashcardSet.getCreator().getUserId());
         responseDTO.setTitle(flashcardSet.getTitle());
         responseDTO.setDescription(flashcardSet.getDescription());
@@ -239,9 +247,6 @@ public class SystemFlashcardSetServiceImpl implements SystemFlashcardSetService 
     }
 
     private SystemFlashcardSetResponseDTO convertToSystemFlashcardSetResponseDTO(SystemFlashcardSet flashcardSet) {
-        Pageable pageable = PageRequest.of(0, Integer.MAX_VALUE, Sort.by("cardOrder").ascending());
-        Page<Flashcard> flashcardPage = flashcardRepository.findBySystemFlashCardSetSystemSetId(flashcardSet.getSystemSetId(), pageable);
-
         SystemFlashcardSetResponseDTO response = new SystemFlashcardSetResponseDTO();
         response.setSystemSetId(flashcardSet.getSystemSetId());
         response.setContentManagerId(flashcardSet.getCreator().getUserId());
@@ -249,7 +254,13 @@ public class SystemFlashcardSetServiceImpl implements SystemFlashcardSetService 
         response.setDescription(flashcardSet.getDescription());
         response.setIsPublic(flashcardSet.isPublic());
         response.setIsPremium(flashcardSet.isPremium());
-        response.setDifficultyLevel(flashcardSet.getDifficultyLevel() != null ? flashcardSet.getDifficultyLevel().getTag() : null);
+        response.setDifficultyLevel(flashcardSet.getDifficultyLevel() != null
+                ? DifficultyLevelEnum.valueOf(String.valueOf(flashcardSet.getDifficultyLevel().getTag()))
+                : null);
+
+        Pageable pageable = PageRequest.of(0, Integer.MAX_VALUE, Sort.by("cardOrder").ascending());
+        Page<Flashcard> flashcardPage = flashcardRepository.findBySystemFlashCardSetSystemSetId(
+                flashcardSet.getSystemSetId(), pageable);
         response.setFlashcards(flashcardPage.getContent().stream()
                 .map(this::convertToFlashcardResponseDTO)
                 .collect(Collectors.toList()));

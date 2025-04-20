@@ -13,7 +13,6 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
-import java.util.Optional;
 
 @Repository
 public interface FlashcardRepository extends JpaRepository<Flashcard, Integer> {
@@ -30,8 +29,11 @@ public interface FlashcardRepository extends JpaRepository<Flashcard, Integer> {
     @Query("select MAX(f.cardOrder) FROM Flashcard f WHERE f.systemFlashCardSet = :flashcardSet")
     Integer findMaxVocabOrderBySystemFlashCardSet(@Param("flashcardSet") SystemFlashcardSet flashcardSet);
 
-    Optional<Flashcard> findTopBySystemFlashCardSet_SystemSetIdOrderByCardOrderAsc(Integer setId);
-    Optional<Flashcard> findTopByStudentFlashCardSet_StudentSetIdOrderByCardOrderAsc(Integer setId);
+    @Query("SELECT f FROM Flashcard f WHERE f.systemFlashCardSet.systemSetId = :setId ORDER BY f.cardOrder ASC, f.flashCardId ASC")
+    List<Flashcard> findTopBySystemFlashCardSet_SystemSetIdOrderByCardOrderAsc(@Param("setId") Integer setId);
+
+    @Query("SELECT f FROM Flashcard f WHERE f.studentFlashCardSet.studentSetId = :setId ORDER BY f.cardOrder ASC, f.flashCardId ASC")
+    List<Flashcard> findTopByStudentFlashCardSet_StudentSetIdOrderByCardOrderAsc(@Param("setId") Integer setId);
 
     @Modifying
     @Transactional
