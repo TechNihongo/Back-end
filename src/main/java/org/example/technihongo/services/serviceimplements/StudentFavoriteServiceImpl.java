@@ -40,11 +40,18 @@ public class StudentFavoriteServiceImpl implements StudentFavoriteService {
     @Override
     @Transactional
     public StudentFavorite saveLearningResource(Integer studentId, Integer learningResourceId) {
+        if(studentId == null){
+            throw new RuntimeException("Student ID không thể null");
+        }
+        if(learningResourceId == null){
+            throw new RuntimeException("LearningResource ID không thể null");
+        }
+
         Student student = studentRepository.findById(studentId)
-                .orElseThrow(() -> new RuntimeException("Student not found with ID: " + studentId));
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy Student với ID: " + studentId));
 
         LearningResource learningResource = learningResourceRepository.findById(learningResourceId)
-                .orElseThrow(() -> new RuntimeException("Learning resource not found with ID: " + learningResourceId));
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy Learning resource với ID: " + learningResourceId));
 
         if (!learningResource.isPublic()) {
             throw new RuntimeException("Cannot favorite a non-public learning resource!");
@@ -76,29 +83,38 @@ public class StudentFavoriteServiceImpl implements StudentFavoriteService {
 
     @Override
     public PageResponseDTO<LearningResource> getListFavoriteLearningResourcesByStudentId(Integer studentId, int pageNo, int pageSize, String sortBy, String sortDir) {
-        studentRepository.findById(studentId)
-                .orElseThrow(() -> new RuntimeException("Student not found with ID: " + studentId));
+        try {
+            if(studentId == null){
+                throw new RuntimeException("Student ID không thể null");
+            }
 
-        boolean hasActiveSubscription = studentSubscriptionRepository
-                .existsByStudent_StudentIdAndIsActive(studentId, true);
+            studentRepository.findById(studentId)
+                    .orElseThrow(() -> new RuntimeException("Không tìm thấy Student với ID: " + studentId));
 
-        Sort sort = sortDir.equalsIgnoreCase(Sort.Direction.ASC.name())
-                ? Sort.by(sortBy).ascending()
-                : Sort.by(sortBy).descending();
-        Pageable pageable = PageRequest.of(pageNo, pageSize, sort);
+            boolean hasActiveSubscription = studentSubscriptionRepository
+                    .existsByStudent_StudentIdAndIsActive(studentId, true);
 
-        Page<StudentFavorite> favorites;
-        if (hasActiveSubscription) {
-            favorites = studentFavoriteRepository.findByStudent_StudentIdAndLearningResource_IsPublic(
-                    studentId, true, pageable);
-        } else {
-            favorites = studentFavoriteRepository.findByStudent_StudentIdAndLearningResource_IsPublicAndLearningResource_IsPremium(
-                    studentId, true, false, pageable);
+            Sort sort = sortDir.equalsIgnoreCase(Sort.Direction.ASC.name())
+                    ? Sort.by(sortBy).ascending()
+                    : Sort.by(sortBy).descending();
+            Pageable pageable = PageRequest.of(pageNo, pageSize, sort);
+
+            Page<StudentFavorite> favorites;
+            if (hasActiveSubscription) {
+                favorites = studentFavoriteRepository.findByStudent_StudentIdAndLearningResource_IsPublic(
+                        studentId, true, pageable);
+            } else {
+                favorites = studentFavoriteRepository.findByStudent_StudentIdAndLearningResource_IsPublicAndLearningResource_IsPremium(
+                        studentId, true, false, pageable);
+            }
+
+            Page<LearningResource> learningResources = favorites.map(StudentFavorite::getLearningResource);
+
+            return getPageResponseDTO(learningResources);
         }
-
-        Page<LearningResource> learningResources = favorites.map(StudentFavorite::getLearningResource);
-
-        return getPageResponseDTO(learningResources);
+        catch (Exception e){
+            throw new RuntimeException();
+        }
     }
 
     @Override

@@ -84,7 +84,7 @@ public class StudentCourseRatingServiceImpl implements StudentCourseRatingServic
     public BigDecimal getAverageRatingForCourse(Integer courseId) {
         Course course = courseRepository.findByCourseId(courseId);
         if (course == null) {
-            throw new ResourceNotFoundException("Course not found with ID: " + courseId);
+            throw new ResourceNotFoundException("Không tìm thấy khóa học với ID: " + courseId);
         }
         List<StudentCourseRating> ratings = studentCourseRatingRepository.findByCourseCourseId(courseId).stream()
                 .filter(rating -> !rating.isDeleted())
@@ -103,34 +103,38 @@ public class StudentCourseRatingServiceImpl implements StudentCourseRatingServic
     }
 
     @Override
-    public PageResponseDTO<StudentCourseRatingDTO> getAllRatingsForCourse(Integer courseId, int pageNo, int pageSize, String sortBy, String sortDir){
-        Course course = courseRepository.findByCourseId(courseId);
-        if (course == null) {
-            throw new ResourceNotFoundException("Course not found with ID: " + courseId);
+    public PageResponseDTO<StudentCourseRatingDTO> getAllRatingsForCourse(Integer courseId, int pageNo, int pageSize, String sortBy, String sortDir) {
+        try {
+            Course course = courseRepository.findByCourseId(courseId);
+            if (course == null) {
+                throw new ResourceNotFoundException("Không tìm thấy khóa học với ID: " + courseId);
+            }
+
+            Sort sort = sortDir.equalsIgnoreCase(Sort.Direction.ASC.name())
+                    ? Sort.by(sortBy).ascending()
+                    : Sort.by(sortBy).descending();
+
+            Pageable pageable = PageRequest.of(pageNo, pageSize, sort);
+
+            Page<StudentCourseRating> ratingsPage = studentCourseRatingRepository.findByCourse_CourseId(courseId, pageable);
+            List<StudentCourseRatingDTO> ratingDTOs = ratingsPage.getContent().stream()
+                    .filter(rating -> !rating.isDeleted())
+                    .map(this::mapToDTO)
+                    .collect(Collectors.toList());
+
+            return PageResponseDTO.<StudentCourseRatingDTO>builder()
+                    .content(ratingDTOs)
+                    .pageNo(ratingsPage.getNumber())
+                    .pageSize(ratingsPage.getSize())
+                    .totalElements(ratingsPage.getTotalElements())
+                    .totalPages(ratingsPage.getTotalPages())
+                    .last(ratingsPage.isLast())
+                    .build();
         }
+        catch (Exception e) {
+            throw new RuntimeException("Truy xuất danh sách đánh giá thất bại");
 
-//        List<StudentCourseRating> ratings = studentCourseRatingRepository.findByCourseCourseId(courseId);
-//        return ratings.stream()
-//                .map(this::mapToDTO)
-//                .collect(Collectors.toList());
-        Sort sort = sortDir.equalsIgnoreCase("asc") ? Sort.by(sortBy).ascending() : Sort.by(sortBy).descending();
-
-        Pageable pageable = PageRequest.of(pageNo, pageSize, sort);
-
-        Page<StudentCourseRating> ratingsPage = studentCourseRatingRepository.findByCourse_CourseId(courseId, pageable);
-        List<StudentCourseRatingDTO> ratingDTOs = ratingsPage.getContent().stream()
-                .filter(rating -> !rating.isDeleted())
-                .map(this::mapToDTO)
-                .collect(Collectors.toList());
-
-        return PageResponseDTO.<StudentCourseRatingDTO>builder()
-                .content(ratingDTOs)
-                .pageNo(ratingsPage.getNumber())
-                .pageSize(ratingsPage.getSize())
-                .totalElements(ratingsPage.getTotalElements())
-                .totalPages(ratingsPage.getTotalPages())
-                .last(ratingsPage.isLast())
-                .build();
+        }
     }
 
     @Override
@@ -185,19 +189,19 @@ public class StudentCourseRatingServiceImpl implements StudentCourseRatingServic
         validateRequest(request);
 
         Student student = studentRepository.findById(studentId)
-                .orElseThrow(() -> new ResourceNotFoundException("Student not found with ID: " + studentId));
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy Student với ID: " + studentId));
         Course course = courseRepository.findByCourseId(request.getCourseId());
         if (course == null) {
-            throw new ResourceNotFoundException("Course not found with ID: " + request.getCourseId());
+            throw new ResourceNotFoundException("Không tìm thấy khóa học với ID: " + request.getCourseId());
         }
 
         boolean isEnrolled = studentCourseProgressRepository.existsByStudentStudentIdAndCourseCourseId(studentId, request.getCourseId());
         if (!isEnrolled) {
-            throw new UnauthorizedAccessException("Student must enroll in the course before rating.");
+            throw new UnauthorizedAccessException("Bạn phải tham gia khóa học mới được đánh giá.");
         }
 
         if (studentCourseRatingRepository.existsByStudentStudentIdAndCourseCourseId(studentId, request.getCourseId())) {
-            throw new IllegalStateException("Student has already rated this course.");
+            throw new IllegalStateException("Bạn đã có sắn 1 đánh giá.");
         }
 
         StudentCourseRating rating = StudentCourseRating.builder()
@@ -251,13 +255,13 @@ public class StudentCourseRatingServiceImpl implements StudentCourseRatingServic
     private void validateRequest(StudentCourseRatingRequest request) {
 
         if (request.getCourseId() == null) {
-            throw new IllegalArgumentException("Course ID is required.");
+            throw new IllegalArgumentException("Course ID không thể null.");
         }
         if (request.getRating() == null || request.getRating() < 1 || request.getRating() > 5) {
-            throw new IllegalArgumentException("Rating must be between 1 and 5.");
+            throw new IllegalArgumentException("Rating phải từ 1 đến 5.");
         }
         if (request.getReview() != null && request.getReview().trim().isEmpty()) {
-            throw new IllegalArgumentException("Review cannot be empty if provided.");
+            throw new IllegalArgumentException("Review hoặc rating không thể null.");
         }
     }
 

@@ -96,11 +96,11 @@ public class UserActivityLogServiceImpl implements UserActivityLogService {
     @Override
     public List<UserActivityLogDTO> getStudentActivityLogs(Integer userId, int page, int size) {
         if (userId == null) {
-            throw new IllegalArgumentException("User ID must not be null.");
+            throw new IllegalArgumentException("User ID không thể null.");
         }
 
         userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found with ID: " + userId));
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy User với ID: " + userId));
 
         Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
         List<ActivityType> allowedTypes = Arrays.asList(ActivityType.LOGIN, ActivityType.COMPLETE);

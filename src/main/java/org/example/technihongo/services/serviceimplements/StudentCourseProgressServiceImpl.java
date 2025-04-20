@@ -120,30 +120,31 @@ public class StudentCourseProgressServiceImpl implements StudentCourseProgressSe
 
     @Override
     public void enrollCourse(Integer studentId, Integer courseId) {
-        Student student = studentRepository.findById(studentId)
-                .orElseThrow(() -> new RuntimeException("Student not found with ID: " + studentId));
-        Course course = courseRepository.findById(courseId)
-                .orElseThrow(() -> new RuntimeException("Course not found with ID: " + courseId));
-
-        if (!course.isPublicStatus()) {
-            throw new RuntimeException("Course is not public and cannot be enrolled!");
+        if(courseId == null){
+            throw new RuntimeException("Course ID không thể null");
         }
 
-        // Nếu Course là premium, kiểm tra subscription
+        Student student = studentRepository.findById(studentId)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy Student với ID: " + studentId));
+        Course course = courseRepository.findById(courseId)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy khóa học với ID: " + courseId));
+
+        if (!course.isPublicStatus()) {
+            throw new RuntimeException("Course đang bị khóa, không thể đăng kí tham gia!");
+        }
+
         if (course.isPremium()) {
             boolean hasActiveSubscription = studentSubscriptionRepository
                     .existsByStudent_StudentIdAndIsActive(studentId, true);
             if (!hasActiveSubscription) {
-                throw new RuntimeException("Student must have an active subscription to enroll in a premium course!");
+                throw new RuntimeException("Bạn phải mua gói để có thể đăng kí tham gia khóa học cao cấp!");
             }
         }
 
-        // Kiểm tra xem đã enroll chưa
         Optional<StudentCourseProgress> existingProgressOpt = studentCourseProgressRepository
                 .findByStudent_StudentIdAndCourse_CourseId(studentId, courseId);
 
         if (existingProgressOpt.isEmpty()) {
-            // Tạo mới StudentCourseProgress
             StudentCourseProgress progress = new StudentCourseProgress();
             progress.setStudent(student);
             progress.setCourse(course);
@@ -156,11 +157,10 @@ public class StudentCourseProgressServiceImpl implements StudentCourseProgressSe
 
             studentCourseProgressRepository.save(progress);
 
-            // Tăng enrollment_count
             course.setEnrollmentCount(course.getEnrollmentCount() + 1);
             courseRepository.save(course);
         }
-        // Nếu đã enroll, bỏ qua
+
     }
 
     @Override

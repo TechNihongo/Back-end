@@ -14,6 +14,7 @@ import org.example.technihongo.response.ApiResponse;
 import org.example.technihongo.services.interfaces.StudentCourseRatingService;
 import org.example.technihongo.services.interfaces.StudentService;
 import org.example.technihongo.services.interfaces.UserActivityLogService;
+import org.hibernate.query.sqm.UnknownPathException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
@@ -43,6 +44,14 @@ public class StudentCourseRatingController {
             HttpServletRequest httpRequest,
             @Valid @RequestBody StudentCourseRatingRequest request) {
         try {
+            if(request.getRating() == null || request.getReview() == null){
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body(ApiResponse.builder()
+                                .success(false)
+                                .message("Review hoặc rating không thể null")
+                                .build());
+            }
+
             Integer studentId = extractStudentId(authorizationHeader);
             StudentCourseRatingDTO response = studentCourseRatingService.createRating(studentId, request);
 
@@ -60,7 +69,7 @@ public class StudentCourseRatingController {
             return ResponseEntity.status(HttpStatus.CREATED)
                     .body(ApiResponse.builder()
                             .success(true)
-                            .message("Rating created successfully")
+                            .message("Đánh giá thành công")
                             .data(response)
                             .build());
         } catch (IllegalArgumentException e) {
@@ -286,7 +295,7 @@ public class StudentCourseRatingController {
             BigDecimal averageRating = studentCourseRatingService.getAverageRatingForCourse(courseId);
             return ResponseEntity.ok(ApiResponse.builder()
                     .success(true)
-                    .message("Average rating retrieved successfully")
+                    .message("Tính đánh giá trung bình thành công")
                     .data(averageRating)
                     .build());
         } catch (IllegalArgumentException e) {
@@ -321,7 +330,7 @@ public class StudentCourseRatingController {
             PageResponseDTO<StudentCourseRatingDTO> ratings = studentCourseRatingService.getAllRatingsForCourse(courseId, pageNo, pageSize, sortBy, sortDir);
             return ResponseEntity.ok(ApiResponse.builder()
                     .success(true)
-                    .message(ratings.getContent().isEmpty() ? "No ratings found for this course" : "Ratings retrieved successfully")
+                    .message(ratings.getContent().isEmpty() ? "Danh sách đánh giá trống" : "Truy xuất danh danh sách đánh giá thành công")
                     .data(ratings)
                     .build());
         } catch (IllegalArgumentException e) {
@@ -330,12 +339,13 @@ public class StudentCourseRatingController {
                             .success(false)
                             .message(e.getMessage())
                             .build());
-        } catch (ResourceNotFoundException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(ApiResponse.builder()
                             .success(false)
                             .message(e.getMessage())
                             .build());
+
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(ApiResponse.builder()

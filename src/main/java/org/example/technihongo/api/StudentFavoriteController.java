@@ -57,14 +57,14 @@ public class StudentFavoriteController {
 
                 return ResponseEntity.ok(ApiResponse.builder()
                         .success(true)
-                        .message("Learning resource saves successfully!")
+                        .message("Lưu learning resource thành công!")
                         .data(favorite)
                         .build());
             } else {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                         .body(ApiResponse.builder()
                                 .success(false)
-                                .message("Unauthorized")
+                                .message("Không có quyền")
                                 .build());
             }
 
@@ -78,7 +78,7 @@ public class StudentFavoriteController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(ApiResponse.builder()
                             .success(false)
-                            .message("Failed to save learning resource: " + e.getMessage())
+                            .message("Luu learning resource thất bại: " + e.getMessage())
                             .build());
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
@@ -105,8 +105,8 @@ public class StudentFavoriteController {
                 PageResponseDTO<LearningResource> list = studentFavoriteService.getListFavoriteLearningResourcesByStudentId(studentId, pageNo, pageSize, sortBy, sortDir);
                 if (list.getContent().isEmpty()) {
                     return ResponseEntity.ok(ApiResponse.builder()
-                            .success(false)
-                            .message("List Favorite LearningResources is empty!")
+                            .success(true)
+                            .message("Danh sách LearningResources yêu thích trống!")
                             .build());
                 } else {
                     return ResponseEntity.ok(ApiResponse.builder()
@@ -119,7 +119,7 @@ public class StudentFavoriteController {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                         .body(ApiResponse.builder()
                                 .success(false)
-                                .message("Unauthorized")
+                                .message("Không có quyền")
                                 .build());
             }
         } catch (IllegalArgumentException e) {
@@ -132,7 +132,7 @@ public class StudentFavoriteController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(ApiResponse.builder()
                             .success(false)
-                            .message("Failed to get Favorite LearningResources: " + e.getMessage())
+                            .message("Truy xuất danh sách resource yêu thích thất bại: " + e.getMessage())
                             .build());
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)

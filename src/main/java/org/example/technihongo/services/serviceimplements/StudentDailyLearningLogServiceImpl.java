@@ -66,7 +66,7 @@ public class StudentDailyLearningLogServiceImpl implements StudentDailyLearningL
     @Override
     public StudentDailyLearningLog getStudentDailyLearningLog(Integer studentId) {
         return dailyLogRepository.findByStudentStudentIdAndLogDate(studentId, LocalDate.now())
-                .orElseThrow(() -> new RuntimeException("Student ID not found!"));
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy Student ID!"));
     }
 
     private StudentDailyLearningLog createNewDailyLog(Student student, LocalDate today) {
@@ -97,10 +97,7 @@ public class StudentDailyLearningLogServiceImpl implements StudentDailyLearningL
         Optional<StudentDailyLearningLog> yesterdayLogOpt = dailyLogRepository
                 .findByStudentStudentIdAndLogDate(student.getStudentId(), yesterday);
 
-        if (yesterdayLogOpt.isPresent() && yesterdayLogOpt.get().getStudyTime() > 0) {
-            return yesterdayLogOpt.get().getStreak() + 1;
-        }
-        return 1;
+        return yesterdayLogOpt.map(studentDailyLearningLog -> studentDailyLearningLog.getStreak() + 1).orElse(1);
     }
 
     private void updateLearningStatistics(Student student, StudentDailyLearningLog dailyLog, boolean isNewLog) {
@@ -119,7 +116,7 @@ public class StudentDailyLearningLogServiceImpl implements StudentDailyLearningL
                 });
 
         stats.setTotalStudyTime(stats.getTotalStudyTime() + dailyLog.getStudyTime());
-        if (isNewLog && dailyLog.getStudyTime() > 0) {
+        if (isNewLog) {
             stats.setActiveDaysCount(stats.getActiveDaysCount() + 1);
         }
 

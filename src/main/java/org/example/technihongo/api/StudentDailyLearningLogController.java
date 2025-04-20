@@ -101,7 +101,7 @@ public class StudentDailyLearningLogController {
                 return ResponseEntity.ok(ApiResponse.builder()
                         .success(false)
                         .data(log)
-                        .message("Daily Learning Log Retrieved Successfully!")
+                        .message("Nhật ký học tập hằng ngày truy xuất thành công!")
                         .build());
             }
             else {

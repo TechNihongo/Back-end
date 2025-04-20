@@ -48,6 +48,9 @@ public class QuizServiceImpl implements QuizService {
 
     @Override
     public QuizDTO getQuizById(Integer quizId) {
+        if(quizId == null){
+            throw new RuntimeException("Quiz ID không được null");
+        }
         Quiz quiz = quizRepository.findByQuizId(quizId);
         if(quiz == null || quiz.isDeleted()){
             throw new RuntimeException("Không tìm thấy Quiz!");
@@ -57,6 +60,9 @@ public class QuizServiceImpl implements QuizService {
 
     @Override
     public QuizDTO getPublicQuizById(Integer userId, Integer quizId) {
+        if(quizId == null){
+            throw new RuntimeException("Quiz ID không thể null");
+        }
         Quiz quiz = quizRepository.findByQuizId(quizId);
         if(quiz == null || quiz.isDeleted() || !quiz.isPublic()){
             throw new RuntimeException("Không tìm thấy Quiz!");

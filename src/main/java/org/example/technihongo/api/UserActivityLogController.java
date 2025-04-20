@@ -59,13 +59,13 @@ public class UserActivityLogController {
     public ResponseEntity<ApiResponse> getStudentActivityLogs(
             @RequestHeader("Authorization") String authorizationHeader,
             HttpServletRequest httpRequest,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size) {
+            @RequestParam(defaultValue = "0") int pageNo,
+            @RequestParam(defaultValue = "20") int pageSize) {
         try {
             if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
                 String token = authorizationHeader.substring(7);
                 Integer userId = jwtUtil.extractUserId(token);
-                List<UserActivityLogDTO> logs = userActivityLogService.getStudentActivityLogs(userId, page, size);
+                List<UserActivityLogDTO> logs = userActivityLogService.getStudentActivityLogs(userId, pageNo, pageSize);
 
                 String ipAddress = httpRequest.getRemoteAddr();
                 String userAgent = httpRequest.getHeader("User-Agent");
