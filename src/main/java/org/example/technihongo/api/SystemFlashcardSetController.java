@@ -240,18 +240,17 @@ public class SystemFlashcardSetController {
         }
     }
 
-    @GetMapping("/getSysFlashcardSet/{flashcardSetId}")
+    @GetMapping("/getSysFlashcardSet/{systemFlashcardSetId}")
     public ResponseEntity<ApiResponse> getSystemFlashcardSetById(
             @RequestHeader("Authorization") String authorizationHeader,
-            @PathVariable Integer flashcardSetId) {
+            @PathVariable Integer systemFlashcardSetId) {
         try {
             Integer userId = extractUserId(authorizationHeader);
-            SystemFlashcardSetResponseDTO response = systemFlashcardSetService.getAllFlashcardsInSet(userId, flashcardSetId);
+            SystemFlashcardSetResponseDTO response = systemFlashcardSetService.getAllFlashcardsInSet(userId, systemFlashcardSetId);
 
-            // Hàm track progress cho Student
             Integer studentId = studentService.getStudentIdByUserId(userId);
             if(studentId != null) {
-                studentFlashcardSetProgressService.trackFlashcardSetProgress(studentId, flashcardSetId, true, null);
+                studentFlashcardSetProgressService.trackFlashcardSetProgress(studentId, systemFlashcardSetId, true, null);
             }
 
             return ResponseEntity.ok(ApiResponse.builder()

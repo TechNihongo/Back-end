@@ -109,11 +109,11 @@ public class StudentFlashcardSetProgressServiceImpl implements StudentFlashcardS
                     progress.setCurrentFlashCardId(null);
                 }
             } else {
-                Optional<Flashcard> firstCardOpt = isSystemSet
+                List<Flashcard> firstCardOpt = isSystemSet
                         ? flashcardRepo.findTopBySystemFlashCardSet_SystemSetIdOrderByCardOrderAsc(setId)
                         : flashcardRepo.findTopByStudentFlashCardSet_StudentSetIdOrderByCardOrderAsc(setId);
-                if (firstCardOpt.isPresent()) {
-                    progress.setCurrentFlashCardId(firstCardOpt.get());
+                if (firstCardOpt.isEmpty()) {
+                    progress.setCurrentFlashCardId(firstCardOpt.get(0));
                 } else {
                     progress.setCurrentFlashCardId(null);
                 }
@@ -179,10 +179,12 @@ public class StudentFlashcardSetProgressServiceImpl implements StudentFlashcardS
                 progress.setCurrentFlashCardId(currentCard);
             }
         } else if (progress.getCurrentFlashCardId() == null) {
-            Optional<Flashcard> firstCardOpt = isSystemSet
+            List<Flashcard> firstCardOpt = isSystemSet
                     ? flashcardRepo.findTopBySystemFlashCardSet_SystemSetIdOrderByCardOrderAsc(setId)
                     : flashcardRepo.findTopByStudentFlashCardSet_StudentSetIdOrderByCardOrderAsc(setId);
-            firstCardOpt.ifPresent(progress::setCurrentFlashCardId);
+            if (!firstCardOpt.isEmpty()) {
+                progress.setCurrentFlashCardId(firstCardOpt.get(0));
+            }
         }
 
         setProgressRepo.save(progress);
@@ -232,11 +234,11 @@ public class StudentFlashcardSetProgressServiceImpl implements StudentFlashcardS
                     progress.setCurrentFlashCardId(null);
                 }
             } else {
-                Optional<Flashcard> firstCardOpt = isSystemSet
+                List<Flashcard> firstCardOpt = isSystemSet
                         ? flashcardRepo.findTopBySystemFlashCardSet_SystemSetIdOrderByCardOrderAsc(setId)
                         : flashcardRepo.findTopByStudentFlashCardSet_StudentSetIdOrderByCardOrderAsc(setId);
-                if (firstCardOpt.isPresent()) {
-                    progress.setCurrentFlashCardId(firstCardOpt.get());
+                if (firstCardOpt.isEmpty()) {
+                    progress.setCurrentFlashCardId(firstCardOpt.get(0));
                 } else {
                     progress.setCurrentFlashCardId(null);
                 }
@@ -270,10 +272,12 @@ public class StudentFlashcardSetProgressServiceImpl implements StudentFlashcardS
                     progress.setCurrentFlashCardId(currentCard);
                 }
             } else if (progress.getCurrentFlashCardId() == null) {
-                Optional<Flashcard> firstCardOpt = isSystemSet
+                List<Flashcard> firstCardOpt = isSystemSet
                         ? flashcardRepo.findTopBySystemFlashCardSet_SystemSetIdOrderByCardOrderAsc(setId)
                         : flashcardRepo.findTopByStudentFlashCardSet_StudentSetIdOrderByCardOrderAsc(setId);
-                firstCardOpt.ifPresent(progress::setCurrentFlashCardId);
+                if (!firstCardOpt.isEmpty()) {
+                    progress.setCurrentFlashCardId(firstCardOpt.get(0));
+                }
             }
         }
 
