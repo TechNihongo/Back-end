@@ -46,7 +46,7 @@ public class PaymentTransactionServiceImpl implements PaymentTransactionService 
                 studentId, pageNo, pageSize, sortBy, sortDir, transactionStatus);
 
         if (studentId == null) {
-            throw new IllegalArgumentException("Student ID must not be null.");
+            throw new IllegalArgumentException("Student ID không thể null.");
         }
 
         Sort sort = sortDir.equalsIgnoreCase(Sort.Direction.ASC.name())
@@ -61,7 +61,7 @@ public class PaymentTransactionServiceImpl implements PaymentTransactionService 
                 transactions = paymentTransactionRepository.findBySubscription_Student_StudentIdAndTransactionStatus(
                         studentId, status, pageable);
             } catch (IllegalArgumentException e) {
-                throw new RuntimeException("Invalid transaction status value. Must be a valid TransactionStatus enum.");
+                throw new RuntimeException("TransactionStatus không hợp lệ.");
             }
         } else {
             transactions = paymentTransactionRepository.findBySubscription_Student_StudentId(studentId, pageable);

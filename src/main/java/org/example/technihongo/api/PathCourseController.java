@@ -35,7 +35,7 @@ public class PathCourseController {
 
     @GetMapping("/learning-path/{pathId}")
     public ResponseEntity<ApiResponse> getPathCourseListByLearningPathId(
-            @RequestHeader("Authorization") String authorizationHeader,
+            @RequestHeader(value = "Authorization", required = false) String authorizationHeader,
             @PathVariable Integer pathId,
             @RequestParam(defaultValue = "0") int pageNo,
             @RequestParam(defaultValue = "100") int pageSize,
@@ -51,7 +51,7 @@ public class PathCourseController {
                     if (pathCourses.getContent().isEmpty()) {
                         return ResponseEntity.ok(ApiResponse.builder()
                                 .success(false)
-                                .message("List PathCourse is empty!")
+                                .message("Danh sách PathCourse trống!")
                                 .build());
                     } else {
                         return ResponseEntity.ok(ApiResponse.builder()
@@ -66,7 +66,7 @@ public class PathCourseController {
                     if (pathCourses.getContent().isEmpty()) {
                         return ResponseEntity.ok(ApiResponse.builder()
                                 .success(false)
-                                .message("List PathCourse is empty!")
+                                .message("Danh sách PathCourse trống!")
                                 .build());
                     } else {
                         return ResponseEntity.ok(ApiResponse.builder()
@@ -77,11 +77,19 @@ public class PathCourseController {
                     }
                 }
             }  else {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                        .body(ApiResponse.builder()
-                                .success(false)
-                                .message("Unauthorized")
-                                .build());
+                PageResponseDTO<PathCourse> pathCourses = pathCourseService.getPublicPathCourseListByLearningPathId(pathId, pageNo, pageSize, sortBy, sortDir);
+                if (pathCourses.getContent().isEmpty()) {
+                    return ResponseEntity.ok(ApiResponse.builder()
+                            .success(false)
+                            .message("Danh sách PathCourse trống!")
+                            .build());
+                } else {
+                    return ResponseEntity.ok(ApiResponse.builder()
+                            .success(true)
+                            .message("Get Public PathCourse List")
+                            .data(pathCourses)
+                            .build());
+                }
             }
         } catch (IllegalArgumentException e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
@@ -93,7 +101,7 @@ public class PathCourseController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(ApiResponse.builder()
                             .success(false)
-                            .message("Failed to get PathCourses: " + e.getMessage())
+                            .message("Lấy danh sách PathCourse thất bại: " + e.getMessage())
                             .build());
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
@@ -206,7 +214,7 @@ public class PathCourseController {
             pathCourseService.updatePathCourseOrder(pathId, updatePathCourseOrderDTO);
             return ResponseEntity.ok(ApiResponse.builder()
                     .success(true)
-                    .message("PathCourse updated successfully")
+                    .message("Cập nhật PathCourse thành công")
                     .build());
         } catch (IllegalArgumentException e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
@@ -218,7 +226,7 @@ public class PathCourseController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(ApiResponse.builder()
                             .success(false)
-                            .message("Failed to update PathCourse: " + e.getMessage())
+                            .message("Cập nhật PathCourse thất bại: " + e.getMessage())
                             .build());
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
