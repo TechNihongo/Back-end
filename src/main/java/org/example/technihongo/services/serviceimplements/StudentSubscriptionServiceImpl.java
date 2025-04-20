@@ -283,7 +283,7 @@ public class StudentSubscriptionServiceImpl implements StudentSubscriptionServic
                 helper.setSubject("Thông báo gia hạn gói đăng ký");
                 helper.setText(
                         String.format(
-                                "Gói %s của bạn sẽ hết hạn vào %s. Nhấn <a href='http://localhost:3000/api/v1/subscription/renew?studentId=%d&subPlanId=%d'>Gia hạn ngay</a>",
+                                "Gói %s của bạn sẽ hết hạn vào %s. Hãy gia hạn để tiếp tục cùng TechNihongo nhé",
                                 sub.getSubscriptionPlan().getName(),
                                 sub.getEndDate(),
                                 sub.getStudent().getStudentId(),

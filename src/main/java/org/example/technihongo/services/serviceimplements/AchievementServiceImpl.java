@@ -318,7 +318,4 @@ public class AchievementServiceImpl implements AchievementService {
     public List<StudentAchievement> getStudentAchievements(Integer studentId) {
         return studentAchievementRepository.findByStudent_StudentId(studentId);
     }
-
-
-
 }
