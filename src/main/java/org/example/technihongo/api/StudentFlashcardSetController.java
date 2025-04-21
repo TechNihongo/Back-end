@@ -248,13 +248,11 @@ public class StudentFlashcardSetController {
         }
     }
 
-    @GetMapping("/getUserFlashcard/{setId}")
+    @GetMapping("/getUserFlashcard/{setId}/{studentId}")
     public ResponseEntity<ApiResponse> getFlashcardSet(
-            @RequestHeader("Authorization") String authorizationHeader,
-            @PathVariable("setId") Integer flashcardSetId) {
+            @PathVariable("setId") Integer flashcardSetId,
+            @PathVariable("studentId") Integer studentId) {
         try {
-            Integer studentId = extractStudentId(authorizationHeader);
-
             FlashcardSetResponseDTO response = studentFlashcardSetService.getAllFlashcardsInSet(studentId, flashcardSetId);
 
             if(studentId != null){
