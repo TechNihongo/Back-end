@@ -46,7 +46,7 @@ public class FolderItemServiceImpl implements FolderItemService {
         StudentFlashcardSet studentFlashcardSet = studentFlashcardSetRepository.findById(folderItemDTO.getStudentSetId())
                 .orElseThrow(() -> new RuntimeException("Student flashcard set not found with ID: " + folderItemDTO.getStudentSetId()));
 
-        if (!studentFlashcardSet.getCreator().getStudentId().equals(studentId) && !studentFlashcardSet.isPublic()) {
+        if (!studentFlashcardSet.getCreator().getStudentId().equals(studentId)) {
             throw new SecurityException("You do not have permission to access this flashcard set");
         }
 
