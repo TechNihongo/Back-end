@@ -759,4 +759,40 @@ public class UserController {
         }
     }
 
+    @GetMapping("/check-token")
+    public ResponseEntity<ApiResponse> checkTokenValid(@RequestParam String token) {
+        try {
+            Boolean valid = authTokenService.isTokenValid(token);
+            if(valid) {
+                return ResponseEntity.ok(ApiResponse.builder()
+                        .success(true)
+                        .message("Token hợp lệ")
+                        .build());
+            }
+            else{
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(ApiResponse.builder()
+                            .success(false)
+                            .message("Token không hợp lệ")
+                            .build());
+            }
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ApiResponse.builder()
+                            .success(false)
+                            .message(e.getMessage())
+                            .build());
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ApiResponse.builder()
+                    .success(false)
+                    .message(e.getMessage())
+                    .build());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponse.builder()
+                            .success(false)
+                            .message("Internal Server Error: " + e.getMessage())
+                            .build());
+        }
+    }
 }

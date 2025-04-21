@@ -186,7 +186,7 @@ public class StudentQuizAttemptController {
             ReviewQuizAttemptDTO reviewDTO = studentQuizAttemptService.reviewQuizAttempt(studentId, attemptId);
             return ResponseEntity.ok(ApiResponse.builder()
                     .success(true)
-                    .message("Quiz attempt retrieved successfully")
+                    .message("Quiz attempt truy xuất thành công")
                     .data(reviewDTO)
                     .build());
         } catch (IllegalArgumentException e) {

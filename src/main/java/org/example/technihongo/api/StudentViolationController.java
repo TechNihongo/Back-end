@@ -36,8 +36,8 @@ public class StudentViolationController {
             PageResponseDTO<StudentViolation> dto = studentViolationService.getAllStudentViolations(classifyBy, status, pageNo, pageSize, sortBy, sortDir);
             if (dto.getContent().isEmpty()) {
                 return ResponseEntity.ok(ApiResponse.builder()
-                        .success(false)
-                        .message("List violations is empty!")
+                        .success(true)
+                        .message("Danh sách vi phạm trống!")
                         .build());
             } else {
                 return ResponseEntity.ok(ApiResponse.builder()
@@ -56,7 +56,7 @@ public class StudentViolationController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(ApiResponse.builder()
                             .success(false)
-                            .message("Failed to get violations: " + e.getMessage())
+                            .message("Lấy danh sách vi phạm thất bại: " + e.getMessage())
                             .build());
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
@@ -106,7 +106,7 @@ public class StudentViolationController {
 
                 return ResponseEntity.ok(ApiResponse.builder()
                         .success(true)
-                        .message("Violation reported successfully")
+                        .message("Báo cáo vi phạm thành công")
                         .data(response)
                         .build());
             }
@@ -114,7 +114,7 @@ public class StudentViolationController {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                         .body(ApiResponse.builder()
                                 .success(false)
-                                .message("Unauthorized")
+                                .message("Không có quuyền")
                                 .build());
             }
         } catch (IllegalArgumentException e) {
@@ -127,7 +127,7 @@ public class StudentViolationController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(ApiResponse.builder()
                             .success(false)
-                            .message("Report failed: " + e.getMessage())
+                            .message("Báo cáo thất bại: " + e.getMessage())
                             .build());
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)

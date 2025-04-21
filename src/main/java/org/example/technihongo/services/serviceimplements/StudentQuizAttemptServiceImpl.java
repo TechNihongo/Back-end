@@ -47,6 +47,8 @@ public class StudentQuizAttemptServiceImpl implements StudentQuizAttemptService 
     private UserActivityLogService userActivityLogService;
     @Autowired
     private QuizQuestionRepository quizQuestionRepository;
+    @Autowired
+    private StudentRepository studentRepository;
 
     private static final Logger log = LoggerFactory.getLogger(PaymentTransactionServiceImpl.class);
 
@@ -207,14 +209,17 @@ public class StudentQuizAttemptServiceImpl implements StudentQuizAttemptService 
     @Override
     public ReviewQuizAttemptDTO reviewQuizAttempt(Integer studentId, Integer attemptId) {
         if (studentId == null || attemptId == null) {
-            throw new RuntimeException("Student ID and Attempt ID must not be null.");
+            throw new RuntimeException("Student ID và Attempt ID không thể null");
         }
 
+        studentRepository.findById(studentId)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy Student với ID: " + studentId));
+
         StudentQuizAttempt attempt = studentQuizAttemptRepository.findById(attemptId)
-                .orElseThrow(() -> new RuntimeException("Quiz attempt not found with ID: " + attemptId));
+                .orElseThrow(() -> new RuntimeException("Không tim thấy Quiz attempt với ID: " + attemptId));
 
         if (!attempt.getStudent().getStudentId().equals(studentId)) {
-            throw new RuntimeException("This quiz attempt does not belong to the current student.");
+            throw new RuntimeException("Lần quiz attempt này không phải của bạn.");
         }
 
         List<QuizQuestion> quizQuestions = quizQuestionRepository.findByQuiz_QuizId(attempt.getQuiz().getQuizId());
@@ -222,7 +227,6 @@ public class StudentQuizAttemptServiceImpl implements StudentQuizAttemptService 
 
         List<QuizAnswerResponse> responses = quizAnswerResponseRepository.findByStudentQuizAttempt_AttemptId(attemptId);
 
-        // Log để kiểm tra
         log.info("Quiz ID: {}, Questions: {}, Responses: {}",
                 attempt.getQuiz().getQuizId(),
                 quizQuestions.stream().map(q -> q.getQuestion().getQuestionId()).collect(Collectors.toList()),

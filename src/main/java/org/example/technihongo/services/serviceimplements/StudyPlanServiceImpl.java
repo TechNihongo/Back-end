@@ -35,8 +35,11 @@ public class StudyPlanServiceImpl implements StudyPlanService {
 
     @Override
     public List<StudyPlan> getStudyPlanListByCourseId(Integer courseId) {
+        if(courseId == null){
+            throw new RuntimeException("Course ID không thể null");
+        }
         if(courseRepository.findByCourseId(courseId) == null){
-            throw new RuntimeException("Course ID not found!");
+            throw new RuntimeException("Không tim thấy Course ID");
         }
 
         return studyPlanRepository.findByCourse_CourseId(courseId);
@@ -44,8 +47,11 @@ public class StudyPlanServiceImpl implements StudyPlanService {
 
     @Override
     public List<StudyPlan> getActiveStudyPlanListByCourseId(Integer courseId) {
+        if(courseId == null){
+            throw new RuntimeException("Course ID không thể null");
+        }
         if(courseRepository.findByCourseId(courseId) == null){
-            throw new RuntimeException("Course ID not found!");
+            throw new RuntimeException("Không tim thấy Course ID");
         }
 
         return studyPlanRepository.findByCourse_CourseId(courseId)

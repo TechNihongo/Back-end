@@ -129,11 +129,15 @@ public class StudentResourceProgressServiceImpl implements StudentResourceProgre
     }
 
     @Override
-    public StudentResourceProgress writeNoteForLearningResource(Integer studentId, Integer resourceId, String notes) {
+    public StudentResourceProgress writeNoteForLearningResource(Integer studentId, Integer resourceId, String note) {
+        if(resourceId == null){
+            throw new RuntimeException("LearningResource ID không thể null");
+        }
+
         Student student = studentRepository.findById(studentId)
-                .orElseThrow(() -> new RuntimeException("Student not found with ID: " + studentId));
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy Student với ID: " + studentId));
         LearningResource learningResource = learningResourceRepository.findById(resourceId)
-                .orElseThrow(() -> new RuntimeException("LearningResource not found with ID: " + resourceId));
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy LearningResource với ID: " + resourceId));
 
         Optional<StudentResourceProgress> existingProgressOpt = studentResourceProgressRepository
                 .findByStudent_StudentIdAndLearningResource_ResourceId(studentId, resourceId);
@@ -149,8 +153,8 @@ public class StudentResourceProgressServiceImpl implements StudentResourceProgre
             progress = existingProgressOpt.get();
             progress.setLastStudied(LocalDateTime.now());
 
-            if (notes != null) {
-                progress.setNotes(notes);
+            if (note != null) {
+                progress.setNotes(note);
             }
         }
 
