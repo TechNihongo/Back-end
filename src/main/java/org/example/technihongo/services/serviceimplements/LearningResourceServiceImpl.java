@@ -159,8 +159,7 @@ public class LearningResourceServiceImpl implements LearningResourceService {
             throw new RuntimeException("Cannot delete a public Learning resource!");
         }
 
-        if (studentFavoriteRepository.existsByLearningResource_ResourceId(learningResourceId) ||
-            studentFlashcardSetRepository.existsByLearningResource_ResourceId(learningResourceId) ||
+        if (studentFlashcardSetRepository.existsByLearningResource_ResourceId(learningResourceId) ||
             lessonResourceRepository.existsByLearningResource_ResourceId(learningResourceId) ||
             studentResourceProgressRepository.existsByLearningResource_ResourceId(learningResourceId)){
                 throw new RuntimeException("Cannot delete a referenced Learning resource!");

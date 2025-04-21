@@ -55,7 +55,7 @@ public class CourseServiceImpl implements CourseService {
                 .filter(Course::isPublicStatus)
                 .map(course -> new CoursePublicDTO(course.getCourseId(), course.getTitle(),
                         course.getDescription(), course.getDomain(), course.getDifficultyLevel(),
-                        course.getAttachmentUrl(), course.getThumbnailUrl(), course.getEstimatedDuration()))
+                        course.getThumbnailUrl(), course.getEstimatedDuration()))
                 .collect(Collectors.toList());
     }
 
@@ -72,7 +72,7 @@ public class CourseServiceImpl implements CourseService {
                 .filter(course -> course.isPublicStatus() && course.getCourseId().equals(courseId))
                 .map(course -> new CoursePublicDTO(course.getCourseId(), course.getTitle(),
                         course.getDescription(), course.getDomain(), course.getDifficultyLevel(),
-                        course.getAttachmentUrl(), course.getThumbnailUrl(), course.getEstimatedDuration()))
+                        course.getThumbnailUrl(), course.getEstimatedDuration()))
                 .findFirst();
     }
 
@@ -96,7 +96,7 @@ public class CourseServiceImpl implements CourseService {
                 .creator(userRepository.findByUserId(creatorId))
                 .domain(domainRepository.findByDomainId(createCourseDTO.getDomainId()))
                 .difficultyLevel(difficultyLevelRepository.findByLevelId(createCourseDTO.getDifficultyLevelId()))
-                .attachmentUrl(createCourseDTO.getAttachmentUrl())
+//                .attachmentUrl(createCourseDTO.getAttachmentUrl())
                 .thumbnailUrl(createCourseDTO.getThumbnailUrl())
                 .estimatedDuration(createCourseDTO.getEstimatedDuration())
                 .isPremium(createCourseDTO.isPremium())
@@ -141,7 +141,7 @@ public class CourseServiceImpl implements CourseService {
         course.setDescription(updateCourseDTO.getDescription());
         course.setDomain(domainRepository.findByDomainId(updateCourseDTO.getDomainId()));
         course.setDifficultyLevel(difficultyLevelRepository.findByLevelId(updateCourseDTO.getDifficultyLevelId()));
-        course.setAttachmentUrl(updateCourseDTO.getAttachmentUrl());
+//        course.setAttachmentUrl(updateCourseDTO.getAttachmentUrl());
         course.setThumbnailUrl(updateCourseDTO.getThumbnailUrl());
         course.setEstimatedDuration(updateCourseDTO.getEstimatedDuration());
         course.setPublicStatus(updateCourseDTO.getIsPublic());

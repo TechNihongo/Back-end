@@ -12,24 +12,24 @@ import java.util.Optional;
 
 @Repository
 public interface StudentFavoriteRepository extends JpaRepository<StudentFavorite, Integer>{
-    Boolean existsByLearningResource_ResourceId(Integer learningResourceId);
-    boolean existsByStudent_StudentIdAndLearningResource_ResourceId(Integer studentId, Integer learningResourceId);
+//    Boolean existsByLearningResource_ResourceId(Integer learningResourceId);
+    boolean existsByStudent_StudentIdAndLessonResource_LessonResourceId(Integer studentId, Integer lessonResourceId);
     @Query("SELECT sf FROM StudentFavorite sf WHERE sf.student.studentId = :studentId " +
-            "AND sf.learningResource.isPublic = :isPublic")
+            "AND sf.lessonResource.learningResource.isPublic = :isPublic")
     Page<StudentFavorite> findByStudent_StudentIdAndLearningResource_IsPublic(
             @Param("studentId") Integer studentId,
             @Param("isPublic") boolean isPublic,
             Pageable pageable);
 
     @Query("SELECT sf FROM StudentFavorite sf WHERE sf.student.studentId = :studentId " +
-            "AND sf.learningResource.isPublic = :isPublic AND sf.learningResource.isPremium = :isPremium")
+            "AND sf.lessonResource.learningResource.isPublic = :isPublic AND sf.lessonResource.learningResource.isPremium = :isPremium")
     Page<StudentFavorite> findByStudent_StudentIdAndLearningResource_IsPublicAndLearningResource_IsPremium(
             @Param("studentId") Integer studentId,
             @Param("isPublic") boolean isPublic,
             @Param("isPremium") boolean isPremium,
             Pageable pageable);
 
-    Optional<StudentFavorite> findByStudent_StudentIdAndLearningResource_ResourceId(Integer studentId, Integer learningResourceId);
+    Optional<StudentFavorite> findByStudent_StudentIdAndLessonResource_LessonResourceId(Integer studentId, Integer lessonResourceId);
 
     long countByStudent_StudentId(Integer studentId);
 }

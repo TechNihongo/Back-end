@@ -15,7 +15,7 @@ public class CoursePublicDTO {
     private String description;
     private Domain domain;
     private DifficultyLevel difficultyLevel;
-    private String attachmentUrl;
+//    private String attachmentUrl;
     private String thumbnailUrl;
     private String estimatedDuration;
 }

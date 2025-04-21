@@ -28,8 +28,8 @@ public class StudentFavorite {
 
     @NotNull
     @ManyToOne
-    @JoinColumn(name = "resource_id", nullable = false, referencedColumnName = "resource_id")
-    private LearningResource learningResource;
+    @JoinColumn(name = "lesson_resource_id", nullable = false, referencedColumnName = "lesson_resource_id")
+    private LessonResource lessonResource;
 
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)

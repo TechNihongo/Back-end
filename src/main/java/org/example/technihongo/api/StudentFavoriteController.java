@@ -3,10 +3,7 @@ package org.example.technihongo.api;
 import jakarta.servlet.http.HttpServletRequest;
 import org.example.technihongo.core.security.JwtUtil;
 import org.example.technihongo.dto.PageResponseDTO;
-import org.example.technihongo.entities.Course;
-import org.example.technihongo.entities.LearningResource;
-import org.example.technihongo.entities.PathCourse;
-import org.example.technihongo.entities.StudentFavorite;
+import org.example.technihongo.entities.*;
 import org.example.technihongo.enums.ActivityType;
 import org.example.technihongo.enums.ContentType;
 import org.example.technihongo.exception.ResourceNotFoundException;
@@ -33,7 +30,7 @@ public class StudentFavoriteController {
 
     @PostMapping("/save")
     public ResponseEntity<ApiResponse> saveLearningResource(
-            @RequestParam Integer learningResourceId,
+            @RequestParam Integer lessonResourceId,
             @RequestHeader("Authorization") String authorizationHeader,
             HttpServletRequest httpRequest) {
         try {
@@ -42,7 +39,7 @@ public class StudentFavoriteController {
                 Integer userId = jwtUtil.extractUserId(token);
                 Integer studentId = studentService.getStudentIdByUserId(userId);
 
-                StudentFavorite favorite = studentFavoriteService.saveLearningResource(studentId, learningResourceId);
+                StudentFavorite favorite = studentFavoriteService.saveLearningResource(studentId, lessonResourceId);
 
                 String ipAddress = httpRequest.getRemoteAddr();
                 String userAgent = httpRequest.getHeader("User-Agent");
@@ -50,7 +47,7 @@ public class StudentFavoriteController {
                         userId,
                         ActivityType.SAVE,
                         ContentType.LearningResource,
-                        learningResourceId,
+                        favorite.getLessonResource().getLearningResource().getResourceId(),
                         ipAddress,
                         userAgent
                 );
@@ -102,7 +99,7 @@ public class StudentFavoriteController {
                 Integer userId = jwtUtil.extractUserId(token);
                 Integer studentId = studentService.getStudentIdByUserId(userId);
 
-                PageResponseDTO<LearningResource> list = studentFavoriteService.getListFavoriteLearningResourcesByStudentId(studentId, pageNo, pageSize, sortBy, sortDir);
+                PageResponseDTO<LessonResource> list = studentFavoriteService.getListFavoriteLearningResourcesByStudentId(studentId, pageNo, pageSize, sortBy, sortDir);
                 if (list.getContent().isEmpty()) {
                     return ResponseEntity.ok(ApiResponse.builder()
                             .success(true)
@@ -145,7 +142,7 @@ public class StudentFavoriteController {
 
     @DeleteMapping("/remove")
     public ResponseEntity<ApiResponse> removeFavoriteLearningResource(
-            @RequestParam Integer learningResourceId,
+            @RequestParam Integer lessonResourceId,
             @RequestHeader("Authorization") String authorizationHeader,
             HttpServletRequest httpRequest) {
         try {
@@ -154,7 +151,7 @@ public class StudentFavoriteController {
                 Integer userId = jwtUtil.extractUserId(token);
                 Integer studentId = studentService.getStudentIdByUserId(userId);
 
-                studentFavoriteService.removeFavoriteLearningResource(studentId, learningResourceId);
+                studentFavoriteService.removeFavoriteLearningResource(studentId, lessonResourceId);
 
                 String ipAddress = httpRequest.getRemoteAddr();
                 String userAgent = httpRequest.getHeader("User-Agent");
@@ -169,14 +166,14 @@ public class StudentFavoriteController {
 
                 return ResponseEntity.ok(ApiResponse.builder()
                         .success(true)
-                        .message("Learning resource removed from favorites successfully!")
+                        .message("Đã xóa LearningResource khỏi danh sách yêu thích thành công!")
                         .data(null)
                         .build());
             } else {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                         .body(ApiResponse.builder()
                                 .success(false)
-                                .message("Unauthorized")
+                                .message("Không có quyền")
                                 .build());
             }
         } catch (IllegalArgumentException e) {
@@ -200,11 +197,11 @@ public class StudentFavoriteController {
 
     @GetMapping("/check")
     public ResponseEntity<ApiResponse> checkLearningResourceFavorited(
-            @RequestParam Integer learningResourceId,
+            @RequestParam Integer lessonResourceId,
             @RequestHeader("Authorization") String authorizationHeader) {
         try {
             Integer studentId = extractStudentId(authorizationHeader);
-            boolean isFavorited = studentFavoriteService.checkLearningResourceFavorited(studentId, learningResourceId);
+            boolean isFavorited = studentFavoriteService.checkLearningResourceFavorited(studentId, lessonResourceId);
             if(isFavorited) {
                 return ResponseEntity.ok(ApiResponse.builder()
                         .success(true)

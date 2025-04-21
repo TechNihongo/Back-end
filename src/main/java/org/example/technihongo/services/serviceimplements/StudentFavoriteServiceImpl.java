@@ -3,13 +3,11 @@ package org.example.technihongo.services.serviceimplements;
 import lombok.RequiredArgsConstructor;
 import org.example.technihongo.dto.PageResponseDTO;
 import org.example.technihongo.entities.LearningResource;
+import org.example.technihongo.entities.LessonResource;
 import org.example.technihongo.entities.Student;
 import org.example.technihongo.entities.StudentFavorite;
 import org.example.technihongo.exception.ResourceNotFoundException;
-import org.example.technihongo.repositories.LearningResourceRepository;
-import org.example.technihongo.repositories.StudentFavoriteRepository;
-import org.example.technihongo.repositories.StudentRepository;
-import org.example.technihongo.repositories.StudentSubscriptionRepository;
+import org.example.technihongo.repositories.*;
 import org.example.technihongo.services.interfaces.StudentFavoriteService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.example.technihongo.services.interfaces.AchievementService;
@@ -35,43 +33,51 @@ public class StudentFavoriteServiceImpl implements StudentFavoriteService {
     private StudentSubscriptionRepository studentSubscriptionRepository;
     @Autowired
     private AchievementService achievementService;
+    @Autowired
+    private LessonResourceRepository lessonResourceRepository;
 
 
     @Override
     @Transactional
-    public StudentFavorite saveLearningResource(Integer studentId, Integer learningResourceId) {
+    public StudentFavorite saveLearningResource(Integer studentId, Integer lessonResourceId) {
         if(studentId == null){
             throw new RuntimeException("Student ID không thể null");
         }
-        if(learningResourceId == null){
-            throw new RuntimeException("LearningResource ID không thể null");
+        if(lessonResourceId == null){
+            throw new RuntimeException("LessonResource ID không thể null");
         }
 
         Student student = studentRepository.findById(studentId)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy Student với ID: " + studentId));
 
-        LearningResource learningResource = learningResourceRepository.findById(learningResourceId)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy Learning resource với ID: " + learningResourceId));
+        LessonResource lessonResource = lessonResourceRepository.findById(lessonResourceId)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy LessonResource với ID: " + lessonResourceId));
 
-        if (!learningResource.isPublic()) {
-            throw new RuntimeException("Cannot favorite a non-public learning resource!");
+        if(lessonResource.getLearningResource() == null){
+            throw new RuntimeException("LessonResource không liên kết với LearningResource");
+        }
+        learningResourceRepository.findById(lessonResource.getLearningResource().getResourceId())
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy Learning resource với ID: " + lessonResource.getLearningResource().getResourceId()));
+
+        if (!lessonResource.getLearningResource().isPublic()) {
+            throw new RuntimeException("Không thể yêu thích LearningResource chưa công khai!");
         }
 
-        if (learningResource.isPremium()) {
+        if (lessonResource.getLearningResource().isPremium()) {
             boolean hasActiveSubscription = studentSubscriptionRepository
                     .existsByStudent_StudentIdAndIsActive(studentId, true);
             if (!hasActiveSubscription) {
-                throw new RuntimeException("Student must have an active subscription to favorite a premium learning resource!");
+                throw new RuntimeException("Bạn phải mua gói để có thể yêu thích LearningResource cao cấp!");
             }
         }
 
-        if (studentFavoriteRepository.existsByStudent_StudentIdAndLearningResource_ResourceId(studentId, learningResourceId)) {
-            throw new RuntimeException("This learning resource has already been favorited by the student!");
+        if (studentFavoriteRepository.existsByStudent_StudentIdAndLessonResource_LessonResourceId(studentId, lessonResourceId)) {
+            throw new RuntimeException("LearningResource này đã có sẵn trong danh sách yêu thích của bạn!");
         }
 
         StudentFavorite favorite = StudentFavorite.builder()
                 .student(student)
-                .learningResource(learningResource)
+                .lessonResource(lessonResource)
                 .build();
 
         StudentFavorite savedFavorite = studentFavoriteRepository.save(favorite);
@@ -82,7 +88,7 @@ public class StudentFavoriteServiceImpl implements StudentFavoriteService {
     }
 
     @Override
-    public PageResponseDTO<LearningResource> getListFavoriteLearningResourcesByStudentId(Integer studentId, int pageNo, int pageSize, String sortBy, String sortDir) {
+    public PageResponseDTO<LessonResource> getListFavoriteLearningResourcesByStudentId(Integer studentId, int pageNo, int pageSize, String sortBy, String sortDir) {
         try {
             if(studentId == null){
                 throw new RuntimeException("Student ID không thể null");
@@ -108,9 +114,9 @@ public class StudentFavoriteServiceImpl implements StudentFavoriteService {
                         studentId, true, false, pageable);
             }
 
-            Page<LearningResource> learningResources = favorites.map(StudentFavorite::getLearningResource);
+            Page<LessonResource> lessonResources = favorites.map(StudentFavorite::getLessonResource);
 
-            return getPageResponseDTO(learningResources);
+            return getPageResponseDTO(lessonResources);
         }
         catch (Exception e){
             throw new RuntimeException();
@@ -119,33 +125,45 @@ public class StudentFavoriteServiceImpl implements StudentFavoriteService {
 
     @Override
     @Transactional
-    public void removeFavoriteLearningResource(Integer studentId, Integer learningResourceId) {
+    public void removeFavoriteLearningResource(Integer studentId, Integer lessonResourceId) {
         studentRepository.findById(studentId)
                 .orElseThrow(() -> new ResourceNotFoundException("Student not found with ID: " + studentId));
 
-        learningResourceRepository.findById(learningResourceId)
-                .orElseThrow(() -> new ResourceNotFoundException("Learning resource not found with ID: " + learningResourceId));
+        LessonResource lessonResource = lessonResourceRepository.findById(lessonResourceId)
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy LessonResource với ID: " + lessonResourceId));
+
+        if(lessonResource.getLearningResource() == null){
+            throw new ResourceNotFoundException("LessonResource không liên kết với LearningResource");
+        }
+        learningResourceRepository.findById(lessonResource.getLearningResource().getResourceId())
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy Learning resource với ID: " + lessonResource.getLearningResource().getResourceId()));
 
         StudentFavorite favorite = studentFavoriteRepository
-                .findByStudent_StudentIdAndLearningResource_ResourceId(studentId, learningResourceId)
-                .orElseThrow(() -> new ResourceNotFoundException("Favorite not found for this student and learning resource"));
+                .findByStudent_StudentIdAndLessonResource_LessonResourceId(studentId, lessonResourceId)
+                .orElseThrow(() -> new ResourceNotFoundException("Bạn chưa yêu thích LearningResource này"));
 
         studentFavoriteRepository.delete(favorite);
     }
 
     @Override
-    public boolean checkLearningResourceFavorited(Integer studentId, Integer learningResourceId) {
+    public boolean checkLearningResourceFavorited(Integer studentId, Integer lessonResourceId) {
         studentRepository.findById(studentId)
                 .orElseThrow(() -> new ResourceNotFoundException("Student not found with ID: " + studentId));
 
-        learningResourceRepository.findById(learningResourceId)
-                .orElseThrow(() -> new ResourceNotFoundException("Learning resource not found with ID: " + learningResourceId));
+        LessonResource lessonResource = lessonResourceRepository.findById(lessonResourceId)
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy LessonResource với ID: " + lessonResourceId));
 
-        return studentFavoriteRepository.existsByStudent_StudentIdAndLearningResource_ResourceId(studentId, learningResourceId);
+        if(lessonResource.getLearningResource() == null){
+            throw new ResourceNotFoundException("LessonResource không liên kết với LearningResource");
+        }
+        learningResourceRepository.findById(lessonResource.getLearningResource().getResourceId())
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy Learning resource với ID: " + lessonResource.getLearningResource().getResourceId()));
+
+        return studentFavoriteRepository.existsByStudent_StudentIdAndLessonResource_LessonResourceId(studentId, lessonResourceId);
     }
 
-    private PageResponseDTO<LearningResource> getPageResponseDTO(Page<LearningResource> page) {
-        return PageResponseDTO.<LearningResource>builder()
+    private PageResponseDTO<LessonResource> getPageResponseDTO(Page<LessonResource> page) {
+        return PageResponseDTO.<LessonResource>builder()
                 .content(page.getContent())
                 .pageNo(page.getNumber())
                 .pageSize(page.getSize())
