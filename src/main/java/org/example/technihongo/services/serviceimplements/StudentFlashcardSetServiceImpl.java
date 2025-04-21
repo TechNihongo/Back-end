@@ -260,10 +260,6 @@ public class StudentFlashcardSetServiceImpl implements StudentFlashcardSetServic
             flashcardSetRepository.save(flashcardSet);
         }
 
-        if (!flashcardSet.isPublic() && !flashcardSet.getCreator().getStudentId().equals(studentId)) {
-            throw new UnauthorizedAccessException("You do not have permission to access this flashcard set.");
-        }
-
         Pageable pageable = PageRequest.of(0, Integer.MAX_VALUE, Sort.by("cardOrder").ascending());
         Page<Flashcard> flashcardPage = flashcardRepository.findByStudentFlashCardSetStudentSetId(flashcardSetId, pageable);
         flashcardSet.setTotalCards((int) flashcardPage.getTotalElements());
