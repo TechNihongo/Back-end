@@ -44,7 +44,7 @@ public class StudentViolationServiceImpl implements StudentViolationService {
     @Override
     public PageResponseDTO<StudentViolation> getAllStudentViolations(String classifyBy, String status, int pageNo, int pageSize, String sortBy, String sortDir) {
         if (!"FlashcardSet".equalsIgnoreCase(classifyBy) && !"Rating".equalsIgnoreCase(classifyBy)) {
-            throw new RuntimeException("classifyBy must be 'FlashcardSet' or 'Rating'.");
+            throw new RuntimeException("classifyBy phải là 'FlashcardSet' hoặc 'Rating'.");
         }
 
         Sort sort = sortDir.equalsIgnoreCase(Sort.Direction.ASC.name())
@@ -57,7 +57,7 @@ public class StudentViolationServiceImpl implements StudentViolationService {
             try {
                 violationStatus = ViolationStatus.valueOf(status.toUpperCase());
             } catch (IllegalArgumentException e) {
-                throw new RuntimeException("Invalid status value. Must be PENDING, RESOLVED, or DISMISSED.");
+                throw new RuntimeException("Status không hợp lệ, phải là PENDING, RESOLVED, hoặc DISMISSED.");
             }
         }
 
@@ -74,16 +74,19 @@ public class StudentViolationServiceImpl implements StudentViolationService {
     public ReportViolationResponseDTO reportViolation(Integer reportedBy, ReportViolationRequestDTO request) {
         String classifyBy = request.getClassifyBy();
         if (!"FlashcardSet".equalsIgnoreCase(classifyBy) && !"Rating".equalsIgnoreCase(classifyBy)) {
-            throw new RuntimeException("classifyBy must be 'FlashcardSet' or 'Rating'!");
+            throw new RuntimeException("classifyBy phải là 'FlashcardSet' hoặc 'Rating'.");
         }
 
         Integer contentId = request.getContentId();
         if (contentId == null) {
-            throw new RuntimeException("ContentId must not be null!");
+            throw new RuntimeException("ContentId không thể null!");
+        }
+        if(request.getDescription().isEmpty()){
+            throw new RuntimeException("Vui lòng điền mô tả vi phạm");
         }
 
         User user = userRepository.findById(reportedBy)
-                .orElseThrow(() -> new RuntimeException("User not found with ID: " + reportedBy));
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy User với ID: " + reportedBy));
 
         StudentViolation violation = StudentViolation.builder()
                 .description(request.getDescription())
@@ -93,12 +96,12 @@ public class StudentViolationServiceImpl implements StudentViolationService {
 
         if ("FlashcardSet".equalsIgnoreCase(classifyBy)) {
             StudentFlashcardSet flashcardSet = studentFlashcardSetRepository.findById(contentId)
-                    .orElseThrow(() -> new RuntimeException("StudentFlashcardSet not found with ID: " + contentId));
+                    .orElseThrow(() -> new RuntimeException("Không tìm thấy StudentFlashcardSet với ID: " + contentId));
             violation.setStudentFlashcardSet(flashcardSet);
             violation.setStudentCourseRating(null);
         } else {
             StudentCourseRating rating = studentCourseRatingRepository.findById(contentId)
-                    .orElseThrow(() -> new RuntimeException("StudentCourseRating not found with ID: " + contentId));
+                    .orElseThrow(() -> new RuntimeException("Không tìm thấy StudentCourseRating với ID: " + contentId));
             violation.setStudentCourseRating(rating);
             violation.setStudentFlashcardSet(null);
         }
@@ -113,18 +116,18 @@ public class StudentViolationServiceImpl implements StudentViolationService {
     @Override
     @Transactional
     public HandleViolationResponseDTO handleViolation(Integer violationId, Integer handledBy, HandleViolationRequestDTO request) {
-        // Tìm vi phạm chính
+        if (violationId == null) {
+            throw new ResourceNotFoundException("violationId không thể null");
+        }
         StudentViolation violation = studentViolationRepository.findByViolationId(violationId);
         if (violation == null) {
             throw new ResourceNotFoundException("Không tìm thấy StudentViolation với ID: " + violationId);
         }
 
-        // Kiểm tra xem vi phạm có còn ở trạng thái PENDING không
         if (!violation.getStatus().equals(ViolationStatus.PENDING)) {
             throw new IllegalStateException("Vi phạm đã được xử lý trước đó.");
         }
 
-        // Xác thực trạng thái
         String statusStr = request.getStatus();
         if (!"RESOLVED".equalsIgnoreCase(statusStr) && !"DISMISSED".equalsIgnoreCase(statusStr)) {
             throw new IllegalArgumentException("Trạng thái phải là 'RESOLVED' hoặc 'DISMISSED'.");

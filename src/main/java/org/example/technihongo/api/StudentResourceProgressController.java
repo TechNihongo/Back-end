@@ -200,14 +200,14 @@ public class StudentResourceProgressController {
 
                 return ResponseEntity.ok(ApiResponse.builder()
                         .success(true)
-                        .message("Note successfully!")
+                        .message("Ghi chú thành công!")
                         .data(progress)
                         .build());
             }  else {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                         .body(ApiResponse.builder()
                                 .success(false)
-                                .message("Unauthorized")
+                                .message("Không có quyền")
                                 .build());
             }
         } catch (IllegalArgumentException e) {

@@ -32,7 +32,7 @@ public class StudyPlanController {
 
     @GetMapping("/course/{courseId}")
     public ResponseEntity<ApiResponse> getAllStudyPlansByCourseId(@RequestHeader("Authorization") String authorizationHeader,
-                                                        @PathVariable Integer courseId) throws Exception {
+                                                        @PathVariable Integer courseId) {
         try{
             if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
                 String token = authorizationHeader.substring(7);
@@ -42,8 +42,8 @@ public class StudyPlanController {
                     List<StudyPlan> studyPlanList = studyPlanService.getStudyPlanListByCourseId(courseId);
                     if (studyPlanList.isEmpty()) {
                         return ResponseEntity.ok(ApiResponse.builder()
-                                .success(false)
-                                .message("List StudyPlans is empty!")
+                                .success(true)
+                                .message("Danh sách StudyPlans trống!")
                                 .build());
                     } else {
                         return ResponseEntity.ok(ApiResponse.builder()
@@ -56,8 +56,8 @@ public class StudyPlanController {
                     List<StudyPlan> studyPlanList = studyPlanService.getActiveStudyPlanListByCourseId(courseId);
                     if (studyPlanList.isEmpty()) {
                         return ResponseEntity.ok(ApiResponse.builder()
-                                .success(false)
-                                .message("List StudyPlans is empty!")
+                                .success(true)
+                                .message("Danh sách StudyPlans trống!")
                                 .build());
                     } else {
                         return ResponseEntity.ok(ApiResponse.builder()
@@ -72,7 +72,7 @@ public class StudyPlanController {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                         .body(ApiResponse.builder()
                                 .success(false)
-                                .message("Unauthorized")
+                                .message("Không có quyền")
                                 .build());
             }
         } catch (IllegalArgumentException e) {
@@ -85,7 +85,7 @@ public class StudyPlanController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(ApiResponse.builder()
                             .success(false)
-                            .message("Failed to get StudyPlan: " + e.getMessage())
+                            .message("Lấy danh sách StudyPlan thất bại: " + e.getMessage())
                             .build());
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
