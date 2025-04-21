@@ -44,8 +44,8 @@ public class Course {
     @JoinColumn(name = "difficulty_level_id", referencedColumnName = "level_id", nullable = false)
     private DifficultyLevel difficultyLevel;
 
-    @Column(name = "attachment_url")
-    private String attachmentUrl;
+//    @Column(name = "attachment_url")
+//    private String attachmentUrl;
 
     @Column(name = "thumbnail_url")
     private String thumbnailUrl;
