@@ -60,8 +60,8 @@ public class StudentSubscriptionServiceImpl implements StudentSubscriptionServic
         // Kiểm tra số lần gia hạn
         List<StudentSubscription> allSubscriptions = subscriptionRepository
                 .findAllByStudent_StudentIdAndIsActiveTrueOrEndDateAfter(studentId, LocalDateTime.now(), Pageable.unpaged());
-        long renewalCount = allSubscriptions.size() - 1; // Trừ subscription đầu tiên
-        if (renewalCount >= 3) {
+        long renewalCount = allSubscriptions.size() - 1;
+        if (renewalCount >= 2) {
             throw new RuntimeException("Hãy dành thời gian và học thật kỹ khóa học trước khi gia hạn thêm nhé");
         }
 
@@ -75,7 +75,7 @@ public class StudentSubscriptionServiceImpl implements StudentSubscriptionServic
                 .findBySubscription_SubscriptionIdAndTransactionStatus(
                         currentSubscription.getSubscriptionId(), TransactionStatus.PENDING);
         if (!pendingTransactions.isEmpty()) {
-            throw new RuntimeException("There is already a pending renewal transaction for this subscription");
+            throw new RuntimeException("Đang có giao dịch đang chờ xử lý cho gói đăng ký này. Vui lòng kiểm tra lại sau.");
         }
 
         SubscriptionPlan plan = subscriptionPlanRepository.findById(request.getSubPlanId())
@@ -86,7 +86,6 @@ public class StudentSubscriptionServiceImpl implements StudentSubscriptionServic
             throw new IllegalStateException("MoMo payment method is not available or inactive");
         }
 
-        // Nhúng subPlanId vào externalOrderId
         String orderId = "RENEW-" + System.currentTimeMillis() + "-" + request.getSubPlanId();
 
         PaymentTransaction transaction = PaymentTransaction.builder()
@@ -417,10 +416,10 @@ public class StudentSubscriptionServiceImpl implements StudentSubscriptionServic
                 periodLabel = now.getYear() + "-M" + now.getMonthValue();
                 break;
             case "QUARTER":
-                int quarter = (now.getMonthValue() - 1) / 4 + 1;
-                int startMonth = (quarter - 1) * 4 + 1;
+                int quarter = (now.getMonthValue() - 1) / 3 + 1;
+                int startMonth = (quarter - 1) * 3 + 1;
                 startDate = LocalDateTime.of(now.getYear(), startMonth, 1, 0, 0);
-                endDate = LocalDateTime.of(now.getYear(), startMonth + 3, 1, 0, 0)
+                endDate = LocalDateTime.of(now.getYear(), startMonth + 2, 1, 0, 0)
                         .with(TemporalAdjusters.lastDayOfMonth()).with(LocalTime.MAX);
                 periodLabel = now.getYear() + "-Q" + quarter;
                 break;

@@ -53,14 +53,14 @@ public class StudentStudyPlanServiceImpl implements StudentStudyPlanService {
                 .orElseThrow(() -> new ResourceNotFoundException("Study plan not found with ID: " + request.getStudyPlanId()));
 
         if(!studyPlan.isActive()) {
-            throw new ResourceNotFoundException("Study plan is not active!! So that you can't enroll to this StudyPlan!!");
+            throw new ResourceNotFoundException("Study plan không Active!! Nên bạn không thể chuyển qua StudyPlan này được!!");
         }
 
         Optional<StudentStudyPlan> existingPlan = studentStudyPlanRepository.findByStudentIdAndStudyPlanId(
                 request.getStudentId(), request.getStudyPlanId());
 
         if(existingPlan.isPresent() && existingPlan.get().getStatus().equals(StudyPlanStatus.ACTIVE)) {
-            throw new ResourceNotFoundException("You are already enrolled in this study plan!!");
+            throw new ResourceNotFoundException("Bạn đã truy cập StudyPlan này rồi!!");
         }
 
         Optional<StudentStudyPlan> activePlan = studentStudyPlanRepository.findActiveStudyPlanByStudentId(request.getStudentId());
@@ -111,7 +111,7 @@ public class StudentStudyPlanServiceImpl implements StudentStudyPlanService {
                 .orElseThrow(() -> new ResourceNotFoundException("Study plan not found with ID: " + request.getNewStudyPlanId()));
 
         if (!newStudyPlan.isActive()) {
-            throw new IllegalStateException("Cannot switch to an inactive study plan");
+            throw new IllegalStateException("Không thể chuyển qua StudyPlan bị Inactive được!!");
         }
 
         StudentStudyPlan currentPlan = studentStudyPlanRepository.findActiveStudyPlanByStudentId(request.getStudentId())
