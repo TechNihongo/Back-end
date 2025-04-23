@@ -1,6 +1,7 @@
 package org.example.technihongo.repositories;
 
 import org.example.technihongo.entities.PaymentTransaction;
+import org.example.technihongo.entities.SubscriptionPlan;
 import org.example.technihongo.enums.TransactionStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -50,7 +51,13 @@ public interface PaymentTransactionRepository extends JpaRepository<PaymentTrans
             "WHERE pt.payment_date >= :startDate and pt.transaction_status = 'COMPLETED' " +
             "GROUP BY DATEADD(MONTH, DATEDIFF(MONTH, 0, pt.payment_date), 0)", nativeQuery = true)
     List<Object[]> sumByMonth(@Param("startDate") LocalDateTime startDate);
+
+    List<PaymentTransaction> findAllBySubscription_SubscriptionPlanAndTransactionStatus(SubscriptionPlan plan, TransactionStatus status);
+
+    List<PaymentTransaction> findAllByTransactionStatus(TransactionStatus status);
 }
+
+
 
 
 
