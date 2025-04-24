@@ -15,6 +15,7 @@ import org.example.technihongo.services.interfaces.UserActivityLogService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -35,6 +36,7 @@ public class DomainController {
     private UserActivityLogService userActivityLogService;
 
     @PostMapping("/create")
+    @PreAuthorize("hasRole('ROLE_Content Manager')")
     public ResponseEntity<ApiResponse> createDomain(
             @RequestHeader("Authorization") String authorizationHeader,
             HttpServletRequest httpRequest,
@@ -87,6 +89,7 @@ public class DomainController {
     }
 
     @PatchMapping("/update/{domainId}")
+    @PreAuthorize("hasRole('ROLE_Content Manager')")
     public ResponseEntity<ApiResponse> updateDomain(
             @PathVariable Integer domainId,
             @RequestBody DomainRequestDTO request,
@@ -145,6 +148,7 @@ public class DomainController {
     }
 
     @DeleteMapping("/delete/{domainId}")
+    @PreAuthorize("hasRole('ROLE_Content Manager')")
     public ResponseEntity<ApiResponse> deleteDomain(
             @PathVariable Integer domainId,
             @RequestHeader("Authorization") String authorizationHeader,

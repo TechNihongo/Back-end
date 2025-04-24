@@ -13,6 +13,7 @@ import org.example.technihongo.services.interfaces.UserActivityLogService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -32,6 +33,7 @@ public class QuizController {
     private UserActivityLogService userActivityLogService;
 
     @GetMapping("/all")
+    @PreAuthorize("hasRole('ROLE_Content Manager')")
     public ResponseEntity<ApiResponse> getAllQuizzes(@RequestHeader("Authorization") String authorizationHeader) throws Exception {
         try{
             if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
@@ -91,6 +93,7 @@ public class QuizController {
     }
 
     @GetMapping("/{quizId}")
+    @PreAuthorize("hasAnyRole('ROLE_Student', 'ROLE_Content Manager')")
     public ResponseEntity<ApiResponse> viewQuiz(
             @PathVariable Integer quizId,
             @RequestHeader("Authorization") String authorizationHeader){
@@ -146,6 +149,7 @@ public class QuizController {
     }
 
     @PostMapping("/create")
+    @PreAuthorize("hasRole('ROLE_Content Manager')")
     public ResponseEntity<ApiResponse> createQuiz(
             @RequestBody CreateQuizDTO createQuizDTO,
             @RequestHeader("Authorization") String authorizationHeader,
@@ -204,6 +208,7 @@ public class QuizController {
     }
 
     @PatchMapping("/update/{quizId}")
+    @PreAuthorize("hasRole('ROLE_Content Manager')")
     public ResponseEntity<ApiResponse> updateQuiz(
             @PathVariable Integer quizId,
             @RequestBody UpdateQuizDTO updateQuizDTO,
@@ -261,6 +266,7 @@ public class QuizController {
     }
 
     @PatchMapping("/update-status/{quizId}")
+    @PreAuthorize("hasRole('ROLE_Content Manager')")
     public ResponseEntity<ApiResponse> updateQuizStatus(
             @PathVariable Integer quizId,
             @RequestBody UpdateQuizStatusDTO updateQuizStatusDTO) {
@@ -292,6 +298,7 @@ public class QuizController {
     }
 
     @GetMapping("/creator")
+    @PreAuthorize("hasAnyRole('ROLE_Content Manager', 'ROLE_Administrator')")
     public ResponseEntity<ApiResponse> getQuizListByCreator(@RequestHeader("Authorization") String authorizationHeader) throws Exception {
         try{
             if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {

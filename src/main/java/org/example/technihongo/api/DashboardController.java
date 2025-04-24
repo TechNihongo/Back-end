@@ -13,6 +13,7 @@ import org.example.technihongo.services.interfaces.StudentService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -64,6 +65,7 @@ public class DashboardController {
     }
 
     @GetMapping("/admin/overview")
+    @PreAuthorize("hasRole('ROLE_Administrator')")
     public ResponseEntity<ApiResponse> getAdminOverview(@RequestHeader("Authorization") String authorizationHeader) {
         try{
             AdminOverviewDTO dto = dashboardService.getAdminOverview();

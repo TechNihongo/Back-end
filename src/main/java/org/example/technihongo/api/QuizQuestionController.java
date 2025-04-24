@@ -9,6 +9,7 @@ import org.example.technihongo.services.interfaces.QuizService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -23,6 +24,7 @@ public class QuizQuestionController {
     private QuizService quizService;
 
     @GetMapping("/quiz/{quizId}")
+    @PreAuthorize("hasAnyRole('ROLE_Student', 'ROLE_Content Manager')")
     public ResponseEntity<ApiResponse> getQuizQuestionListByQuizId(@PathVariable Integer quizId) throws Exception {
         try{
             List<QuizQuestion> quizQuestions = quizQuestionService.getQuizQuestionsByQuizId(quizId);
@@ -60,6 +62,7 @@ public class QuizQuestionController {
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ROLE_Student', 'ROLE_Content Manager')")
     public ResponseEntity<ApiResponse> getQuizQuestionById(@PathVariable Integer id) throws Exception {
         try{
             QuizQuestion quizQuestion = quizQuestionService.getQuizQuestionById(id);
@@ -97,6 +100,7 @@ public class QuizQuestionController {
     }
 
     @PostMapping("/create")
+    @PreAuthorize("hasRole('ROLE_Content Manager')")
     public ResponseEntity<ApiResponse> createQuizQuestion(@RequestBody CreateQuizQuestionDTO createQuizQuestionDTO){
         try {
             QuizQuestion quizQuestion = quizQuestionService.createQuizQuestion(createQuizQuestionDTO);
@@ -129,6 +133,7 @@ public class QuizQuestionController {
     }
 
     @PatchMapping("/update-order/{quizId}")
+    @PreAuthorize("hasRole('ROLE_Content Manager')")
     public ResponseEntity<ApiResponse> updateQuizQuestionOrder(@PathVariable Integer quizId,
                                                              @RequestBody UpdateQuizQuestionOrderDTO updateQuizQuestionOrderDTO) {
         try{
@@ -159,6 +164,7 @@ public class QuizQuestionController {
     }
 
     @DeleteMapping("/delete/{id}")
+    @PreAuthorize("hasRole('ROLE_Content Manager')")
     public ResponseEntity<ApiResponse> deleteQuizQuestion(@PathVariable Integer id) {
         try{
             Integer quizId = quizQuestionService.getQuizQuestionById(id).getQuiz().getQuizId();
@@ -191,6 +197,7 @@ public class QuizQuestionController {
     }
 
     @PatchMapping("/set-order/{quizId}")
+    @PreAuthorize("hasRole('ROLE_Content Manager')")
     public ResponseEntity<ApiResponse> setQuizQuestionOrder(@PathVariable Integer quizId,
                                                             @RequestParam Integer quizQuestionId,
                                                             @RequestParam Integer newOrder) {
@@ -222,6 +229,7 @@ public class QuizQuestionController {
     }
 
     @PostMapping("/create-new-question")
+    @PreAuthorize("hasRole('ROLE_Content Manager')")
     public ResponseEntity<ApiResponse> createQuizQuestionWithNewQuestion(
             @RequestBody CreateQuizQuestionWithNewQuestionDTO dto){
         try {
@@ -254,6 +262,7 @@ public class QuizQuestionController {
         }
     }
     @GetMapping("/questions-options/{quizId}")
+    @PreAuthorize("hasAnyRole('ROLE_Student', 'ROLE_Content Manager')")
     public ResponseEntity<ApiResponse> getAllQuestionsAndOptionsByQuizId(
             @PathVariable Integer quizId) {
         try {

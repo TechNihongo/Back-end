@@ -7,6 +7,7 @@ import org.example.technihongo.services.interfaces.PaymentMethodService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -19,6 +20,7 @@ public class PaymentMethodController {
     private PaymentMethodService paymentMethodService;
 
     @PatchMapping("/{methodId}/update")
+    @PreAuthorize("hasAnyRole('ROLE_Content Manager', 'ROLE_Administrator')")
     public ResponseEntity<ApiResponse> updatePaymentMethod(
             @PathVariable Integer methodId,
             @RequestBody UpdatePaymentMethodRequestDTO request) {

@@ -8,6 +8,7 @@ import org.example.technihongo.services.interfaces.QuestionAnswerOptionService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -21,6 +22,7 @@ public class QuestionAnswerOptionController {
     private QuestionAnswerOptionService questionAnswerOptionService;
 
     @GetMapping("/question/{questionId}")
+    @PreAuthorize("hasAnyRole('ROLE_Student', 'ROLE_Content Manager')")
     public ResponseEntity<ApiResponse> getOptionsByQuestionId(@PathVariable Integer questionId) throws Exception {
         try{
             List<QuestionAnswerOption> optionList = questionAnswerOptionService.getOptionListByQuestionId(questionId);
@@ -58,6 +60,7 @@ public class QuestionAnswerOptionController {
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ROLE_Student', 'ROLE_Content Manager')")
     public ResponseEntity<ApiResponse> viewQuestionAnswerOption(@PathVariable Integer id) throws Exception {
         try{
             QuestionAnswerOption option = questionAnswerOptionService.getOptionById(id);
@@ -88,6 +91,7 @@ public class QuestionAnswerOptionController {
     }
 
     @PostMapping("/create")
+    @PreAuthorize("hasRole('ROLE_Content Manager')")
     public ResponseEntity<ApiResponse> createQuestionAnswerOptions(@RequestBody QuestionAnswerOptionListDTO questionAnswerOptionListDTO){
         try {
             QuestionWithOptionsResponseDTO question = questionAnswerOptionService.createAnswerOptionList(questionAnswerOptionListDTO);
@@ -119,6 +123,7 @@ public class QuestionAnswerOptionController {
     }
 
     @PatchMapping("/update")
+    @PreAuthorize("hasRole('ROLE_Content Manager')")
     public ResponseEntity<ApiResponse> updateQuestionAnswerOptions(@RequestBody QuestionAnswerOptionListDTO questionAnswerOptionListDTO) {
         try{
             QuestionWithOptionsResponseDTO question =  questionAnswerOptionService.updateAnswerOptionList(questionAnswerOptionListDTO);

@@ -14,6 +14,7 @@ import org.example.technihongo.services.interfaces.UserActivityLogService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -87,6 +88,7 @@ public class StudentFavoriteController {
     }
 
     @GetMapping("/view")
+    @PreAuthorize("hasRole('ROLE_Student')")
     public ResponseEntity<ApiResponse> getListFavoriteLearningResourcesByStudentId(
             @RequestHeader("Authorization") String authorizationHeader,
             @RequestParam(defaultValue = "0") int pageNo,

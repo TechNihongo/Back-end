@@ -12,6 +12,7 @@ import org.example.technihongo.services.interfaces.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -157,6 +158,7 @@ public class LessonResourceController {
     }
 
     @PostMapping("/create")
+    @PreAuthorize("hasRole('ROLE_Content Manager')")
     public ResponseEntity<ApiResponse> createLessonResource(
             @RequestBody CreateLessonResourceDTO createLessonResourceDTO,
             @RequestHeader("Authorization") String authorizationHeader,
@@ -214,6 +216,7 @@ public class LessonResourceController {
     }
 
     @PatchMapping("/update/{id}")
+    @PreAuthorize("hasRole('ROLE_Content Manager')")
     public ResponseEntity<ApiResponse> updateLessonResource(
             @PathVariable Integer id,
             @RequestBody UpdateLessonResourceDTO updateLessonResourceDTO,
@@ -271,6 +274,7 @@ public class LessonResourceController {
     }
 
     @PatchMapping("/update-order/{lessonId}")
+    @PreAuthorize("hasRole('ROLE_Content Manager')")
     public ResponseEntity<ApiResponse> updateLessonResourceOrder(@PathVariable Integer lessonId,
                                                          @RequestBody UpdateLessonResourceOrderDTO updateLessonResourceOrderDTO) {
         try{
@@ -301,6 +305,7 @@ public class LessonResourceController {
     }
 
     @DeleteMapping("/delete/{id}")
+    @PreAuthorize("hasRole('ROLE_Content Manager')")
     public ResponseEntity<ApiResponse> deleteLessonResource(
             @PathVariable Integer id,
             @RequestHeader("Authorization") String authorizationHeader,
@@ -357,6 +362,7 @@ public class LessonResourceController {
     }
 
     @GetMapping("/study-plan")
+    @PreAuthorize("hasRole('ROLE_Content Manager')")
     public ResponseEntity<ApiResponse> getLessonResourcesByDefaultStudyPlan(
             @RequestParam(defaultValue = "") Integer studyPlanId,
             @RequestParam(defaultValue = "") String keyword,
@@ -402,6 +408,7 @@ public class LessonResourceController {
     }
 
     @PatchMapping("/set-order/{lessonId}")
+    @PreAuthorize("hasRole('ROLE_Content Manager')")
     public ResponseEntity<ApiResponse> setLessonResourceOrder(@PathVariable Integer lessonId,
                                                               @RequestParam Integer lessonResourceId,
                                                               @RequestParam Integer newOrder) {

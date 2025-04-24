@@ -18,6 +18,7 @@ import org.example.technihongo.services.interfaces.UserActivityLogService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -34,6 +35,7 @@ public class StudentController {
     private UserActivityLogService userActivityLogService;
 
     @PatchMapping("/{studentId}/daily-goal")
+    @PreAuthorize("hasRole('ROLE_Student')")
     public ResponseEntity<ApiResponse> setDailyGoal(
             @PathVariable Integer studentId,
             @RequestBody DailyGoalRequest request) {
@@ -73,6 +75,7 @@ public class StudentController {
 
 
     @PatchMapping("/{studentId}/difficulty-level")
+    @PreAuthorize("hasRole('ROLE_Student')")
     public ResponseEntity<ApiResponse> updateDifficultyLevel(
             @PathVariable Integer studentId,
             @RequestBody DifficultyLevelRequest request) {
@@ -112,6 +115,7 @@ public class StudentController {
     }
 
     @PatchMapping("/{userId}/profile")
+    @PreAuthorize("hasRole('ROLE_Student')")
     public ResponseEntity<ApiResponse> updateProfile(
             @PathVariable Integer userId,
             @RequestBody UpdateProfileDTO request,
@@ -169,6 +173,7 @@ public class StudentController {
     }
 
     @GetMapping("/profile/{studentId}")
+    @PreAuthorize("hasRole('ROLE_Student')")
     public ResponseEntity<ApiResponse> getProfile(@PathVariable Integer studentId) {
         try {
             ProfileDTO profileDTO = studentService.getStudentProfile(studentId);

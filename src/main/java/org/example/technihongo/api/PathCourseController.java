@@ -16,6 +16,7 @@ import org.example.technihongo.services.interfaces.UserActivityLogService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -208,6 +209,7 @@ public class PathCourseController {
     }
 
     @PatchMapping("/update-order/{pathId}")
+    @PreAuthorize("hasRole('ROLE_Content Manager')")
     public ResponseEntity<ApiResponse> updatePathCourseOrder(@PathVariable Integer pathId,
                                                          @RequestBody UpdatePathCourseOrderDTO updatePathCourseOrderDTO) {
         try{
@@ -296,6 +298,7 @@ public class PathCourseController {
     }
 
     @PatchMapping("/set-order/{pathId}")
+    @PreAuthorize("hasRole('ROLE_Content Manager')")
     public ResponseEntity<ApiResponse> setPathCourseOrder(@PathVariable Integer pathId,
                                                           @RequestParam Integer pathCourseId,
                                                           @RequestParam Integer newOrder) {

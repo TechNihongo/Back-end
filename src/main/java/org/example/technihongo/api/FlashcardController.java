@@ -16,6 +16,7 @@ import org.example.technihongo.services.interfaces.UserActivityLogService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -36,6 +37,7 @@ public class FlashcardController {
 
 
     @PostMapping("/{setId}/studentCreate")
+    @PreAuthorize("hasRole('ROLE_Student')")
     public ResponseEntity<ApiResponse> createStudentFlashcards(
             @RequestHeader("Authorization") String authorizationHeader,
             HttpServletRequest httpRequest,
@@ -94,6 +96,7 @@ public class FlashcardController {
     }
 
     @PostMapping("/{setId}/systemCreate")
+    @PreAuthorize("hasRole('ROLE_Content Manager')")
     public ResponseEntity<ApiResponse> createSystemFlashcards(
             @PathVariable("setId") Integer flashcardSetId,
             @RequestBody List<FlashcardRequestDTO> requests,
@@ -149,6 +152,7 @@ public class FlashcardController {
         }
     }
     @PatchMapping("/{flashcardId}/update")
+    @PreAuthorize("hasAnyRole('ROLE_Student', 'ROLE_Content Manager')")
     public ResponseEntity<ApiResponse> updateFlashcard(
             @PathVariable Integer flashcardId,
             @RequestBody FlashcardRequestDTO request,
@@ -208,6 +212,7 @@ public class FlashcardController {
 
 
     @DeleteMapping("/delete/{flashcardId}")
+    @PreAuthorize("hasAnyRole('ROLE_Student', 'ROLE_Content Manager')")
     public ResponseEntity<ApiResponse> deleteFlashcard(
             @PathVariable Integer flashcardId,
             @RequestHeader("Authorization") String authorizationHeader,

@@ -13,6 +13,7 @@ import org.example.technihongo.services.interfaces.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -95,7 +96,7 @@ public class LessonController {
     }
 
     @GetMapping("/study-plan/{id}")
-    public ResponseEntity<ApiResponse> getLessonListByStudyPlanId(@PathVariable Integer id) throws Exception {
+    public ResponseEntity<ApiResponse> getLessonListByStudyPlanId(@PathVariable Integer id){
         try{
             List<Lesson> lessonList = lessonService.getLessonListByStudyPlanId(id);
             if(lessonList.isEmpty()){
@@ -133,7 +134,7 @@ public class LessonController {
             @RequestParam(defaultValue = "10") int pageSize,
             @RequestParam(defaultValue = "lessonId") String sortBy,
             @RequestParam(defaultValue = "asc") String sortDir,
-            @RequestParam(defaultValue = "") String keyword) throws Exception {
+            @RequestParam(defaultValue = "") String keyword) {
         try{
             if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
                 String token = authorizationHeader.substring(7);
@@ -208,6 +209,7 @@ public class LessonController {
     }
 
     @PostMapping("/create")
+    @PreAuthorize("hasRole('ROLE_Content Manager')")
     public ResponseEntity<ApiResponse> createLesson(
             @RequestBody CreateLessonDTO createLessonDTO,
             @RequestHeader("Authorization") String authorizationHeader,
@@ -265,6 +267,7 @@ public class LessonController {
     }
 
     @PatchMapping("/update/{lessonId}")
+    @PreAuthorize("hasRole('ROLE_Content Manager')")
     public ResponseEntity<ApiResponse> updateLesson(
             @PathVariable Integer lessonId,
             @RequestBody UpdateLessonDTO updateLessonDTO,
@@ -322,6 +325,7 @@ public class LessonController {
     }
 
     @PatchMapping("/update-order/{studyPlanId}")
+    @PreAuthorize("hasRole('ROLE_Content Manager')")
     public ResponseEntity<ApiResponse> updateLessonOrder(@PathVariable Integer studyPlanId,
                                                     @RequestBody UpdateLessonOrderDTO updateLessonOrderDTO) {
         try{
@@ -352,6 +356,7 @@ public class LessonController {
     }
 
     @PatchMapping("/set-order/{studyPlanId}")
+    @PreAuthorize("hasRole('ROLE_Content Manager')")
     public ResponseEntity<ApiResponse> setLessonResourceOrder(@PathVariable Integer studyPlanId,
                                                               @RequestParam Integer lessonId,
                                                               @RequestParam Integer newOrder) {
