@@ -88,7 +88,8 @@ public class SecurityConfig {
 
                         .requestMatchers("/*/user/content-manager", "/*/*/*/overview", "/*/*/set-violated/*",
                                 "/*/violation/all", "/*/violation/handle/*", "/*/violation/summary",
-                                "/*/activity-log/user/*").hasRole("Administrator")
+                                "/*/activity-log/user/*", "/*/*/most-popular-plan", "/*/*/revenue-by-plan",
+                                "/*/*/revenue-by-period").hasRole("Administrator")
 
 
                         .requestMatchers("/*/flashcard/*/update", "/*/flashcard/delete/*", "/*/option/question/*",
