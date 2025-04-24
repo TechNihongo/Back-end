@@ -33,7 +33,7 @@ import java.time.DayOfWeek;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.temporal.TemporalAdjusters;
-import java.time.temporal.WeekFields;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
@@ -374,7 +374,6 @@ public class StudentSubscriptionServiceImpl implements StudentSubscriptionServic
     }
 
 
-    @Override
     public List<RevenueByPeriodDTO> getRevenueByPeriod(String periodType) {
         log.info("Fetching revenue for period: {}", periodType);
 
@@ -389,7 +388,7 @@ public class StudentSubscriptionServiceImpl implements StudentSubscriptionServic
             return List.of();
         }
 
-        // Lọc các giao dịch có payment_date không null
+        // Filter transactions with non-null payment dates
         transactions = transactions.stream()
                 .filter(tx -> tx.getPaymentDate() != null)
                 .toList();
@@ -400,123 +399,88 @@ public class StudentSubscriptionServiceImpl implements StudentSubscriptionServic
         }
 
         LocalDateTime now = LocalDateTime.now();
-        LocalDateTime startDate;
-        LocalDateTime endDate;
-        String periodLabel;
+        List<RevenueByPeriodDTO> result = new ArrayList<>();
 
         switch (periodType.toUpperCase()) {
             case "WEEK":
-                startDate = now.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY)).with(LocalTime.MIN);
-                endDate = now.with(TemporalAdjusters.nextOrSame(DayOfWeek.SUNDAY)).with(LocalTime.MAX);
-                periodLabel = now.getYear() + "-W" + now.get(WeekFields.ISO.weekOfWeekBasedYear());
+                LocalDateTime weekStart = now.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY)).with(LocalTime.MIN);
+                for (int i = 0; i < 7; i++) {
+                    LocalDateTime dayStart = weekStart.plusDays(i).with(LocalTime.MIN);
+                    LocalDateTime dayEnd = dayStart.with(LocalTime.MAX);
+                    String periodLabel = dayStart.toLocalDate().toString(); // Format: YYYY-MM-DD
+                    BigDecimal revenue = transactions.stream()
+                            .filter(tx -> !tx.getPaymentDate().isBefore(dayStart) && !tx.getPaymentDate().isAfter(dayEnd))
+                            .map(PaymentTransaction::getTransactionAmount)
+                            .reduce(BigDecimal.ZERO, BigDecimal::add);
+                    result.add(RevenueByPeriodDTO.builder()
+                            .period(periodLabel)
+                            .totalRevenue(revenue)
+                            .build());
+                }
                 break;
             case "MONTH":
-                startDate = now.withDayOfMonth(1).with(LocalTime.MIN);
-                endDate = now.with(TemporalAdjusters.lastDayOfMonth()).with(LocalTime.MAX);
-                periodLabel = now.getYear() + "-M" + now.getMonthValue();
+                LocalDateTime monthStart = now.withDayOfMonth(1).with(LocalTime.MIN);
+                LocalDateTime monthEnd = now.with(TemporalAdjusters.lastDayOfMonth()).with(LocalTime.MAX);
+                LocalDateTime cursor = monthStart.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY));
+                int weekIndex = 1;
+                while (!cursor.isAfter(monthEnd)) {
+                    final LocalDateTime weekStartCursor = cursor;
+                    LocalDateTime weekEnd = weekStartCursor.plusDays(6).with(LocalTime.MAX);
+                    if (weekEnd.isAfter(monthEnd)) {
+                        weekEnd = monthEnd;
+                    }
+                    final LocalDateTime weekEndCursor = weekEnd;
+                    String periodLabel = now.getYear() + "-M" + now.getMonthValue() + "-W" + weekIndex;
+                    BigDecimal revenue = transactions.stream()
+                            .filter(tx -> !tx.getPaymentDate().isBefore(weekStartCursor) && !tx.getPaymentDate().isAfter(weekEndCursor))
+                            .map(PaymentTransaction::getTransactionAmount)
+                            .reduce(BigDecimal.ZERO, BigDecimal::add);
+                    result.add(RevenueByPeriodDTO.builder()
+                            .period(periodLabel)
+                            .totalRevenue(revenue)
+                            .build());
+                    cursor = weekEndCursor.plusSeconds(1).with(TemporalAdjusters.next(DayOfWeek.MONDAY));
+                    weekIndex++;
+                }
                 break;
             case "QUARTER":
                 int quarter = (now.getMonthValue() - 1) / 3 + 1;
                 int startMonth = (quarter - 1) * 3 + 1;
-                startDate = LocalDateTime.of(now.getYear(), startMonth, 1, 0, 0);
-                endDate = LocalDateTime.of(now.getYear(), startMonth + 2, 1, 0, 0)
-                        .with(TemporalAdjusters.lastDayOfMonth()).with(LocalTime.MAX);
-                periodLabel = now.getYear() + "-Q" + quarter;
+                for (int month = startMonth; month < startMonth + 3; month++) {
+                    LocalDateTime quarterMonthStart = LocalDateTime.of(now.getYear(), month, 1, 0, 0);
+                    LocalDateTime quarterMonthEnd = quarterMonthStart.with(TemporalAdjusters.lastDayOfMonth()).with(LocalTime.MAX);
+                    String periodLabel = now.getYear() + "-M" + month;
+                    BigDecimal revenue = transactions.stream()
+                            .filter(tx -> !tx.getPaymentDate().isBefore(quarterMonthStart) && !tx.getPaymentDate().isAfter(quarterMonthEnd))
+                            .map(PaymentTransaction::getTransactionAmount)
+                            .reduce(BigDecimal.ZERO, BigDecimal::add);
+                    result.add(RevenueByPeriodDTO.builder()
+                            .period(periodLabel)
+                            .totalRevenue(revenue)
+                            .build());
+                }
                 break;
             case "YEAR":
-                startDate = LocalDateTime.of(now.getYear(), 1, 1, 0, 0);
-                endDate = LocalDateTime.of(now.getYear(), 12, 31, 23, 59, 59);
-                periodLabel = String.valueOf(now.getYear());
+                for (int month = 1; month <= 12; month++) {
+                    LocalDateTime yearMonthStart = LocalDateTime.of(now.getYear(), month, 1, 0, 0);
+                    LocalDateTime yearMonthEnd = yearMonthStart.with(TemporalAdjusters.lastDayOfMonth()).with(LocalTime.MAX);
+                    String periodLabel = now.getYear() + "-M" + month;
+                    BigDecimal revenue = transactions.stream()
+                            .filter(tx -> !tx.getPaymentDate().isBefore(yearMonthStart) && !tx.getPaymentDate().isAfter(yearMonthEnd))
+                            .map(PaymentTransaction::getTransactionAmount)
+                            .reduce(BigDecimal.ZERO, BigDecimal::add);
+                    result.add(RevenueByPeriodDTO.builder()
+                            .period(periodLabel)
+                            .totalRevenue(revenue)
+                            .build());
+                }
                 break;
             default:
                 throw new IllegalStateException("Unexpected period type: " + periodType);
         }
 
-        BigDecimal totalRevenue = transactions.stream()
-                .filter(tx -> !tx.getPaymentDate().isBefore(startDate) && !tx.getPaymentDate().isAfter(endDate))
-                .map(PaymentTransaction::getTransactionAmount)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-
-        return List.of(RevenueByPeriodDTO.builder()
-                .period(periodLabel)
-                .totalRevenue(totalRevenue)
-                .build());
+        return result;
     }
-
-//    @Override
-//    public List<RevenueByPeriodDTO> getRevenueByPeriod(String periodType) {
-//        log.info("Fetching revenue by period: {}", periodType);
-//
-//        if (!List.of("WEEK", "MONTH", "QUARTER", "YEAR").contains(periodType.toUpperCase())) {
-//            throw new IllegalArgumentException("Invalid period type. Must be WEEK, MONTH, QUARTER, or YEAR.");
-//        }
-//
-//        List<PaymentTransaction> transactions = paymentTransactionRepository
-//                .findAllByTransactionStatus(TransactionStatus.COMPLETED);
-//        if (transactions.isEmpty()) {
-//            log.info("No completed transactions found");
-//            return List.of();
-//        }
-//
-//        transactions = transactions.stream()
-//                .filter(tx -> tx.getPaymentDate() != null)
-//                .toList();
-//
-//        Map<String, BigDecimal> revenueMap;
-//        switch (periodType.toUpperCase()) {
-//            case "WEEK":
-//                revenueMap = transactions.stream()
-//                        .collect(Collectors.groupingBy(
-//                                tx -> {
-//                                    LocalDate date = tx.getPaymentDate().toLocalDate();
-//                                    return date.getYear() + "-W" + date.get(IsoFields.WEEK_OF_WEEK_BASED_YEAR);
-//                                },
-//                                Collectors.mapping(PaymentTransaction::getTransactionAmount,
-//                                        Collectors.reducing(BigDecimal.ZERO, BigDecimal::add))
-//                        ));
-//                break;
-//            case "MONTH":
-//                revenueMap = transactions.stream()
-//                        .collect(Collectors.groupingBy(
-//                                tx -> tx.getPaymentDate().toLocalDate().getYear() + "-M" + tx.getPaymentDate().getMonthValue(),
-//                                Collectors.mapping(PaymentTransaction::getTransactionAmount,
-//                                        Collectors.reducing(BigDecimal.ZERO, BigDecimal::add))
-//                        ));
-//                break;
-//            case "QUARTER":
-//                revenueMap = transactions.stream()
-//                        .collect(Collectors.groupingBy(
-//                                tx -> {
-//                                    LocalDate date = tx.getPaymentDate().toLocalDate();
-//                                    return date.getYear() + "-Q" + date.get(IsoFields.QUARTER_OF_YEAR);
-//                                },
-//                                Collectors.mapping(PaymentTransaction::getTransactionAmount,
-//                                        Collectors.reducing(BigDecimal.ZERO, BigDecimal::add))
-//                        ));
-//                break;
-//            case "YEAR":
-//                revenueMap = transactions.stream()
-//                        .collect(Collectors.groupingBy(
-//                                tx -> String.valueOf(tx.getPaymentDate().getYear()),
-//                                Collectors.mapping(PaymentTransaction::getTransactionAmount,
-//                                        Collectors.reducing(BigDecimal.ZERO, BigDecimal::add))
-//                        ));
-//                break;
-//            default:
-//                throw new IllegalStateException("Unexpected period type: " + periodType);
-//        }
-//
-//        return revenueMap.entrySet().stream()
-//                .map(entry -> RevenueByPeriodDTO.builder()
-//                        .period(entry.getKey())
-//                        .totalRevenue(entry.getValue())
-//                        .build())
-//                .sorted(Comparator.comparing(RevenueByPeriodDTO::getPeriod))
-//                .collect(Collectors.toList());
-//    }
-
-
-
 
     @Scheduled(fixedRate = 86400000)
     @Transactional
