@@ -44,12 +44,28 @@ public class SecurityConfig {
                                 "/*/learning-path/search/*", "/*/learning-resource/{id:[0-9]+}", "/*/lesson/{id:[0-9]+}",
                                 "/*/lesson/*/paginated/*", "/*/lesson-resource/{id:[0-9]+}", "/*/lesson-resource/lesson/*",
                                 "/*/meeting/all", "/*/meeting/{id:[0-9]+}", "/*/script/meeting/*", "/*/script/{id:[0-9]+}",
-                                "/*/payment-method/all", "/*/payment/*").permitAll()
+                                "/*/payment-method/all", "/*/payment/*", "/*/course-progress/view/*", "/*/student-course-rating/getRating/*",
+                                "/*/student-course-rating/average/*", "/*/student-course-rating/course/**", "/*/student-flashcard-set/getUserFlashcard/*/*",
+                                "/*/*/searchTitle", "/*/flashcard-set-progress/all/*", "/*/flashcard-set-progress/set/*",
+                                "/*/resource-progress/*/*", "/*/*/send-reminders", "/*/study-plan/course/*",
+                                "/*/study-plan/{id:[0-9]+}", "/*/subscription/all", "/*/subscription/detail/*",
+                                "/*/system-flashcard-set/getSysFlashcardSet/*", "/*/system-flashcard-set/getAllFlashcardOfSet/*").permitAll()
 
 
-                        .requestMatchers("/*/lesson-progress/view", "/*/favorite/view", "/*/learning-log/view",
+                        .requestMatchers("/*/lesson-progress/*", "/*/favorite/**", "/*/learning-log/view",
                                 "/*/achievement/student/**", "/*/flashcard/*/studentCreate", "/*/flashcard-progress/*",
-                                "/*/folder-item/**", "/*/student/**").hasRole("Student")
+                                "/*/folder-item/**", "/*/student/**", "/*/course-progress/enroll", "/*/course-progress/check-enroll",
+                                "/*/course-progress/track", "/*/student-course-rating/createRating", "/*/student-course-rating/update/*",
+                                "/*/student-course-rating/student-rating/course/*", "/*/learning-log/track",
+                                "/*/student-flashcard-set/create", "/*/student-flashcard-set/update/*",
+                                "/*/student-flashcard-set/updateOrder/*", "/*/student-flashcard-set/delete/*",
+                                "/*/student-flashcard-set/updateVisibility/*", "/*/student-flashcard-set/getAllFlashcardOfSet/*",
+                                "/*/*/getStudentFlashcardSet/*", "/*/*/publicFlashcardSet", "/*/student-flashcard-set/all",
+                                "/*/*/from-resource", "/*/*/clone/*", "/*/flashcard-set-progress/track",
+                                "/*/flashcard-set-progress/complete", "/*/student-folder/**", "/*/student-quiz-attempt/**",
+                                "/*/resource-progress/track", "/*/resource-progress/complete", "/*/resource-progress/note",
+                                "/*/student-study-plan/**", "/*/subscription/renew", "/*/subscription/current-plan",
+                                "/*/subscription/history", "/*/activity-log/student").hasRole("Student")
 
 
                         .requestMatchers("/*/course/create", "/*/course/update/*", "/*/course/creator",
@@ -64,23 +80,31 @@ public class SecurityConfig {
                                 "/*/script/delete/*", "/*/option/create", "/*/option/update", "/*/question/all",
                                 "/*/question/create", "/*/question/update/*", "/*/question/options/**", "/*/quiz/all",
                                 "/*/quiz/create", "/*/quiz/update/*", "/*/quiz/update-status/*", "/api/quiz-question/create",
-                                "/*/quiz-question/delete/*", "/*/quiz-question/create-new-question").hasRole("Content Manager")
+                                "/*/quiz-question/delete/*", "/*/quiz-question/create-new-question", "/*/study-plan/create",
+                                "/*/study-plan/update/*", "/*/study-plan/delete/*", "/*/system-flashcard-set/create",
+                                "/*/system-flashcard-set/update/*", "/*/system-flashcard-set/delete/*", "/*/system-flashcard-set/updateOrder/*",
+                                "/*/system-flashcard-set/update-visibility/*", "/*/system-flashcard-set/all").hasRole("Content Manager")
 
 
-                        .requestMatchers("/*/user/content-manager", "/*/*/*/overview").hasRole("Administrator")
+                        .requestMatchers("/*/user/content-manager", "/*/*/*/overview", "/*/*/set-violated/*",
+                                "/*/violation/all", "/*/violation/handle/*", "/*/violation/summary",
+                                "/*/activity-log/user/*").hasRole("Administrator")
 
 
                         .requestMatchers("/*/flashcard/*/update", "/*/flashcard/delete/*", "/*/option/question/*",
                                 "/*/option/{id:[0-9]+}", "/*/question/{id:[0-9]+}", "/*/quiz/{id:[0-9]+}",
-                                "/*/quiz-question/quiz/*", "/*/quiz-question/{id:[0-9]+}", "/*/*/questions-options/{id:[0-9]+}").hasAnyRole("Student", "Content Manager")
+                                "/*/quiz-question/quiz/*", "/*/quiz-question/{id:[0-9]+}", "/*/*/questions-options/{id:[0-9]+}",
+                                "/*/violation/report").hasAnyRole("Student", "Content Manager")
 
 
                         .requestMatchers("/*/user/paginated", "/*/user/student/*", "/*/user/content-managers/*",
                                 "/*/user/searchContentManagerName", "/*/learning-path/creator", "/*/learning-resource/creator",
-                                "/*/payment-method/*/update", "/*/quiz/creator").hasAnyRole("Content Manager", "Administrator")
+                                "/*/payment-method/*/update", "/*/quiz/creator", "/*/course-progress/all/*",
+                                "/*/course-progress/statistics/*", "/*/student-course-rating/allRating",
+                                "/*/subscription/create", "/*/subscription/update/*", "/*/subscription/delete/*").hasAnyRole("Content Manager", "Administrator")
 
 
-                        .requestMatchers("/*/statistics/view").hasAnyRole("Student", "Administrator")
+                        .requestMatchers("/*/statistics/view", "/*/student-course-rating/delete/*").hasAnyRole("Student", "Administrator")
 
 
                         .anyRequest().authenticated()

@@ -14,6 +14,7 @@ import org.example.technihongo.services.interfaces.UserActivityLogService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -154,6 +155,7 @@ public class StudyPlanController {
 
 
     @PostMapping("/create")
+    @PreAuthorize("hasRole('ROLE_Content Manager')")
     public ResponseEntity<ApiResponse> createStudyPlan(
             @RequestBody CreateStudyPlanDTO createStudyPlanDTO,
             @RequestHeader("Authorization") String authorizationHeader,
@@ -199,6 +201,7 @@ public class StudyPlanController {
     }
 
     @PatchMapping("/update/{id}")
+    @PreAuthorize("hasRole('ROLE_Content Manager')")
     public ResponseEntity<ApiResponse> updateStudyPlan(
             @PathVariable Integer id,
             @RequestBody UpdateStudyPlanDTO updateStudyPlanDTO,
@@ -244,6 +247,7 @@ public class StudyPlanController {
     }
 
     @DeleteMapping("/delete/{id}")
+    @PreAuthorize("hasRole('ROLE_Content Manager')")
     public ResponseEntity<ApiResponse> deleteStudyPlan(
             @PathVariable Integer id,
             @RequestHeader("Authorization") String authorizationHeader,

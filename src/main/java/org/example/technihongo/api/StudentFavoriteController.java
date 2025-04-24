@@ -30,6 +30,7 @@ public class StudentFavoriteController {
     private UserActivityLogService userActivityLogService;
 
     @PostMapping("/save")
+    @PreAuthorize("hasRole('ROLE_Student')")
     public ResponseEntity<ApiResponse> saveLearningResource(
             @RequestParam Integer lessonResourceId,
             @RequestHeader("Authorization") String authorizationHeader,
@@ -143,6 +144,7 @@ public class StudentFavoriteController {
     }
 
     @DeleteMapping("/remove")
+    @PreAuthorize("hasRole('ROLE_Student')")
     public ResponseEntity<ApiResponse> removeFavoriteLearningResource(
             @RequestParam Integer lessonResourceId,
             @RequestHeader("Authorization") String authorizationHeader,
@@ -198,6 +200,7 @@ public class StudentFavoriteController {
     }
 
     @GetMapping("/check")
+    @PreAuthorize("hasRole('ROLE_Student')")
     public ResponseEntity<ApiResponse> checkLearningResourceFavorited(
             @RequestParam Integer lessonResourceId,
             @RequestHeader("Authorization") String authorizationHeader) {

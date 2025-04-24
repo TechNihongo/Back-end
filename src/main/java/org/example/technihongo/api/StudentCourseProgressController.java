@@ -15,6 +15,7 @@ import org.example.technihongo.services.interfaces.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -36,7 +37,6 @@ public class StudentCourseProgressController {
     private StudentStudyPlanService studentStudyPlanService;
 
     @GetMapping("/view/{studentId}")
-
     public ResponseEntity<ApiResponse> getStudentCourseProgress(
             @RequestHeader("Authorization") String authorizationHeader,
             @PathVariable Integer studentId,
@@ -100,6 +100,7 @@ public class StudentCourseProgressController {
     }
 
     @GetMapping("/all/{studentId}")
+    @PreAuthorize("hasAnyRole('ROLE_Administrator', 'ROLE_Content Manager')")
     public ResponseEntity<ApiResponse> getAllStudentCourseProgress(
             @PathVariable Integer studentId) {
         try {
@@ -139,6 +140,7 @@ public class StudentCourseProgressController {
     }
 
     @GetMapping("/statistics/{courseId}")
+    @PreAuthorize("hasAnyRole('ROLE_Administrator', 'ROLE_Content Manager')")
     public ResponseEntity<ApiResponse> viewCourseStatistics(
             @PathVariable Integer courseId) {
         try {
@@ -170,6 +172,7 @@ public class StudentCourseProgressController {
     }
 
     @PostMapping("/enroll")
+    @PreAuthorize("hasRole('ROLE_Student')")
     public ResponseEntity<ApiResponse> enrollCourse(
             @RequestHeader("Authorization") String authorizationHeader,
             HttpServletRequest httpRequest,
@@ -231,6 +234,7 @@ public class StudentCourseProgressController {
     }
 
     @GetMapping("/check-enroll")
+    @PreAuthorize("hasRole('ROLE_Student')")
     public ResponseEntity<ApiResponse> checkStudentCourseEnrollment(
             @RequestHeader("Authorization") String authorizationHeader,
             @RequestParam Integer courseId) {
@@ -283,6 +287,7 @@ public class StudentCourseProgressController {
     }
 
     @PatchMapping("/track")
+    @PreAuthorize("hasRole('ROLE_Student')")
     public ResponseEntity<ApiResponse> trackStudentCourseProgress(
             @RequestHeader("Authorization") String authorizationHeader,
             @RequestParam Integer courseId) {

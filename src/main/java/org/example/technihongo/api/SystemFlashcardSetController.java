@@ -18,6 +18,7 @@ import org.example.technihongo.services.interfaces.UserActivityLogService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Collections;
@@ -38,6 +39,7 @@ public class SystemFlashcardSetController {
     private UserActivityLogService userActivityLogService;
 
     @PostMapping("/create")
+    @PreAuthorize("hasRole('ROLE_Content Manager')")
     public ResponseEntity<ApiResponse> create(
             @RequestHeader("Authorization") String authorizationHeader,
             HttpServletRequest httpRequest,
@@ -85,6 +87,7 @@ public class SystemFlashcardSetController {
     }
 
     @PatchMapping("/update/{flashcardSetId}")
+    @PreAuthorize("hasRole('ROLE_Content Manager')")
     public ResponseEntity<ApiResponse> update(
             @RequestHeader("Authorization") String authorizationHeader,
             HttpServletRequest httpRequest,
@@ -138,6 +141,7 @@ public class SystemFlashcardSetController {
     }
 
     @PatchMapping("/updateOrder/{flashcardSetId}")
+    @PreAuthorize("hasRole('ROLE_Content Manager')")
     public ResponseEntity<ApiResponse> updateFlashcardOrder(
             @RequestHeader("Authorization") String authorizationHeader,
             @PathVariable Integer flashcardSetId,
@@ -190,6 +194,7 @@ public class SystemFlashcardSetController {
     }
 
     @DeleteMapping("/delete/{flashcardSetId}")
+    @PreAuthorize("hasRole('ROLE_Content Manager')")
     public ResponseEntity<ApiResponse> delete(
             @RequestHeader("Authorization") String authorizationHeader,
             HttpServletRequest httpRequest,
@@ -292,6 +297,7 @@ public class SystemFlashcardSetController {
     }
 
     @PatchMapping("/update-visibility/{setId}")
+    @PreAuthorize("hasRole('ROLE_Content Manager')")
     public ResponseEntity<ApiResponse> updateVisibility(
             @RequestHeader("Authorization") String authorizationHeader,
             @PathVariable Integer setId,
@@ -378,6 +384,7 @@ public class SystemFlashcardSetController {
     }
 
     @GetMapping("/all")
+    @PreAuthorize("hasRole('ROLE_Content Manager')")
     public ResponseEntity<ApiResponse> getAllByContentManagerId(
             @RequestHeader("Authorization") String authorizationHeader) {
         try {

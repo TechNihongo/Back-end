@@ -78,6 +78,7 @@ public class StudentLessonProgressController {
     }
 
     @PatchMapping("/track")
+    @PreAuthorize("hasRole('ROLE_Student')")
     public ResponseEntity<ApiResponse> trackStudentLessonProgress(
             @RequestHeader("Authorization") String authorizationHeader,
             @RequestParam Integer lessonId) {

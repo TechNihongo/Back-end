@@ -12,6 +12,7 @@ import org.example.technihongo.services.interfaces.UserActivityLogService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -25,6 +26,7 @@ public class StudentViolationController {
     private UserActivityLogService userActivityLogService;
 
     @GetMapping("/all")
+    @PreAuthorize("hasRole('ROLE_Administrator')")
     public ResponseEntity<ApiResponse> getAllStudentViolations(
             @RequestParam(defaultValue = "0") int pageNo,
             @RequestParam(defaultValue = "10") int pageSize,
@@ -68,6 +70,7 @@ public class StudentViolationController {
     }
 
     @PostMapping("/report")
+    @PreAuthorize("hasAnyRole('ROLE_Student', 'ROLE_Content Manager')")
     public ResponseEntity<ApiResponse> reportViolation(
             @RequestHeader("Authorization") String authorizationHeader,
             HttpServletRequest httpRequest,
@@ -139,6 +142,7 @@ public class StudentViolationController {
     }
 
     @PatchMapping("/handle/{violationId}")
+    @PreAuthorize("hasRole('ROLE_Administrator')")
     public ResponseEntity<ApiResponse> handleViolation(
             @RequestHeader("Authorization") String authorizationHeader,
             HttpServletRequest httpRequest,
@@ -196,6 +200,7 @@ public class StudentViolationController {
     }
 
     @GetMapping("/summary")
+    @PreAuthorize("hasRole('ROLE_Administrator')")
     public ResponseEntity<ApiResponse> getViolationSummary(
             @RequestParam String classifyBy,
             @RequestParam(required = false) String status,

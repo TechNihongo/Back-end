@@ -9,6 +9,7 @@ import org.example.technihongo.services.interfaces.StudentService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -24,6 +25,7 @@ public class StudentResourceProgressController {
     private StudentService studentService;
 
     @PatchMapping("/track")
+    @PreAuthorize("hasRole('ROLE_Student')")
     public ResponseEntity<ApiResponse> trackLearningResourceProgress(
             @RequestHeader("Authorization") String authorizationHeader,
             @RequestParam Integer resourceId) {
@@ -70,6 +72,7 @@ public class StudentResourceProgressController {
     }
 
     @PatchMapping("/complete")
+    @PreAuthorize("hasRole('ROLE_Student')")
     public ResponseEntity<ApiResponse> completeLearningResourceProgress(
             @RequestHeader("Authorization") String authorizationHeader,
             @RequestParam Integer resourceId) {
@@ -116,6 +119,7 @@ public class StudentResourceProgressController {
 
     @GetMapping("/all/{studentId}")
     public ResponseEntity<ApiResponse> getAllStudentResourceProgress(
+            @RequestHeader("Authorization") String authorizationHeader,
             @PathVariable Integer studentId) {
         try {
             List<StudentResourceProgress> progressList = resourceProgressService.getAllStudentResourceProgress(studentId);
@@ -155,6 +159,7 @@ public class StudentResourceProgressController {
 
     @GetMapping("/view/{studentId}")
     public ResponseEntity<ApiResponse> viewStudentResourceProgress(
+            @RequestHeader("Authorization") String authorizationHeader,
             @PathVariable Integer studentId,
             @RequestParam Integer resourceId) {
         try {
@@ -186,6 +191,7 @@ public class StudentResourceProgressController {
     }
 
     @PatchMapping("/note")
+    @PreAuthorize("hasRole('ROLE_Student')")
     public ResponseEntity<ApiResponse> writeNoteForLearningResource(
             @RequestHeader("Authorization") String authorizationHeader,
             @RequestParam Integer resourceId,
