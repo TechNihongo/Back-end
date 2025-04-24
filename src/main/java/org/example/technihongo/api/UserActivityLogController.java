@@ -10,6 +10,7 @@ import org.example.technihongo.services.interfaces.UserActivityLogService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -23,6 +24,7 @@ public class UserActivityLogController {
     private JwtUtil jwtUtil;
 
     @GetMapping("/user/{userId}")
+    @PreAuthorize("hasRole('ROLE_Administrator')")
     public ResponseEntity<ApiResponse> getUserActivityLogs(
             @PathVariable Integer userId,
             @RequestParam(defaultValue = "0") int page,
@@ -56,6 +58,7 @@ public class UserActivityLogController {
     }
 
     @GetMapping("/student")
+    @PreAuthorize("hasRole('ROLE_Student')")
     public ResponseEntity<ApiResponse> getStudentActivityLogs(
             @RequestHeader("Authorization") String authorizationHeader,
             HttpServletRequest httpRequest,

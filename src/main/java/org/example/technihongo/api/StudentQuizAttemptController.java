@@ -13,6 +13,7 @@ import org.example.technihongo.services.interfaces.UserActivityLogService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -34,6 +35,7 @@ public class StudentQuizAttemptController {
     private UserActivityLogService userActivityLogService;
 
     @PostMapping("/startAttempt/{quizId}")
+    @PreAuthorize("hasRole('ROLE_Student')")
     public ResponseEntity<ApiResponse> startQuiz(
             @RequestHeader("Authorization") String authorizationHeader,
             HttpServletRequest httpRequest,
@@ -80,6 +82,7 @@ public class StudentQuizAttemptController {
     }
 
     @PostMapping("/attempt")
+    @PreAuthorize("hasRole('ROLE_Student')")
     public ResponseEntity<ApiResponse> attemptQuiz(
             @RequestHeader("Authorization") String authorizationHeader,
             @Valid @RequestBody QuizAttemptRequestDTO request) {
@@ -113,6 +116,7 @@ public class StudentQuizAttemptController {
     }
 
     @GetMapping("/report/{quizId}")
+    @PreAuthorize("hasRole('ROLE_Student')")
     public ResponseEntity<ApiResponse> generatePerformanceReport(
             @RequestHeader("Authorization") String authorizationHeader,
             @PathVariable Integer quizId) {
@@ -145,6 +149,7 @@ public class StudentQuizAttemptController {
     //Lần làm bài có điểm cao nhất (top attempt)
     //3 lần làm bài gần đây nhất (recent attempts)
     @GetMapping("/top-recent/{quizId}")
+    @PreAuthorize("hasRole('ROLE_Student')")
     public ResponseEntity<ApiResponse> getTopAndRecentQuizAttempts(
             @RequestHeader("Authorization") String authorizationHeader,
             @PathVariable Integer quizId) {
@@ -178,6 +183,7 @@ public class StudentQuizAttemptController {
     }
 
     @GetMapping("/review/{attemptId}")
+    @PreAuthorize("hasRole('ROLE_Student')")
     public ResponseEntity<ApiResponse> reviewQuizAttempt(
             @RequestHeader("Authorization") String authorizationHeader,
             @PathVariable Integer attemptId) {
@@ -211,6 +217,7 @@ public class StudentQuizAttemptController {
     }
 
     @GetMapping("/attemptStatus/{quizId}")
+    @PreAuthorize("hasRole('ROLE_Student')")
     public ResponseEntity<ApiResponse> getAttemptStatus(
             @RequestHeader("Authorization") String authorizationHeader,
             @PathVariable Integer quizId) {

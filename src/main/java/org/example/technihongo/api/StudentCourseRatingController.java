@@ -19,6 +19,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
@@ -39,6 +40,7 @@ public class StudentCourseRatingController {
     private UserActivityLogService userActivityLogService;
 
     @PostMapping("/createRating")
+    @PreAuthorize("hasRole('ROLE_Student')")
     public ResponseEntity<ApiResponse> createRating(
             @RequestHeader("Authorization") String authorizationHeader,
             HttpServletRequest httpRequest,
@@ -130,6 +132,7 @@ public class StudentCourseRatingController {
     }
 
     @GetMapping("/allRating")
+    @PreAuthorize("hasAnyRole('ROLE_Administrator', 'ROLE_Content Manager')")
     public ResponseEntity<ApiResponse> getAllRatings() {
         try {
             List<StudentCourseRatingDTO> response = studentCourseRatingService.getAllRatings();
@@ -154,6 +157,7 @@ public class StudentCourseRatingController {
     }
 
     @PatchMapping("/update/{ratingId}")
+    @PreAuthorize("hasRole('ROLE_Student')")
     public ResponseEntity<ApiResponse> updateRating(
             @RequestHeader("Authorization") String authorizationHeader,
             HttpServletRequest httpRequest,
@@ -207,6 +211,7 @@ public class StudentCourseRatingController {
     }
 
     @DeleteMapping("/delete/{ratingId}")
+    @PreAuthorize("hasAnyRole('ROLE_Student', 'ROLE_Administrator')")
     public ResponseEntity<ApiResponse> deleteRating(
             @RequestHeader("Authorization") String authorizationHeader,
             HttpServletRequest httpRequest,
@@ -391,6 +396,7 @@ public class StudentCourseRatingController {
     }
 
     @GetMapping("/student-rating/course/{courseId}")
+    @PreAuthorize("hasRole('ROLE_Student')")
     public ResponseEntity<ApiResponse> getMyRatingForCourse(
             @RequestHeader("Authorization") String authorizationHeader,
             @PathVariable Integer courseId) {

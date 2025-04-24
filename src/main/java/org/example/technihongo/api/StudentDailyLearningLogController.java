@@ -33,6 +33,7 @@ public class StudentDailyLearningLogController {
     private UserActivityLogService userActivityLogService;
 
     @PostMapping("/track")
+    @PreAuthorize("hasRole('ROLE_Student')")
     public ResponseEntity<ApiResponse> trackStudentDailyLearningLog(
             @RequestHeader("Authorization") String authorizationHeader,
             @RequestParam(defaultValue = "0") Integer studyTime){

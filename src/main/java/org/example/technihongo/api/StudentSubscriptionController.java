@@ -16,6 +16,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -32,6 +33,7 @@ public class StudentSubscriptionController {
     private final UserActivityLogService userActivityLogService;
 
     @PostMapping("/renew")
+    @PreAuthorize("hasRole('ROLE_Student')")
     public ResponseEntity<ApiResponse> renewSubscription(
             @RequestHeader("Authorization") String authorizationHeader,
             HttpServletRequest httpRequest,
@@ -90,24 +92,15 @@ public class StudentSubscriptionController {
     }
 
     @GetMapping("/current-plan")
+    @PreAuthorize("hasRole('ROLE_Student')")
     public ResponseEntity<ApiResponse> getCurrentSubscriptionPlan(
-            @RequestHeader("Authorization") String authorizationHeader,
-            HttpServletRequest httpRequest) {
+            @RequestHeader("Authorization") String authorizationHeader) {
         try {
             if(authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
                 String token = authorizationHeader.substring(7);
                 Integer userId = jwtUtil.extractUserId(token);
                 Integer studentId = studentService.getStudentIdByUserId(userId);
-                String ipAddress = httpRequest.getRemoteAddr();
-                String userAgent = httpRequest.getHeader("User-Agent");
-                userActivityLogService.trackUserActivityLog(
-                        userId,
-                        ActivityType.RENEW_SUBSCRIPTION,
-                        ContentType.StudentSubscription,
-                        null,
-                        ipAddress,
-                        userAgent
-                );
+
                 StudentSubscription currentSubscription = subscriptionService.getCurrentSubscriptionByStudentId(studentId);
 
                 if (currentSubscription == null) {
@@ -156,9 +149,9 @@ public class StudentSubscriptionController {
 
 
     @GetMapping("/history")
+    @PreAuthorize("hasRole('ROLE_Student')")
     public ResponseEntity<ApiResponse> getSubscriptionHistory(
             @RequestHeader("Authorization") String authorizationHeader,
-            HttpServletRequest httpRequest,
             @RequestParam(defaultValue = "0") int pageNo,
             @RequestParam(defaultValue = "10") int pageSize,
             @RequestParam(defaultValue = "startDate") String sortBy,
@@ -168,16 +161,7 @@ public class StudentSubscriptionController {
                 String token = authorizationHeader.substring(7);
                 Integer userId = jwtUtil.extractUserId(token);
                 Integer studentId = studentService.getStudentIdByUserId(userId);
-                String ipAddress = httpRequest.getRemoteAddr();
-                String userAgent = httpRequest.getHeader("User-Agent");
-                userActivityLogService.trackUserActivityLog(
-                        userId,
-                        ActivityType.RENEW_SUBSCRIPTION,
-                        ContentType.StudentSubscription,
-                        null,
-                        ipAddress,
-                        userAgent
-                );
+
                 PageResponseDTO<SubscriptionHistoryDTO> history = subscriptionService.getSubscriptionHistory(studentId, pageNo, pageSize, sortBy, sortDir);
                 return ResponseEntity.ok(ApiResponse.builder()
                         .success(true)
@@ -239,6 +223,7 @@ public class StudentSubscriptionController {
         }
     }
 
+
     @GetMapping("/most-popular-plan")
     public ResponseEntity<ApiResponse> getMostPopularSubscriptionPlan() {
         try {
@@ -297,6 +282,4 @@ public class StudentSubscriptionController {
         }
     }
 
-
- 
 }

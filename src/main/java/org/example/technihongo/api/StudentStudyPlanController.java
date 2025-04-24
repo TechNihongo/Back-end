@@ -16,6 +16,7 @@ import org.example.technihongo.services.interfaces.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -37,6 +38,7 @@ public class StudentStudyPlanController {
     private StudentService studentService;
 
     @PostMapping("/enroll")
+    @PreAuthorize("hasRole('ROLE_Student')")
     public ResponseEntity<ApiResponse> enrollStudentInStudyPlan(
             @RequestBody EnrollStudyPlanRequest request,
             @RequestHeader("Authorization") String authorizationHeader,
@@ -76,6 +78,7 @@ public class StudentStudyPlanController {
     }
 
     @PostMapping("/switchStudyPlan")
+    @PreAuthorize("hasRole('ROLE_Student')")
     public ResponseEntity<ApiResponse> switchStudyPlan(
             @RequestBody SwitchStudyPlanRequestDTO request,
             @RequestHeader("Authorization") String authorizationHeader,
@@ -129,6 +132,7 @@ public class StudentStudyPlanController {
     }
 
     @GetMapping("/availableStudyPlan/{studentId}")
+    @PreAuthorize("hasRole('ROLE_Student')")
     public ResponseEntity<ApiResponse> getAvailableStudyPlan(@PathVariable Integer studentId) {
         try {
             List<StudyPlanDTO> availablePlans = studentStudyPlanService.getAvailableStudyPlans(studentId);
@@ -160,6 +164,7 @@ public class StudentStudyPlanController {
     }
 
     @GetMapping("/activeStudyPlan/{courseId}")
+    @PreAuthorize("hasRole('ROLE_Student')")
     public ResponseEntity<ApiResponse> getActiveStudyPlan(
             @PathVariable Integer courseId,
             @RequestHeader("Authorization") String authorizationHeader) {
@@ -187,6 +192,7 @@ public class StudentStudyPlanController {
     }
 
     @GetMapping("/historyStudyPlan/{studentId}")
+    @PreAuthorize("hasRole('ROLE_Student')")
     public ResponseEntity<ApiResponse> getStudyPlanHistory(@PathVariable Integer studentId) {
         try {
             List<StudentStudyPlanDTO> planHistory = studentStudyPlanService.getStudyPlanHistory(studentId);

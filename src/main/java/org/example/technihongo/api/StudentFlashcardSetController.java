@@ -18,6 +18,7 @@ import org.example.technihongo.services.interfaces.UserActivityLogService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Collections;
@@ -42,6 +43,7 @@ public class StudentFlashcardSetController {
     private StudentFlashcardSetRepository studentFlashcardSetRepository;
 
     @PostMapping("/create")
+    @PreAuthorize("hasRole('ROLE_Student')")
     public ResponseEntity<ApiResponse> createFlashcardSet(
             @RequestHeader("Authorization") String authorizationHeader,
             HttpServletRequest httpRequest,
@@ -89,6 +91,7 @@ public class StudentFlashcardSetController {
     }
 
     @PatchMapping("/update/{setId}")
+    @PreAuthorize("hasRole('ROLE_Student')")
     public ResponseEntity<ApiResponse> updateFlashcardSet(
             @RequestHeader("Authorization") String authorizationHeader,
             HttpServletRequest httpRequest,
@@ -142,6 +145,7 @@ public class StudentFlashcardSetController {
     }
 
     @PatchMapping("/updateOrder/{flashcardSetId}")
+    @PreAuthorize("hasRole('ROLE_Student')")
     public ResponseEntity<ApiResponse> updateFlashcardOrder(
             @RequestHeader("Authorization") String authorizationHeader,
             @PathVariable Integer flashcardSetId,
@@ -198,6 +202,7 @@ public class StudentFlashcardSetController {
     }
 
     @DeleteMapping("/delete/{setId}")
+    @PreAuthorize("hasRole('ROLE_Student')")
     public ResponseEntity<ApiResponse> deleteFlashcardSet(
             @RequestHeader("Authorization") String authorizationHeader,
             HttpServletRequest httpRequest,
@@ -298,6 +303,7 @@ public class StudentFlashcardSetController {
     }
 
     @PatchMapping("/updateVisibility/{setId}")
+    @PreAuthorize("hasRole('ROLE_Student')")
     public ResponseEntity<ApiResponse> updateFlashcardSetVisibility(
             @RequestHeader("Authorization") String authorizationHeader,
             @PathVariable("setId") Integer flashcardSetId,
@@ -338,6 +344,7 @@ public class StudentFlashcardSetController {
     }
 
     @GetMapping("/getAllFlashcardOfSet/{setId}")
+    @PreAuthorize("hasRole('ROLE_Student')")
     public ResponseEntity<ApiResponse> getAllFlashcardsInSet(
             @RequestHeader("Authorization") String authorizationHeader,
             @PathVariable("setId") Integer flashcardSetId) {
@@ -450,6 +457,7 @@ public class StudentFlashcardSetController {
     }
 
     @GetMapping("/all")
+    @PreAuthorize("hasRole('ROLE_Student')")
     public ResponseEntity<ApiResponse> getAllStudentFlashcardSet(
             @RequestHeader("Authorization") String authorizationHeader) {
         try {
@@ -520,6 +528,7 @@ public class StudentFlashcardSetController {
     }
 
     @PostMapping("/from-resource")
+    @PreAuthorize("hasRole('ROLE_Student')")
     public ResponseEntity<ApiResponse> createFlashcardSetFromResource(
             @RequestHeader("Authorization") String authorizationHeader,
             HttpServletRequest httpRequest,
@@ -567,6 +576,7 @@ public class StudentFlashcardSetController {
     }
 
     @PostMapping("/clone/{studentSetId}")
+    @PreAuthorize("hasRole('ROLE_Student')")
     public ResponseEntity<ApiResponse> cloneFlashcardSet(
             @PathVariable Integer studentSetId,
             @RequestHeader("Authorization") String authorizationHeader,
@@ -632,8 +642,8 @@ public class StudentFlashcardSetController {
         }
     }
 
-    //Admin
     @PatchMapping("/set-violated/{setId}")
+    @PreAuthorize("hasRole('ROLE_Administrator')")
     public ResponseEntity<ApiResponse> setViolatedFlashcardSet(
             @RequestHeader("Authorization") String authorizationHeader,
             @PathVariable("setId") Integer flashcardSetId) {

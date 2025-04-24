@@ -8,6 +8,7 @@ import org.example.technihongo.services.interfaces.StudentService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -24,6 +25,7 @@ public class StudentFlashcardSetProgressController {
 
     @GetMapping("/all/{studentId}")
     public ResponseEntity<ApiResponse> getAllStudentAndSystemSetProgress(
+            @RequestHeader("Authorization") String authorizationHeader,
             @PathVariable Integer studentId) {
         try {
             List<FlashcardSetProgressDTO> progressList = setProgressService.getAllStudentAndSystemSetProgress(studentId);
@@ -63,6 +65,7 @@ public class StudentFlashcardSetProgressController {
 
     @GetMapping("/set/{studentId}")
     public ResponseEntity<ApiResponse> getStudentOrSystemSetProgress(
+            @RequestHeader("Authorization") String authorizationHeader,
             @PathVariable Integer studentId,
             @RequestParam Integer setId,
             @RequestParam(defaultValue = "false") boolean isSystemSet) {
@@ -95,6 +98,7 @@ public class StudentFlashcardSetProgressController {
     }
 
     @PatchMapping("/track")
+    @PreAuthorize("hasRole('ROLE_Student')")
     public ResponseEntity<ApiResponse> trackFlashcardSetProgress(
             @RequestHeader("Authorization") String authorizationHeader,
             @RequestParam Integer setId,
@@ -142,6 +146,7 @@ public class StudentFlashcardSetProgressController {
     }
 
     @PatchMapping("/complete")
+    @PreAuthorize("hasRole('ROLE_Student')")
     public ResponseEntity<ApiResponse> completeFlashcardSetProgress(
             @RequestHeader("Authorization") String authorizationHeader,
             @RequestParam Integer setId,

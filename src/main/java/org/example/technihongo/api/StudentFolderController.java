@@ -12,6 +12,7 @@ import org.example.technihongo.services.interfaces.UserActivityLogService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -29,6 +30,7 @@ public class StudentFolderController {
     private StudentService studentService;
 
     @PostMapping("/create")
+    @PreAuthorize("hasRole('ROLE_Student')")
     public ResponseEntity<ApiResponse> createStudentFolder(
             @RequestBody StudentFolderDTO folderDTO,
             @RequestHeader("Authorization") String authorizationHeader,
@@ -80,6 +82,7 @@ public class StudentFolderController {
     }
 
     @PatchMapping("/update/{folderId}")
+    @PreAuthorize("hasRole('ROLE_Student')")
     public ResponseEntity<ApiResponse> updateStudentFolder(
             @PathVariable Integer folderId,
             @RequestBody StudentFolderDTO folderDTO,
@@ -132,6 +135,7 @@ public class StudentFolderController {
     }
 
     @DeleteMapping("/deleteFolder/{folderId}")
+    @PreAuthorize("hasRole('ROLE_Student')")
     public ResponseEntity<ApiResponse> deleteStudentFolder(
             @PathVariable Integer folderId,
             @RequestHeader("Authorization") String authorizationHeader,
@@ -181,6 +185,7 @@ public class StudentFolderController {
     }
 
     @GetMapping("/getStudentFolder/{studentId}")
+    @PreAuthorize("hasRole('ROLE_Student')")
     public ResponseEntity<ApiResponse> listAllStudentFolders(@PathVariable Integer studentId) {
         try {
             List<StudentFolderDTO> folders = studentFolderService.listAllStudentFolders(studentId);
