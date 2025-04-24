@@ -30,4 +30,6 @@ public interface StudentSubscriptionRepository extends JpaRepository<StudentSubs
 
     List<StudentSubscription> findAllByStudent_StudentIdAndIsActiveTrueOrEndDateAfter(
             Integer studentId, LocalDateTime endDate, Pageable pageable);
+
+    Long countBySubscriptionPlan(SubscriptionPlan plan);
 }

@@ -25,11 +25,11 @@ public class SubscriptionPlanServiceImpl implements SubscriptionPlanService {
     @Override
     public SubscriptionPlan createSubscriptionPlan(SubscriptionDTO subscriptionDTO) {
         if(subscriptionDTO.getName() == null || subscriptionDTO.getPrice() == null || subscriptionDTO.getDurationDays() == null) {
-            throw new IllegalArgumentException("You must fill all fields required!");
+            throw new IllegalArgumentException("Bạn cần điền tất cả thông tin!");
 
         }
         if (subscriptionPlanRepository.existsByName(subscriptionDTO.getName())) {
-            throw new IllegalArgumentException("Subscription plan with this name already exists");
+            throw new IllegalArgumentException("Subscription plan đã tồn tại với tên này!");
         }
         SubscriptionPlan plan = SubscriptionPlan.builder()
                 .name(subscriptionDTO.getName())
@@ -43,10 +43,13 @@ public class SubscriptionPlanServiceImpl implements SubscriptionPlanService {
     }
 
     @Override
-    @Transactional
     public SubscriptionPlan updateSubscriptionPlan(Integer id, UpdateSubscriptionDTO dto) {
         SubscriptionPlan existingPlan = subscriptionPlanRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Subscription plan not found with id: " + id));
+
+        if (!dto.isActive() && checkIfPlanIsUsed(existingPlan)) {
+            throw new IllegalStateException("Không thể vô hiệu hóa gói đăng ký vì nó đang được sử dụng.");
+        }
 
         if (dto.getPrice() != null) {
             existingPlan.setPrice(dto.getPrice());
@@ -60,12 +63,9 @@ public class SubscriptionPlanServiceImpl implements SubscriptionPlanService {
             existingPlan.setDurationDays(dto.getDurationDays());
         }
 
-        if (existingPlan.isActive() != dto.isActive()) {
-            existingPlan.setActive(dto.isActive());
-        }
+        existingPlan.setActive(dto.isActive());
 
         return subscriptionPlanRepository.save(existingPlan);
-
     }
 
     @Override
@@ -75,7 +75,7 @@ public class SubscriptionPlanServiceImpl implements SubscriptionPlanService {
             throw new RuntimeException("Subscription plan not found!");
         }
         if(checkIfPlanIsUsed(plan.get())) {
-            throw new RuntimeException("Can't delete: SubscriptionPlan is in used!");
+            throw new RuntimeException("Can't delete: SubscriptionPlan đang được sử dụng!");
         }
         subscriptionPlanRepository.deleteById(Id);
 

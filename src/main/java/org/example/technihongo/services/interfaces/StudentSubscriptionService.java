@@ -3,6 +3,7 @@ package org.example.technihongo.services.interfaces;
 import org.example.technihongo.dto.*;
 import org.example.technihongo.entities.StudentSubscription;
 
+import java.util.List;
 import java.util.Map;
 
 public interface StudentSubscriptionService {
@@ -13,4 +14,8 @@ public interface StudentSubscriptionService {
     StudentSubscription getCurrentSubscriptionByStudentId(Integer studentId);
 
     void sendExpirationReminders();
+
+    SubscriptionPlanStatisticsDTO getMostPopularSubscriptionPlan();
+    List<SubscriptionPlanStatisticsDTO> getRevenueBySubscriptionPlan();
+    List<RevenueByPeriodDTO> getRevenueByPeriod(String periodType);
 }

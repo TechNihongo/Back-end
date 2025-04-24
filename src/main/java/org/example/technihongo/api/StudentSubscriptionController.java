@@ -19,6 +19,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("${spring.application.api-prefix}/subscription")
 @RequiredArgsConstructor
@@ -216,6 +218,65 @@ public class StudentSubscriptionController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(ApiResponse.builder()
                     .success(false)
                     .message("Failed to send reminders: " + e.getMessage())
+                    .data(null)
+                    .build());
+        }
+    }
+
+
+    @GetMapping("/most-popular-plan")
+    public ResponseEntity<ApiResponse> getMostPopularSubscriptionPlan() {
+        try {
+            subscriptionService.getMostPopularSubscriptionPlan();
+            return ResponseEntity.ok(ApiResponse.builder()
+                    .success(true)
+                    .message("Most popular subscription plan retrieved successfully!")
+                    .data(subscriptionService.getMostPopularSubscriptionPlan())
+                    .build());
+        } catch (Exception e) {
+            log.error("Failed to retrieve most popular subscription plan: {}", e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(ApiResponse.builder()
+                    .success(false)
+                    .message("Failed to retrieve most popular plan: " + e.getMessage())
+                    .data(null)
+                    .build());
+        }
+    }
+
+    @GetMapping("/revenue-by-plan")
+    public ResponseEntity<ApiResponse> getRevenueBySubscriptionPlan() {
+        try {
+            List<SubscriptionPlanStatisticsDTO> revenueByPlan = subscriptionService.getRevenueBySubscriptionPlan();
+            return ResponseEntity.ok(ApiResponse.builder()
+                    .success(true)
+                    .message("Revenue by subscription plan retrieved successfully!")
+                    .data(revenueByPlan)
+                    .build());
+        } catch (Exception e) {
+            log.error("Failed to retrieve revenue by subscription plan: {}", e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(ApiResponse.builder()
+                    .success(false)
+                    .message("Failed to retrieve revenue: " + e.getMessage())
+                    .data(null)
+                    .build());
+        }
+    }
+
+    @GetMapping("/revenue-by-period")
+    public ResponseEntity<ApiResponse> getRevenueByPeriod(
+            @RequestParam String periodType) {
+        try {
+            List<RevenueByPeriodDTO> revenueByPeriod = subscriptionService.getRevenueByPeriod(periodType);
+            return ResponseEntity.ok(ApiResponse.builder()
+                    .success(true)
+                    .message("Revenue by period retrieved successfully!")
+                    .data(revenueByPeriod)
+                    .build());
+        } catch (Exception e) {
+            log.error("Failed to retrieve revenue by period: {}", e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(ApiResponse.builder()
+                    .success(false)
+                    .message("Failed to retrieve revenue: " + e.getMessage())
                     .data(null)
                     .build());
         }

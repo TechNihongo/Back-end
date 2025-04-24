@@ -50,14 +50,14 @@ public class UserServiceImpl implements UserService {
     @Override
     public LoginResponseDTO login(String email, String password) throws Exception {
         User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new Exception("User does not exist"));
+                .orElseThrow(() -> new Exception("User không tồn tại"));
 
         if (!user.isVerified()){
-            throw new Exception("Account not yet verified");
+            throw new Exception("Account chưa được xác thực");
         }
 
         if (!passwordEncoder.matches(password, user.getPassword())) {
-            throw new Exception("Invalid password");
+            throw new Exception("Password không đúng");
         }
 
         if (user.getRole().getRoleId() == 3 && user.getStudent() != null) {
@@ -70,7 +70,7 @@ public class UserServiceImpl implements UserService {
                 user.getEmail(),
                 user.getRole().getRoleName(),
                 true,
-                "Login Successful!!"
+                "Login thành công!!"
         );
     }
 
@@ -79,16 +79,16 @@ public class UserServiceImpl implements UserService {
     public LoginResponseDTO register(RegistrationDTO registrationDTO) {
         try {
             if (!registrationDTO.getPassword().equals(registrationDTO.getConfirmPassword())) {
-                throw new IllegalArgumentException("Password and Confirm Password do not match");
+                throw new IllegalArgumentException("Password and Confirm Password không khớp nhau");
             }
             if (userRepository.existsByUserName(registrationDTO.getUserName())) {
-                throw new RuntimeException("Username already exists", new IllegalArgumentException("Username: " + registrationDTO.getUserName()));
+                throw new RuntimeException("Username đã tồn tại", new IllegalArgumentException("Username: " + registrationDTO.getUserName()));
             }
 
             if (userRepository.existsByEmail(registrationDTO.getEmail())) {
                 User existingUser = userRepository.findUserByEmail(registrationDTO.getEmail());
                 if (existingUser.isVerified()) {
-                    throw new RuntimeException("Email already exists", new IllegalArgumentException("Email: " + registrationDTO.getEmail()));
+                    throw new RuntimeException("Email đã tồn tại", new IllegalArgumentException("Email: " + registrationDTO.getEmail()));
                 }
 
                 existingUser.setUserName(registrationDTO.getUserName());
@@ -143,7 +143,7 @@ public class UserServiceImpl implements UserService {
                         savedUser.getEmail(),
                         savedUser.getRole().getRoleName(),
                         true,
-                        "Registration Successful. Please check email to verify your account!"
+                        "Registration thành công! Vui lòng kiểm tra email để xác thực tài khoản!"
                 );
 
 
@@ -172,10 +172,10 @@ public class UserServiceImpl implements UserService {
         if (existedUser.isPresent()) {
             user = existedUser.get();
             user.setLastLogin(LocalDateTime.now());
-            message = "Login Successfully";
+            message = "Login thành công";
         } else {
             user = createNewUserFromGoogle(googleUserInfoDTO);
-            message = "Registration Successfully";
+            message = "Registration thành công. Vui lòng kiểm tra email để xác thực tài khoản!";
         }
 
         user = userRepository.save(user);
@@ -266,15 +266,15 @@ public class UserServiceImpl implements UserService {
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
         if (adminUser.getRole().getRoleId() != 1) {
-            throw new RuntimeException("Only Admin can create Content Manager accounts");
+            throw new RuntimeException("Chỉ Admin mới có quyền tạo Content Manager");
         }
 
         if (userRepository.existsByEmail(dto.getEmail())) {
-            throw new RuntimeException("Email already exists");
+            throw new RuntimeException("Email đã tồn tại");
         }
 
         if (userRepository.existsByUserName(dto.getUserName())) {
-            throw new RuntimeException("Username already exists");
+            throw new RuntimeException("Username đã tồn tại");
         }
 
         Role contentManagerRole = roleRepository.findById(2)
@@ -301,7 +301,7 @@ public class UserServiceImpl implements UserService {
     @Transactional
     public void updateUserName(Integer userId, UpdateProfileDTO dto) {
         User user = userRepository.findByUserId(userId);
-        if(user == null) throw new RuntimeException("User not found!");
+        if(user == null) throw new RuntimeException("Không tìm thấy User!");
         user.setUserName(dto.getUserName());
         userRepository.save(user);
     }
@@ -310,10 +310,10 @@ public class UserServiceImpl implements UserService {
     @Transactional
     public void updatePassword(Integer userId, UpdateProfileDTO dto) {
         if (userId == null || dto == null || dto.getPassword() == null || dto.getConfirmPassword() == null) {
-            throw new IllegalArgumentException("User ID, Password, or Confirm Password cannot be null");
+            throw new IllegalArgumentException("User ID, Password, or Confirm Password không được để trống");
         }
         if (!dto.getPassword().equals(dto.getConfirmPassword())) {
-            throw new IllegalArgumentException("Password and Confirm Password do not match");
+            throw new IllegalArgumentException("Password and Confirm Password không khớp nhau");
         }
         User user = userRepository.findByUserId(userId);
         if (user == null) {
@@ -458,12 +458,12 @@ public class UserServiceImpl implements UserService {
         }
 
         if (!passwordResetDTO.getPassword().equals(passwordResetDTO.getConfirm())) {
-            return "Confirm password does not match!";
+            return "Confirm password không khớp!";
         }
 
 
         if (passwordEncoder.matches(passwordResetDTO.getPassword(), user.getPassword())) {
-            return "New password cannot be same as current password.";
+            return "New password không được giống với Old Password.";
         }
 
         user.setPassword(passwordEncoder.encode(passwordResetDTO.getPassword()));
@@ -471,7 +471,7 @@ public class UserServiceImpl implements UserService {
         userRepository.save(user);
         authToken.setIsActive(false);
         authTokenRepository.save(authToken);
-        return "Your password has been successfully updated.";
+        return "Your password đã được cập nhật thành công!";
     }
 
     private String generateToken() {

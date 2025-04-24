@@ -29,7 +29,11 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.time.DayOfWeek;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.temporal.TemporalAdjusters;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
@@ -56,8 +60,8 @@ public class StudentSubscriptionServiceImpl implements StudentSubscriptionServic
         // Kiểm tra số lần gia hạn
         List<StudentSubscription> allSubscriptions = subscriptionRepository
                 .findAllByStudent_StudentIdAndIsActiveTrueOrEndDateAfter(studentId, LocalDateTime.now(), Pageable.unpaged());
-        long renewalCount = allSubscriptions.size() - 1; // Trừ subscription đầu tiên
-        if (renewalCount >= 3) {
+        long renewalCount = allSubscriptions.size() - 1;
+        if (renewalCount >= 2) {
             throw new RuntimeException("Hãy dành thời gian và học thật kỹ khóa học trước khi gia hạn thêm nhé");
         }
 
@@ -71,7 +75,7 @@ public class StudentSubscriptionServiceImpl implements StudentSubscriptionServic
                 .findBySubscription_SubscriptionIdAndTransactionStatus(
                         currentSubscription.getSubscriptionId(), TransactionStatus.PENDING);
         if (!pendingTransactions.isEmpty()) {
-            throw new RuntimeException("There is already a pending renewal transaction for this subscription");
+            throw new RuntimeException("Đang có giao dịch đang chờ xử lý cho gói đăng ký này. Vui lòng kiểm tra lại sau.");
         }
 
         SubscriptionPlan plan = subscriptionPlanRepository.findById(request.getSubPlanId())
@@ -82,7 +86,6 @@ public class StudentSubscriptionServiceImpl implements StudentSubscriptionServic
             throw new IllegalStateException("MoMo payment method is not available or inactive");
         }
 
-        // Nhúng subPlanId vào externalOrderId
         String orderId = "RENEW-" + System.currentTimeMillis() + "-" + request.getSubPlanId();
 
         PaymentTransaction transaction = PaymentTransaction.builder()
@@ -295,6 +298,188 @@ public class StudentSubscriptionServiceImpl implements StudentSubscriptionServic
                 log.error("Failed to send reminder to student {}: {}", sub.getStudent().getStudentId(), e.getMessage());
             }
         }
+    }
+
+    @Override
+    public SubscriptionPlanStatisticsDTO getMostPopularSubscriptionPlan() {
+        log.info("Fetching the most popular subscription plan");
+
+        // Get all subscriptions and group by subscription plan
+        List<StudentSubscription> subscriptions = subscriptionRepository.findAll();
+        if (subscriptions.isEmpty()) {
+            log.info("No subscriptions found");
+            return SubscriptionPlanStatisticsDTO.builder()
+                    .subPlanId(0)
+                    .planName("N/A")
+                    .purchaseCount(0L)
+                    .totalRevenue(BigDecimal.ZERO)
+                    .build();
+        }
+
+        // Count purchases per plan
+        Map<SubscriptionPlan, Long> purchaseCountMap = subscriptions.stream()
+                .collect(Collectors.groupingBy(StudentSubscription::getSubscriptionPlan, Collectors.counting()));
+
+        // Find the plan with the most purchases
+        Map.Entry<SubscriptionPlan, Long> mostPopularEntry = purchaseCountMap.entrySet().stream()
+                .max(Map.Entry.comparingByValue())
+                .orElseThrow(() -> new RuntimeException("Unable to determine most popular plan"));
+
+        SubscriptionPlan mostPopularPlan = mostPopularEntry.getKey();
+        Long purchaseCount = mostPopularEntry.getValue();
+
+        // Calculate total revenue for the most popular plan
+        List<PaymentTransaction> transactions = paymentTransactionRepository
+                .findAllBySubscription_SubscriptionPlanAndTransactionStatus(mostPopularPlan, TransactionStatus.COMPLETED);
+        BigDecimal totalRevenue = transactions.stream()
+                .map(PaymentTransaction::getTransactionAmount)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        return SubscriptionPlanStatisticsDTO.builder()
+                .subPlanId(mostPopularPlan.getSubPlanId())
+                .planName(mostPopularPlan.getName())
+                .purchaseCount(purchaseCount)
+                .totalRevenue(totalRevenue)
+                .build();
+    }
+
+    @Override
+    public List<SubscriptionPlanStatisticsDTO> getRevenueBySubscriptionPlan() {
+        log.info("Fetching revenue statistics for all subscription plans");
+
+        List<SubscriptionPlan> plans = subscriptionPlanRepository.findAll();
+        if (plans.isEmpty()) {
+            log.info("No subscription plans found");
+            return List.of();
+        }
+
+        return plans.stream().map(plan -> {
+            // Count purchases for this plan
+            Long purchaseCount = subscriptionRepository.countBySubscriptionPlan(plan);
+
+            // Calculate total revenue for this plan
+            List<PaymentTransaction> transactions = paymentTransactionRepository
+                    .findAllBySubscription_SubscriptionPlanAndTransactionStatus(plan, TransactionStatus.COMPLETED);
+            BigDecimal totalRevenue = transactions.stream()
+                    .map(PaymentTransaction::getTransactionAmount)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+            return SubscriptionPlanStatisticsDTO.builder()
+                    .subPlanId(plan.getSubPlanId())
+                    .planName(plan.getName())
+                    .purchaseCount(purchaseCount)
+                    .totalRevenue(totalRevenue)
+                    .build();
+        }).collect(Collectors.toList());
+    }
+
+
+    public List<RevenueByPeriodDTO> getRevenueByPeriod(String periodType) {
+        log.info("Fetching revenue for period: {}", periodType);
+
+        if (!List.of("WEEK", "MONTH", "QUARTER", "YEAR").contains(periodType.toUpperCase())) {
+            throw new IllegalArgumentException("Invalid period type. Must be WEEK, MONTH, QUARTER, or YEAR.");
+        }
+
+        List<PaymentTransaction> transactions = paymentTransactionRepository
+                .findAllByTransactionStatus(TransactionStatus.COMPLETED);
+        if (transactions.isEmpty()) {
+            log.info("No completed transactions found");
+            return List.of();
+        }
+
+        // Filter transactions with non-null payment dates
+        transactions = transactions.stream()
+                .filter(tx -> tx.getPaymentDate() != null)
+                .toList();
+
+        if (transactions.isEmpty()) {
+            log.info("No transactions with valid payment_date found");
+            return List.of();
+        }
+
+        LocalDateTime now = LocalDateTime.now();
+        List<RevenueByPeriodDTO> result = new ArrayList<>();
+
+        switch (periodType.toUpperCase()) {
+            case "WEEK":
+                LocalDateTime weekStart = now.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY)).with(LocalTime.MIN);
+                for (int i = 0; i < 7; i++) {
+                    LocalDateTime dayStart = weekStart.plusDays(i).with(LocalTime.MIN);
+                    LocalDateTime dayEnd = dayStart.with(LocalTime.MAX);
+                    String periodLabel = dayStart.toLocalDate().toString(); // Format: YYYY-MM-DD
+                    BigDecimal revenue = transactions.stream()
+                            .filter(tx -> !tx.getPaymentDate().isBefore(dayStart) && !tx.getPaymentDate().isAfter(dayEnd))
+                            .map(PaymentTransaction::getTransactionAmount)
+                            .reduce(BigDecimal.ZERO, BigDecimal::add);
+                    result.add(RevenueByPeriodDTO.builder()
+                            .period(periodLabel)
+                            .totalRevenue(revenue)
+                            .build());
+                }
+                break;
+            case "MONTH":
+                LocalDateTime monthStart = now.withDayOfMonth(1).with(LocalTime.MIN);
+                LocalDateTime monthEnd = now.with(TemporalAdjusters.lastDayOfMonth()).with(LocalTime.MAX);
+                LocalDateTime cursor = monthStart.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY));
+                int weekIndex = 1;
+                while (!cursor.isAfter(monthEnd)) {
+                    final LocalDateTime weekStartCursor = cursor;
+                    LocalDateTime weekEnd = weekStartCursor.plusDays(6).with(LocalTime.MAX);
+                    if (weekEnd.isAfter(monthEnd)) {
+                        weekEnd = monthEnd;
+                    }
+                    final LocalDateTime weekEndCursor = weekEnd;
+                    String periodLabel = now.getYear() + "-M" + now.getMonthValue() + "-W" + weekIndex;
+                    BigDecimal revenue = transactions.stream()
+                            .filter(tx -> !tx.getPaymentDate().isBefore(weekStartCursor) && !tx.getPaymentDate().isAfter(weekEndCursor))
+                            .map(PaymentTransaction::getTransactionAmount)
+                            .reduce(BigDecimal.ZERO, BigDecimal::add);
+                    result.add(RevenueByPeriodDTO.builder()
+                            .period(periodLabel)
+                            .totalRevenue(revenue)
+                            .build());
+                    cursor = weekEndCursor.plusSeconds(1).with(TemporalAdjusters.next(DayOfWeek.MONDAY));
+                    weekIndex++;
+                }
+                break;
+            case "QUARTER":
+                int quarter = (now.getMonthValue() - 1) / 3 + 1;
+                int startMonth = (quarter - 1) * 3 + 1;
+                for (int month = startMonth; month < startMonth + 3; month++) {
+                    LocalDateTime quarterMonthStart = LocalDateTime.of(now.getYear(), month, 1, 0, 0);
+                    LocalDateTime quarterMonthEnd = quarterMonthStart.with(TemporalAdjusters.lastDayOfMonth()).with(LocalTime.MAX);
+                    String periodLabel = now.getYear() + "-M" + month;
+                    BigDecimal revenue = transactions.stream()
+                            .filter(tx -> !tx.getPaymentDate().isBefore(quarterMonthStart) && !tx.getPaymentDate().isAfter(quarterMonthEnd))
+                            .map(PaymentTransaction::getTransactionAmount)
+                            .reduce(BigDecimal.ZERO, BigDecimal::add);
+                    result.add(RevenueByPeriodDTO.builder()
+                            .period(periodLabel)
+                            .totalRevenue(revenue)
+                            .build());
+                }
+                break;
+            case "YEAR":
+                for (int month = 1; month <= 12; month++) {
+                    LocalDateTime yearMonthStart = LocalDateTime.of(now.getYear(), month, 1, 0, 0);
+                    LocalDateTime yearMonthEnd = yearMonthStart.with(TemporalAdjusters.lastDayOfMonth()).with(LocalTime.MAX);
+                    String periodLabel = now.getYear() + "-M" + month;
+                    BigDecimal revenue = transactions.stream()
+                            .filter(tx -> !tx.getPaymentDate().isBefore(yearMonthStart) && !tx.getPaymentDate().isAfter(yearMonthEnd))
+                            .map(PaymentTransaction::getTransactionAmount)
+                            .reduce(BigDecimal.ZERO, BigDecimal::add);
+                    result.add(RevenueByPeriodDTO.builder()
+                            .period(periodLabel)
+                            .totalRevenue(revenue)
+                            .build());
+                }
+                break;
+            default:
+                throw new IllegalStateException("Unexpected period type: " + periodType);
+        }
+
+        return result;
     }
 
     @Scheduled(fixedRate = 86400000)

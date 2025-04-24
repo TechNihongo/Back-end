@@ -40,7 +40,7 @@ public class SystemFlashcardSetServiceImpl implements SystemFlashcardSetService 
     @Override
     public SystemFlashcardSetResponseDTO create(Integer userId, SystemFlashcardSetRequestDTO requestDTO) {
         if (requestDTO.getTitle() == null) {
-            throw new IllegalArgumentException("Title is required!");
+            throw new IllegalArgumentException("Vui lòng nhập Title nhé!");
         }
 
         User user = userRepository.findByUserId(userId);
@@ -75,7 +75,7 @@ public class SystemFlashcardSetServiceImpl implements SystemFlashcardSetService 
                 .orElseThrow(() -> new ResourceNotFoundException("FlashcardSet not found with Id: " + flashcardSetId));
 
         if (!flashcardSet.getCreator().getUserId().equals(userId)) {
-            throw new UnauthorizedAccessException("You do not have permission to update this flashcard set.");
+            throw new UnauthorizedAccessException("Bạn không có thẩm quyền cập nhật FlashcardSet này.");
         }
 
         if (requestDTO.getIsPremium() != null && !requestDTO.getIsPremium().equals(flashcardSet.isPremium())) {
@@ -122,17 +122,17 @@ public class SystemFlashcardSetServiceImpl implements SystemFlashcardSetService 
         if (updateFlashcardOrderDTO == null ||
                 updateFlashcardOrderDTO.getNewFlashcardOrder() == null ||
                 updateFlashcardOrderDTO.getNewFlashcardOrder().isEmpty()) {
-            throw new IllegalArgumentException("New flashcard order cannot be null or empty");
+            throw new IllegalArgumentException("New flashcard order không thể trống");
         }
 
         SystemFlashcardSet flashcardSet = systemFlashcardSetRepository.findById(flashcardSetId)
                 .orElseThrow(() -> new ResourceNotFoundException("System Flashcard Set not found with ID: " + flashcardSetId));
 
         if (flashcardSet.isDeleted()) {
-            throw new ResourceNotFoundException("System Flashcard Set has been deleted");
+            throw new ResourceNotFoundException("SystemFlashcardSet đã bị xóa.");
         }
         if (!flashcardSet.getCreator().getUserId().equals(userId)) {
-            throw new UnauthorizedAccessException("You do not have permission to update this system flashcard set");
+            throw new UnauthorizedAccessException("Bạn không có thẩm quyền cập nhật FlashcardSet này.");
         }
 
         List<Flashcard> flashcards = flashcardRepository.findBySystemFlashCardSet_SystemSetId(flashcardSetId);
@@ -160,7 +160,7 @@ public class SystemFlashcardSetServiceImpl implements SystemFlashcardSetService 
                 .orElseThrow(() -> new ResourceNotFoundException("FlashcardSet not found with Id: " + flashcardSetId));
 
         if (!flashcardSet.getCreator().getUserId().equals(userId)) {
-            throw new UnauthorizedAccessException("You do not have permission to delete this flashcard set.");
+            throw new UnauthorizedAccessException("Bạn không có thẩm quyền xóa FlashcardSet này.");
         }
 
         flashcardSet.setDeleted(true);
@@ -196,7 +196,7 @@ public class SystemFlashcardSetServiceImpl implements SystemFlashcardSetService 
         }
 
         if (flashcardSet.isDeleted()) {
-            throw new ResourceNotFoundException("FlashcardSet has been deleted and cannot be accessed.");
+            throw new ResourceNotFoundException("FlashcardSet đã bị xóa và không thể truy cập.");
         }
 
 
@@ -235,7 +235,7 @@ public class SystemFlashcardSetServiceImpl implements SystemFlashcardSetService 
         SystemFlashcardSet flashcardSet = systemFlashcardSetRepository.findById(flashcardSetId)
                 .orElseThrow(() -> new ResourceNotFoundException("FlashcardSet not found with Id: " + flashcardSetId));
         if (flashcardSet.isDeleted()) {
-            throw new ResourceNotFoundException("FlashcardSet has been deleted and cannot be accessed.");
+            throw new ResourceNotFoundException("lashcardSet đã bị xóa và không thể truy cập.");
         }
 
         Pageable pageable = PageRequest.of(0, Integer.MAX_VALUE);

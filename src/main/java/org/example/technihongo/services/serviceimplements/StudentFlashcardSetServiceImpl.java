@@ -47,7 +47,7 @@ public class StudentFlashcardSetServiceImpl implements StudentFlashcardSetServic
     @Override
     public FlashcardSetResponseDTO createFlashcardSet(Integer studentId, FlashcardSetRequestDTO request) {
         if (request.getTitle() == null) {
-            throw new IllegalArgumentException("Title is required!");
+            throw new IllegalArgumentException("Vui lòng nhâp vào tiêu đề cho bộ Flashcard nhé!!");
         }
         Student student = studentRepository.findById(studentId)
                 .orElseThrow(() -> new ResourceNotFoundException("Student not found with Id: " + studentId));
@@ -116,7 +116,7 @@ public class StudentFlashcardSetServiceImpl implements StudentFlashcardSetServic
         StudentFlashcardSet flashcardSet = getActiveFlashcardSet(flashcardSetId);
 
         if (!flashcardSet.getCreator().getStudentId().equals(studentId)) {
-            throw new UnauthorizedAccessException("You do not have permission to delete this flashcard set.");
+            throw new UnauthorizedAccessException("Bạn không có quyền xóa bộ flashcard này!!");
         }
         flashcardSet.setDeleted(true);
         flashcardSetRepository.save(flashcardSet);
@@ -130,7 +130,7 @@ public class StudentFlashcardSetServiceImpl implements StudentFlashcardSetServic
                 .orElseThrow(() -> new ResourceNotFoundException("Flashcard Set not found with id: " + flashcardSetId));
 
         if (flashcardSet.isDeleted()) {
-            throw new ResourceNotFoundException("Flashcard Set has been deleted and cannot be accessed.");
+            throw new ResourceNotFoundException("Flashcard Set đã bị xóa và không thể truy cập được nữa..");
         }
 
         Student student = flashcardSet.getCreator();
@@ -192,18 +192,18 @@ public class StudentFlashcardSetServiceImpl implements StudentFlashcardSetServic
         if (updateFlashcardOrderDTO == null ||
                 updateFlashcardOrderDTO.getNewFlashcardOrder() == null ||
                 updateFlashcardOrderDTO.getNewFlashcardOrder().isEmpty()) {
-            throw new IllegalArgumentException("New flashcard order cannot be null or empty");
+            throw new IllegalArgumentException("New flashcard order không thể null hoặc rỗng");
         }
 
         StudentFlashcardSet flashcardSet = flashcardSetRepository.findById(flashcardSetId)
                 .orElseThrow(() -> new ResourceNotFoundException("Student Flashcard Set not found with ID: " + flashcardSetId));
 
         if (flashcardSet.isDeleted()) {
-            throw new ResourceNotFoundException("Flashcard Set has been deleted and cannot be accessed.");
+            throw new ResourceNotFoundException("Flashcard Set đã bị xóa và không thể truy cập được nữa.");
         }
 
         if (!flashcardSet.getCreator().getStudentId().equals(studentId)) {
-            throw new UnauthorizedAccessException("You do not have permission to update this student flashcard set");
+            throw new UnauthorizedAccessException("Bạn không có quyền chỉnh sửa bộ flashcard này.");
         }
 
         List<Flashcard> flashcards = flashcardRepository.findAllById(updateFlashcardOrderDTO.getNewFlashcardOrder());
@@ -241,7 +241,7 @@ public class StudentFlashcardSetServiceImpl implements StudentFlashcardSetServic
             if (violation != null && violation.getViolationHandledAt() != null) {
                 LocalDateTime deadline = violation.getViolationHandledAt().plusDays(1);
                 if (LocalDateTime.now().isAfter(deadline)) {
-                    throw new RuntimeException("Đã quá thời hạn chỉnh sửa, bộ flashcard không thể mở public.");
+                    throw new RuntimeException("Đã quá thời hạn chỉnh sửa, bộ flashcard không thể mở public được nữa.");
                 }
             }
         }

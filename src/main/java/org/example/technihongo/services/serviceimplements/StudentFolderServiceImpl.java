@@ -35,7 +35,7 @@ public class StudentFolderServiceImpl implements StudentFolderService {
     public StudentFolderDTO createStudentFolder(Integer studentId,StudentFolderDTO folderDTO) {
 
         if (folderDTO.getName() == null || folderDTO.getName().trim().isEmpty()) {
-            throw new IllegalArgumentException("Folder name is required");
+            throw new IllegalArgumentException("Vui lòng nhập Folder name nhé");
         }
 
         if (studentId == null) {
