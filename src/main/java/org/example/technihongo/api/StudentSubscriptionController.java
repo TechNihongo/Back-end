@@ -225,6 +225,7 @@ public class StudentSubscriptionController {
 
 
     @GetMapping("/most-popular-plan")
+    @PreAuthorize("hasRole('ROLE_Administrator')")
     public ResponseEntity<ApiResponse> getMostPopularSubscriptionPlan() {
         try {
             subscriptionService.getMostPopularSubscriptionPlan();
@@ -244,6 +245,7 @@ public class StudentSubscriptionController {
     }
 
     @GetMapping("/revenue-by-plan")
+    @PreAuthorize("hasRole('ROLE_Administrator')")
     public ResponseEntity<ApiResponse> getRevenueBySubscriptionPlan() {
         try {
             List<SubscriptionPlanStatisticsDTO> revenueByPlan = subscriptionService.getRevenueBySubscriptionPlan();
@@ -263,6 +265,7 @@ public class StudentSubscriptionController {
     }
 
     @GetMapping("/revenue-by-period")
+    @PreAuthorize("hasRole('ROLE_Administrator')")
     public ResponseEntity<ApiResponse> getRevenueByPeriod(
             @RequestParam String periodType) {
         try {
