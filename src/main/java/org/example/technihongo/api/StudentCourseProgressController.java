@@ -36,6 +36,7 @@ public class StudentCourseProgressController {
     private StudentStudyPlanService studentStudyPlanService;
 
     @GetMapping("/view/{studentId}")
+
     public ResponseEntity<ApiResponse> getStudentCourseProgress(
             @RequestHeader("Authorization") String authorizationHeader,
             @PathVariable Integer studentId,

@@ -14,6 +14,7 @@ import org.example.technihongo.services.interfaces.UserActivityLogService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -31,7 +32,7 @@ public class LearningPathController {
 
     @GetMapping("/all")
     public ResponseEntity<ApiResponse> getAllLearningPaths(
-            @RequestHeader("Authorization") String authorizationHeader,
+            @RequestHeader(value = "Authorization", required = false) String authorizationHeader,
             @RequestParam(defaultValue = "") String keyword,
             @RequestParam(defaultValue = "") Integer domainId) {
         try{
@@ -70,11 +71,19 @@ public class LearningPathController {
                 }
             }
             else {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                        .body(ApiResponse.builder()
-                                .success(false)
-                                .message("Không có quyền")
-                                .build());
+                List<LearningPath> learningPaths = learningPathService.getPublicLearningPaths(keyword, domainId);
+                if (learningPaths.isEmpty()) {
+                    return ResponseEntity.ok(ApiResponse.builder()
+                            .success(true)
+                            .message("Danh sách lộ trình trống!")
+                            .build());
+                } else {
+                    return ResponseEntity.ok(ApiResponse.builder()
+                            .success(true)
+                            .message("Get All Public LearningPaths")
+                            .data(learningPaths)
+                            .build());
+                }
             }
         } catch (IllegalArgumentException e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
@@ -94,7 +103,7 @@ public class LearningPathController {
     @GetMapping("/{id}")
     public ResponseEntity<ApiResponse> viewLearningPath(
             @PathVariable Integer id,
-            @RequestHeader("Authorization") String authorizationHeader){
+            @RequestHeader(value = "Authorization", required = false) String authorizationHeader){
         try{
             if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
                 String token = authorizationHeader.substring(7);
@@ -105,7 +114,7 @@ public class LearningPathController {
                     if (learningPath == null) {
                         return ResponseEntity.ok(ApiResponse.builder()
                                 .success(false)
-                                .message("LearningPath not found!")
+                                .message("Không tìm thấy LearningPath!")
                                 .build());
                     } else {
                         return ResponseEntity.ok(ApiResponse.builder()
@@ -120,7 +129,7 @@ public class LearningPathController {
                     if(learningPath == null){
                         return ResponseEntity.ok(ApiResponse.builder()
                                 .success(false)
-                                .message("LearningPath not found!")
+                                .message("Không tìm thấy LearningPath!")
                                 .build());
                     }else{
                         return ResponseEntity.ok(ApiResponse.builder()
@@ -132,11 +141,19 @@ public class LearningPathController {
                 }
             }
              else {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                        .body(ApiResponse.builder()
-                                .success(false)
-                                .message("Unauthorized")
-                                .build());
+                LearningPath learningPath = learningPathService.getPublicLearningPathById(id);
+                if(learningPath == null){
+                    return ResponseEntity.ok(ApiResponse.builder()
+                            .success(false)
+                            .message("Không tìm thấy LearningPath!")
+                            .build());
+                }else{
+                    return ResponseEntity.ok(ApiResponse.builder()
+                            .success(true)
+                            .message("Get LearningPath")
+                            .data(learningPath)
+                            .build());
+                }
             }
         } catch (IllegalArgumentException e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
@@ -154,6 +171,7 @@ public class LearningPathController {
     }
 
     @PostMapping("/create")
+    @PreAuthorize("hasRole('ROLE_Content Manager')")
     public ResponseEntity<ApiResponse> createLearningPath(
             @RequestBody CreateLearningPathDTO createLearningPathDTO,
             @RequestHeader("Authorization") String authorizationHeader,
@@ -212,6 +230,7 @@ public class LearningPathController {
     }
 
     @PatchMapping("/update/{pathId}")
+    @PreAuthorize("hasRole('ROLE_Content Manager')")
     public ResponseEntity<ApiResponse> updateLearningPath(
             @PathVariable Integer pathId,
             @RequestBody UpdateLearningPathDTO updateLearningPathDTO,
@@ -271,7 +290,7 @@ public class LearningPathController {
     @GetMapping("/search/{keyword}")
     public ResponseEntity<ApiResponse> searchLearningPathByTitle(
             @PathVariable String keyword,
-            @RequestHeader("Authorization") String authorizationHeader) throws Exception {
+            @RequestHeader(value = "Authorization", required = false) String authorizationHeader) throws Exception {
         try{
             if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
                 String token = authorizationHeader.substring(7);
@@ -281,8 +300,8 @@ public class LearningPathController {
                     List<LearningPath> learningPaths = learningPathService.getLearningPathsByTitle(keyword);
                     if (learningPaths.isEmpty()) {
                         return ResponseEntity.ok(ApiResponse.builder()
-                                .success(false)
-                                .message("List LearningPath is empty!")
+                                .success(true)
+                                .message("Danh sách LearningPath trống!")
                                 .build());
                     } else {
                         return ResponseEntity.ok(ApiResponse.builder()
@@ -295,8 +314,8 @@ public class LearningPathController {
                     List<LearningPath> learningPaths = learningPathService.getPublicLearningPathsByTitle(keyword);
                     if (learningPaths.isEmpty()) {
                         return ResponseEntity.ok(ApiResponse.builder()
-                                .success(false)
-                                .message("List LearningPaths is empty!")
+                                .success(true)
+                                .message("Danh sách LearningPath trống!")
                                 .build());
                     } else {
                         return ResponseEntity.ok(ApiResponse.builder()
@@ -308,11 +327,19 @@ public class LearningPathController {
                 }
             }
              else {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                        .body(ApiResponse.builder()
-                                .success(false)
-                                .message("Unauthorized")
-                                .build());
+                List<LearningPath> learningPaths = learningPathService.getPublicLearningPathsByTitle(keyword);
+                if (learningPaths.isEmpty()) {
+                    return ResponseEntity.ok(ApiResponse.builder()
+                            .success(true)
+                            .message("Danh sách LearningPath trống!")
+                            .build());
+                } else {
+                    return ResponseEntity.ok(ApiResponse.builder()
+                            .success(true)
+                            .message("Get Public LearningPaths By Keyword")
+                            .data(learningPaths)
+                            .build());
+                }
             }
         } catch (IllegalArgumentException e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
@@ -330,6 +357,7 @@ public class LearningPathController {
     }
 
     @DeleteMapping("/delete/{id}")
+    @PreAuthorize("hasRole('ROLE_Content Manager')")
     public ResponseEntity<ApiResponse> deleteLearningPath(
             @PathVariable Integer id,
             @RequestHeader("Authorization") String authorizationHeader,
@@ -386,10 +414,11 @@ public class LearningPathController {
     }
 
     @GetMapping("/creator")
+    @PreAuthorize("hasAnyRole('ROLE_Content Manager', 'ROLE_Administrator')")
     public ResponseEntity<ApiResponse> getLearningPathListByCreator(
             @RequestHeader("Authorization") String authorizationHeader,
             @RequestParam(defaultValue = "") String keyword,
-            @RequestParam(defaultValue = "") Integer domainId) throws Exception {
+            @RequestParam(defaultValue = "") Integer domainId) {
         try{
             if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
                 String token = authorizationHeader.substring(7);

@@ -12,6 +12,7 @@ import org.example.technihongo.services.interfaces.MeetingScriptService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -99,6 +100,7 @@ public class MeetingScriptController {
     }
 
     @PostMapping("/create")
+    @PreAuthorize("hasRole('ROLE_Content Manager')")
     public ResponseEntity<ApiResponse> createScript(
             @RequestBody MeetingScriptDTO dto,
             @RequestHeader("Authorization") String authorizationHeader) {
@@ -153,6 +155,7 @@ public class MeetingScriptController {
     }
 
     @PatchMapping("/update/{scriptId}")
+    @PreAuthorize("hasRole('ROLE_Content Manager')")
     public ResponseEntity<ApiResponse> updateScript(
             @PathVariable Integer scriptId,
             @RequestBody MeetingScriptDTO dto,
@@ -206,6 +209,7 @@ public class MeetingScriptController {
     }
 
     @DeleteMapping("/delete/{scriptId}")
+    @PreAuthorize("hasRole('ROLE_Content Manager')")
     public ResponseEntity<ApiResponse> deleteScript(
             @PathVariable Integer scriptId,
             @RequestHeader("Authorization") String authorizationHeader) {

@@ -7,6 +7,7 @@ import org.example.technihongo.response.ApiResponse;
 import org.example.technihongo.services.interfaces.AchievementService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -49,6 +50,7 @@ public class AchievementController {
         }
     }
     @GetMapping("/student/achievement/{studentId}")
+    @PreAuthorize("hasRole('ROLE_Student')")
     public ResponseEntity<ApiResponse> getStudentAchievements(@PathVariable Integer studentId) {
         try {
             List<StudentAchievement> studentAchievements = achievementService.getStudentAchievements(studentId);
@@ -76,6 +78,7 @@ public class AchievementController {
 
 
     @PostMapping("/student/track-achievement/{studentId}")
+    @PreAuthorize("hasRole('ROLE_Student')")
     public ResponseEntity<ApiResponse> trackAchievements(@PathVariable Integer studentId) {
         try {
             achievementService.trackAchievementProgress(studentId);

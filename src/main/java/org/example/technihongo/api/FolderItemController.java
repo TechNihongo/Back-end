@@ -13,6 +13,7 @@ import org.example.technihongo.services.interfaces.UserActivityLogService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -30,6 +31,7 @@ public class FolderItemController {
     private UserActivityLogService userActivityLogService;
 
     @PostMapping("/add")
+    @PreAuthorize("hasRole('ROLE_Student')")
     public ResponseEntity<ApiResponse> addFolderItem(
             @RequestBody FolderItemDTO folderItemDTO,
             @RequestHeader("Authorization") String authorizationHeader,
@@ -87,6 +89,7 @@ public class FolderItemController {
     }
 
     @DeleteMapping("/remove")
+    @PreAuthorize("hasRole('ROLE_Student')")
     public ResponseEntity<ApiResponse> removeFolderItem(
             @RequestBody RemoveItemDTO request,
             @RequestHeader("Authorization") String authorizationHeader,
@@ -143,6 +146,7 @@ public class FolderItemController {
     }
 
     @GetMapping("/folder/{folderId}")
+    @PreAuthorize("hasRole('ROLE_Student')")
     public ResponseEntity<ApiResponse> getFolderItems(
             @PathVariable Integer folderId,
             @RequestHeader("Authorization") String authorizationHeader) {
@@ -195,6 +199,7 @@ public class FolderItemController {
     }
 
     @PostMapping("/add-multiple")
+    @PreAuthorize("hasRole('ROLE_Student')")
     public ResponseEntity<ApiResponse> addMultipleFolderItems(
             @RequestBody List<FolderItemDTO> folderItemDTOs,
             @RequestHeader("Authorization") String authorizationHeader,
@@ -252,6 +257,7 @@ public class FolderItemController {
     }
 
     @DeleteMapping("/remove-multiple")
+    @PreAuthorize("hasRole('ROLE_Student')")
     public ResponseEntity<ApiResponse> removeMultipleFolderItems(
             @RequestBody List<RemoveItemDTO> requests,
             @RequestHeader("Authorization") String authorizationHeader,
@@ -308,6 +314,7 @@ public class FolderItemController {
     }
 
     @GetMapping("/search/{folderId}")
+    @PreAuthorize("hasRole('ROLE_Student')")
     public ResponseEntity<ApiResponse> searchFolderItems(
             @PathVariable Integer folderId,
             @RequestParam String searchTerm,
@@ -362,6 +369,7 @@ public class FolderItemController {
     }
 
     @GetMapping("/count/{folderId}")
+    @PreAuthorize("hasRole('ROLE_Student')")
     public ResponseEntity<ApiResponse> countFolderItems(
             @PathVariable Integer folderId,
             @RequestHeader("Authorization") String authorizationHeader) {
@@ -406,6 +414,7 @@ public class FolderItemController {
     }
 
     @PutMapping("/move/{folderItemId}/{targetFolderId}")
+    @PreAuthorize("hasRole('ROLE_Student')")
     public ResponseEntity<ApiResponse> moveFolderItem(
             @PathVariable Integer folderItemId,
             HttpServletRequest httpRequest,

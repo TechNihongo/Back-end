@@ -12,6 +12,7 @@ import org.example.technihongo.services.interfaces.UserActivityLogService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -29,6 +30,7 @@ public class QuestionController {
     private JwtUtil jwtUtil;
 
     @GetMapping("/all")
+    @PreAuthorize("hasRole('ROLE_Content Manager')")
     public ResponseEntity<ApiResponse> getAllQuestions() throws Exception {
         try{
             List<Question> questionList = questionService.getQuestionList();
@@ -60,7 +62,8 @@ public class QuestionController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<ApiResponse> viewQuestion(@PathVariable Integer id) throws Exception {
+    @PreAuthorize("hasAnyRole('ROLE_Student', 'ROLE_Content Manager')")
+    public ResponseEntity<ApiResponse> viewQuestion(@PathVariable Integer id) {
         try{
             Question question = questionService.getQuestionById(id);
             return ResponseEntity.ok(ApiResponse.builder()
@@ -91,6 +94,7 @@ public class QuestionController {
     }
 
     @PostMapping("/create")
+    @PreAuthorize("hasRole('ROLE_Content Manager')")
     public ResponseEntity<ApiResponse> createQuestion(@RequestBody CreateUpdateQuestionDTO createUpdateQuestionDTO){
         try {
             Question question = questionService.createQuestion(createUpdateQuestionDTO);
@@ -122,6 +126,7 @@ public class QuestionController {
     }
 
     @PatchMapping("/update/{id}")
+    @PreAuthorize("hasRole('ROLE_Content Manager')")
     public ResponseEntity<ApiResponse> updateQuestion(@PathVariable Integer id,
                                                             @RequestBody CreateUpdateQuestionDTO createUpdateQuestionDTO) {
         try{
@@ -152,6 +157,7 @@ public class QuestionController {
     }
 
     @PostMapping("/options/create")
+    @PreAuthorize("hasRole('ROLE_Content Manager')")
     public ResponseEntity<ApiResponse> createQuestionWithOptions(
             @RequestBody QuestionWithOptionsDTO questionWithOptionsDTO,
             @RequestHeader("Authorization") String authorizationHeader,
@@ -209,6 +215,7 @@ public class QuestionController {
     }
 
     @PatchMapping("/options/update/{id}")
+    @PreAuthorize("hasRole('ROLE_Content Manager')")
     public ResponseEntity<ApiResponse> updateQuestionWithOptions(
             @PathVariable Integer id,
             @RequestBody QuestionWithOptionsDTO questionWithOptionsDTO,

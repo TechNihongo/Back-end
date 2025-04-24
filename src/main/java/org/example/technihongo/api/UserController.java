@@ -18,6 +18,7 @@ import org.example.technihongo.services.interfaces.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
@@ -335,6 +336,7 @@ public class UserController {
         }
     }
     @GetMapping("/paginated")
+    @PreAuthorize("hasAnyRole('ROLE_Content Manager', 'ROLE_Administrator')")
     public ResponseEntity<ApiResponse> getAllUsersPaginated(
             @RequestHeader("Authorization") String authorizationHeader,
             HttpServletRequest httpRequest,
@@ -397,6 +399,7 @@ public class UserController {
     }
 
     @GetMapping("/student/paginated")
+    @PreAuthorize("hasAnyRole('ROLE_Content Manager', 'ROLE_Administrator')")
     public ResponseEntity<ApiResponse> getStudentUsersPaginated(
             @RequestParam(defaultValue = "0") int pageNo,
             @RequestParam(defaultValue = "10") int pageSize,
@@ -427,6 +430,7 @@ public class UserController {
     }
 
     @GetMapping("/content-managers/paginated")
+    @PreAuthorize("hasAnyRole('ROLE_Content Manager', 'ROLE_Administrator')")
     public ResponseEntity<ApiResponse> getContentManagerUsersPaginated(
             @RequestParam(defaultValue = "0") int pageNo,
             @RequestParam(defaultValue = "10") int pageSize,
@@ -460,6 +464,7 @@ public class UserController {
 
     @PatchMapping("/{userId}/username")
     public ResponseEntity<ApiResponse> updateUserName(
+            @RequestHeader("Authorization") String authorizationHeader,
             @PathVariable Integer userId,
             @RequestBody UpdateProfileDTO request) {
         try {
@@ -549,6 +554,7 @@ public class UserController {
     }
 
     @GetMapping("/searchContentManagerName")
+    @PreAuthorize("hasAnyRole('ROLE_Content Manager', 'ROLE_Administrator')")
     public ResponseEntity<ApiResponse> searchContentManager(
             @RequestParam String keyword,
             @RequestParam(defaultValue = "0") int pageNo,
@@ -585,6 +591,7 @@ public class UserController {
 
     @PatchMapping("/{userId}/password")
     public ResponseEntity<ApiResponse> updatePassword(
+            @RequestHeader("Authorization") String authorizationHeader,
             @PathVariable Integer userId,
             @RequestBody UpdateProfileDTO request) {
         try {
@@ -609,6 +616,7 @@ public class UserController {
     }
 
     @PostMapping("/content-manager")
+    @PreAuthorize("hasRole('ROLE_Administrator')")
     public ResponseEntity<ApiResponse> createContentManager(
             @RequestHeader("Authorization") String authorizationHeader,
             HttpServletRequest httpRequest,

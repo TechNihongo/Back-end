@@ -13,6 +13,7 @@ import org.example.technihongo.services.interfaces.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -109,7 +110,7 @@ public class CourseController {
 
     @GetMapping("/{id}")
     public ResponseEntity<ApiResponse> viewCourse(@PathVariable Integer id,
-                                                  @RequestHeader("Authorization") String authorizationHeader,
+                                                  @RequestHeader(value = "Authorization") String authorizationHeader,
                                                   HttpServletRequest httpRequest){
         try{
             if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
@@ -203,6 +204,7 @@ public class CourseController {
     }
 
     @PostMapping("/create")
+    @PreAuthorize("hasRole('ROLE_Content Manager')")
     public ResponseEntity<ApiResponse> createCourse(
             @RequestBody CreateCourseDTO createCourseDTO,
             @RequestHeader("Authorization") String authorizationHeader,
@@ -261,6 +263,7 @@ public class CourseController {
     }
 
     @PatchMapping("/update/{courseId}")
+    @PreAuthorize("hasRole('ROLE_Content Manager')")
     public ResponseEntity<ApiResponse> updateCourse(
             @PathVariable Integer courseId,
             @RequestBody UpdateCourseDTO updateCourseDTO,
@@ -349,6 +352,7 @@ public class CourseController {
     }
 
     @GetMapping("/creator")
+    @PreAuthorize("hasRole('ROLE_Content Manager')")
     public ResponseEntity<ApiResponse> getCourseListByCreator(@RequestHeader("Authorization") String authorizationHeader) throws Exception {
         try{
             if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
@@ -521,6 +525,7 @@ public class CourseController {
     }
 
     @GetMapping("/creator/paginated")
+    @PreAuthorize("hasRole('ROLE_Content Manager')")
     public ResponseEntity<ApiResponse> getCourseListByCreatorPaginated(
             @RequestHeader("Authorization") String authorizationHeader,
             @RequestParam(defaultValue = "0") int pageNo,
@@ -578,6 +583,7 @@ public class CourseController {
     }
 
     @GetMapping("/domain/{parentDomainId}")
+    @PreAuthorize("hasRole('ROLE_Content Manager')")
     public ResponseEntity<ApiResponse> getCourseListByParentDomainId(
             @PathVariable Integer parentDomainId,
             @RequestParam(defaultValue = "0") int pageNo,

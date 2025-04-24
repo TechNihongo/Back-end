@@ -10,6 +10,7 @@ import org.example.technihongo.services.interfaces.StudentService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -25,6 +26,7 @@ public class FlashcardProgressController {
     private StudentService studentService;
 
     @GetMapping("/starred")
+    @PreAuthorize("hasRole('ROLE_Student')")
     public ResponseEntity<ApiResponse> getStarredFlashcards(
             @RequestHeader("Authorization") String authorizationHeader,
             @RequestParam Integer setId,
@@ -79,6 +81,7 @@ public class FlashcardProgressController {
 
     // starred and is learned
     @PatchMapping("/update")
+    @PreAuthorize("hasRole('ROLE_Student')")
     public ResponseEntity<ApiResponse> updateFlashcardProgress(
             @RequestHeader("Authorization") String authorizationHeader,
             @RequestParam Integer flashcardId,

@@ -11,6 +11,7 @@ import org.example.technihongo.services.interfaces.UserActivityLogService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -24,6 +25,7 @@ public class StudentLearningStatisticsController {
     private JwtUtil jwtUtil;
 
     @GetMapping("/view")
+    @PreAuthorize("hasAnyRole('ROLE_Student', 'ROLE_Administrator')")
     public ResponseEntity<ApiResponse> viewStudentLearningStatistics(
             @RequestParam Integer studentId,
             @RequestHeader("Authorization") String authorizationHeader,

@@ -10,6 +10,7 @@ import org.example.technihongo.services.interfaces.MeetingService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -155,6 +156,7 @@ public class MeetingController {
     }
 
     @PostMapping("/create")
+    @PreAuthorize("hasRole('ROLE_Content Manager')")
     public ResponseEntity<ApiResponse> createMeeting(
             @RequestBody MeetingDTO meetingDTO,
             @RequestHeader("Authorization") String authorizationHeader) {
@@ -210,6 +212,7 @@ public class MeetingController {
     }
 
     @PatchMapping("/update/{meetingId}")
+    @PreAuthorize("hasRole('ROLE_Content Manager')")
     public ResponseEntity<ApiResponse> updateMeeting(
             @PathVariable Integer meetingId,
             @RequestBody MeetingDTO meetingDTO,

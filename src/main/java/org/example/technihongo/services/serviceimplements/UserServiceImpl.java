@@ -502,7 +502,7 @@ public class UserServiceImpl implements UserService {
         Student student = studentRepository.findById(studentId)
                 .orElseThrow(() -> new ResourceNotFoundException("Student not found with id: " + studentId));
         User user = student.getUser();
-        return new UserDTO(user.getUserId(), user.getUserName(), user.getEmail(), user.getDob());
+        return new UserDTO(user.getUserId(), user.getUserName(), user.getEmail(), user.getDob(), user.getProfileImg());
     }
 
 

@@ -16,6 +16,7 @@ import org.example.technihongo.services.interfaces.UserActivityLogService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -36,6 +37,7 @@ public class LearningResourceController {
     private UserActivityLogService userActivityLogService;
 
     @GetMapping("/all")
+    @PreAuthorize("hasRole('ROLE_Content Manager')")
     public ResponseEntity<ApiResponse> getAllLearningResources() {
         try{
             List<LearningResource> learningResourceList = learningResourceService.getAllLearningResources();
@@ -141,6 +143,7 @@ public class LearningResourceController {
     }
 
     @PostMapping("/create")
+    @PreAuthorize("hasRole('ROLE_Content Manager')")
     public ResponseEntity<ApiResponse> createLearningResource(@RequestBody LearningResourceDTO learningResourceDTO,
                                                   @RequestHeader("Authorization") String authorizationHeader,
                                                               HttpServletRequest httpRequest) {
@@ -198,6 +201,7 @@ public class LearningResourceController {
     }
 
     @PatchMapping("/update/{id}")
+    @PreAuthorize("hasRole('ROLE_Content Manager')")
     public ResponseEntity<ApiResponse> updateLearningResource(
             @PathVariable Integer id,
             @RequestBody LearningResourceDTO learningResourceDTO,
@@ -255,6 +259,7 @@ public class LearningResourceController {
     }
 
     @PatchMapping("/update-status/{id}")
+    @PreAuthorize("hasRole('ROLE_Content Manager')")
     public ResponseEntity<ApiResponse> updateLearningResourceStatus(@PathVariable Integer id,
                                                         @RequestBody LearningResourceStatusDTO learningResourceStatusDTO) {
         try{
@@ -285,6 +290,7 @@ public class LearningResourceController {
     }
 
     @DeleteMapping("/delete/{id}")
+    @PreAuthorize("hasRole('ROLE_Content Manager')")
     public ResponseEntity<ApiResponse> deleteLearningResource(
             @PathVariable Integer id,
             @RequestHeader("Authorization") String authorizationHeader,
@@ -340,6 +346,7 @@ public class LearningResourceController {
     }
 
     @GetMapping("/creator")
+    @PreAuthorize("hasAnyRole('ROLE_Content Manager', 'ROLE_Administrator')")
     public ResponseEntity<ApiResponse> getLearningResourceListByCreator(@RequestHeader("Authorization") String authorizationHeader) throws Exception {
         try{
             if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
