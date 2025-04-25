@@ -451,6 +451,7 @@ public class StudentFlashcardSetServiceImpl implements StudentFlashcardSetServic
         response.setTotalViews(flashcardSet.getTotalViews());
         response.setDescription(flashcardSet.getDescription());
         response.setIsPublic(flashcardSet.isPublic());
+        response.setIsViolated(flashcardSet.isViolated());
         response.setFlashcards(flashcardPage.getContent().stream()
                 .map(this::convertToFlashcardResponseDTO)
                 .collect(Collectors.toList()));
@@ -507,8 +508,6 @@ public class StudentFlashcardSetServiceImpl implements StudentFlashcardSetServic
 
         return responseDTO;
     }
-
-
 
     private StudentFlashcardSet getActiveFlashcardSet(Integer flashcardSetId) {
         StudentFlashcardSet flashcardSet = flashcardSetRepository.findById(flashcardSetId)
