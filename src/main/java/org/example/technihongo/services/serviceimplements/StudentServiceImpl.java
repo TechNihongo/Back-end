@@ -53,7 +53,7 @@ public class StudentServiceImpl implements StudentService {
                 .orElseThrow(() -> new ResourceNotFoundException("Student not found with id: " + studentId));
 
         if (dailyGoal < 30) {
-            throw new RuntimeException("Cố lên!Bạn có thể học nhiều hơn mà!!");
+            throw new RuntimeException("Cố lên! Bạn có thể học nhiều hơn mà!!");
         }
 
         student.setDailyGoal(dailyGoal);

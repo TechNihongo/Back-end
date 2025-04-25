@@ -49,7 +49,8 @@ public class SecurityConfig {
                                 "/*/*/searchTitle", "/*/flashcard-set-progress/all/*", "/*/flashcard-set-progress/set/*",
                                 "/*/resource-progress/*/*", "/*/*/send-reminders", "/*/study-plan/course/*",
                                 "/*/study-plan/{id:[0-9]+}", "/*/subscription/all", "/*/subscription/detail/*",
-                                "/*/system-flashcard-set/getSysFlashcardSet/*", "/*/system-flashcard-set/getAllFlashcardOfSet/*").permitAll()
+                                "/*/system-flashcard-set/getSysFlashcardSet/*", "/*/system-flashcard-set/getAllFlashcardOfSet/*",
+                                "/*/course-progress/all/*").permitAll()
 
 
                         .requestMatchers("/*/lesson-progress/*", "/*/favorite/**", "/*/learning-log/view",
@@ -100,7 +101,7 @@ public class SecurityConfig {
 
                         .requestMatchers("/*/user/paginated", "/*/user/student/*", "/*/user/content-managers/*",
                                 "/*/user/searchContentManagerName", "/*/learning-path/creator", "/*/learning-resource/creator",
-                                "/*/payment-method/*/update", "/*/quiz/creator", "/*/course-progress/all/*",
+                                "/*/payment-method/*/update", "/*/quiz/creator",
                                 "/*/course-progress/statistics/*", "/*/student-course-rating/allRating",
                                 "/*/subscription/create", "/*/subscription/update/*", "/*/subscription/delete/*").hasAnyRole("Content Manager", "Administrator")
 

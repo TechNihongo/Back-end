@@ -100,8 +100,8 @@ public class StudentCourseProgressController {
     }
 
     @GetMapping("/all/{studentId}")
-    @PreAuthorize("hasAnyRole('ROLE_Administrator', 'ROLE_Content Manager')")
     public ResponseEntity<ApiResponse> getAllStudentCourseProgress(
+            @RequestHeader("Authorization") String authorizationHeader,
             @PathVariable Integer studentId) {
         try {
             List<StudentCourseProgress> progressList = courseProgressService.getAllStudentCourseProgress(studentId);
