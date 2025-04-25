@@ -265,6 +265,8 @@ public class StudentFlashcardSetServiceImpl implements StudentFlashcardSetServic
         flashcardSet.setTotalCards((int) flashcardPage.getTotalElements());
 
         FlashcardSetResponseDTO response = new FlashcardSetResponseDTO();
+        response.setUserName(flashcardSet.getCreator().getUser().getUserName());
+        response.setProfileImg(flashcardSet.getCreator().getUser().getProfileImg());
         response.setStudentId(flashcardSet.getCreator().getStudentId());
         response.setStudentSetId(flashcardSet.getStudentSetId());
         response.setTitle(flashcardSet.getTitle());
@@ -275,6 +277,7 @@ public class StudentFlashcardSetServiceImpl implements StudentFlashcardSetServic
                 .map(this::convertToFlashcardResponseDTO)
                 .collect(Collectors.toList()));
         response.setCreatedAt(flashcardSet.getCreatedAt());
+
 
         return response;
     }

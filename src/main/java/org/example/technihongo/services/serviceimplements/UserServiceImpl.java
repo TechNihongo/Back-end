@@ -68,6 +68,7 @@ public class UserServiceImpl implements UserService {
                 user.getUserId(),
                 user.getUserName(),
                 user.getEmail(),
+                user.getProfileImg(),
                 user.getRole().getRoleName(),
                 true,
                 "Login thành công!!"
@@ -104,6 +105,7 @@ public class UserServiceImpl implements UserService {
                         existingUser.getUserId(),
                         existingUser.getUserName(),
                         existingUser.getEmail(),
+                        existingUser.getProfileImg(),
                         existingUser.getRole().getRoleName(),
                         true,
                         "Registration updated. Please check your email for verification."
@@ -141,6 +143,7 @@ public class UserServiceImpl implements UserService {
                         savedUser.getUserId(),
                         savedUser.getUserName(),
                         savedUser.getEmail(),
+                        savedUser.getProfileImg(),
                         savedUser.getRole().getRoleName(),
                         true,
                         "Registration thành công! Vui lòng kiểm tra email để xác thực tài khoản!"
@@ -188,6 +191,7 @@ public class UserServiceImpl implements UserService {
                 user.getUserId(),
                 user.getUserName(),
                 user.getEmail(),
+                user.getProfileImg(),
                 user.getRole().getRoleName(),
                 true,
                 message
