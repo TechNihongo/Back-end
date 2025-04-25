@@ -17,9 +17,7 @@ public class FlashcardSetResponseDTO {
     private String description;
     private Integer totalViews;
     private Boolean isPublic;
+    private Boolean isViolated;
     private List<FlashcardResponseDTO> flashcards;
     private LocalDateTime createdAt;
-
-
-
 }
