@@ -11,11 +11,15 @@ import java.util.List;
 public class FlashcardSetResponseDTO {
     private Integer studentId;
     private Integer studentSetId;
+    private String userName;
+    private String profileImg;
     private String title;
     private String description;
     private Integer totalViews;
     private Boolean isPublic;
     private List<FlashcardResponseDTO> flashcards;
     private LocalDateTime createdAt;
+
+
 
 }

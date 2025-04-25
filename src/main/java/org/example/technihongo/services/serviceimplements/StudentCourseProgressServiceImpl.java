@@ -27,7 +27,8 @@ import java.util.Optional;
 @Service
 @RequiredArgsConstructor
 @Component
-public class StudentCourseProgressServiceImpl implements StudentCourseProgressService {
+public class
+StudentCourseProgressServiceImpl implements StudentCourseProgressService {
     @Autowired
     private StudentCourseProgressRepository studentCourseProgressRepository;
     @Autowired

@@ -81,17 +81,35 @@ public class UserController {
                         userAgent
                 );
 
-                return ResponseEntity.ok(new LoginResponseTokenDTO(response.getUserId(), studentId, response.getUserName(),
-                        response.getEmail(), response.getRole(), true, response.getMessage(), token));
+                return ResponseEntity.ok(new LoginResponseTokenDTO(
+                        response.getUserId(),
+                        studentId,
+                        response.getUserName(),
+                        response.getEmail(),
+                        response.getProfileImg(),
+                        response.getRole(),
+                        true,
+                        response.getMessage(),
+                        token
+                ));
 
             } else {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new LoginResponseTokenDTO(response.getUserId(), studentId, response.getUserName(),
-                        response.getEmail(), response.getRole(), false, response.getMessage(), token));
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new LoginResponseTokenDTO(
+                        response.getUserId(),
+                        studentId,
+                        response.getUserName(),
+                        response.getEmail(),
+                        response.getProfileImg(),
+                        response.getRole(),
+                        false,
+                        response.getMessage(),
+                        token
+                ));
             }
 
         } catch (Exception e) {
             String errorMessage = "Login failed: " + e.getMessage();
-            LoginResponseTokenDTO errorResponse = new LoginResponseTokenDTO(null,null, null, null, null, false, errorMessage, null);
+            LoginResponseTokenDTO errorResponse = new LoginResponseTokenDTO(null,null, null,null, null, null, false, errorMessage, null);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
         }
     }
@@ -111,11 +129,11 @@ public class UserController {
             }
         } catch (RuntimeException e) {
             String errorMessage = "Registration failed: " + e.getMessage();
-            LoginResponseDTO errorResponse = new LoginResponseDTO(null, null, null, null, false, errorMessage);
+            LoginResponseDTO errorResponse = new LoginResponseDTO(null, null,null,null, null, false, errorMessage);
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
         } catch (Exception e) {
             String errorMessage = "Registration failed: " + e.getMessage();
-            LoginResponseDTO errorResponse = new LoginResponseDTO(null, null, null, null, false, errorMessage);
+            LoginResponseDTO errorResponse = new LoginResponseDTO(null, null,null,null, null, false, errorMessage);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
         }
     }
@@ -152,16 +170,34 @@ public class UserController {
                         userAgent
                 );
 
-                return ResponseEntity.ok(new LoginResponseTokenDTO(response.getUserId(), studentId, response.getUserName(),
-                        response.getEmail(), response.getRole(), true, response.getMessage(), token));
+                return ResponseEntity.ok(new LoginResponseTokenDTO(
+                        response.getUserId(),
+                        studentId,
+                        response.getUserName(),
+                        response.getEmail(),
+                        response.getProfileImg(),
+                        response.getRole(),
+                        true,
+                        response.getMessage(),
+                        token
+                ));
 
             } else {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new LoginResponseTokenDTO(response.getUserId(), studentId, response.getUserName(),
-                        response.getEmail(), response.getRole(), false, response.getMessage(), token));
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new LoginResponseTokenDTO(
+                        response.getUserId(),
+                        studentId,
+                        response.getUserName(),
+                        response.getEmail(),
+                        response.getProfileImg(),
+                        response.getRole(),
+                        false,
+                        response.getMessage(),
+                        token
+                ));
             }
         } catch (Exception e) {
             String errorMessage = "Google authentication failed: " + e.getMessage();
-            LoginResponseTokenDTO errorResponse = new LoginResponseTokenDTO(null, null, null, null, null, false, errorMessage, null);
+            LoginResponseTokenDTO errorResponse = new LoginResponseTokenDTO(null, null, null,null, null, null, false, errorMessage, null);
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorResponse);
         }
     }
