@@ -1,6 +1,7 @@
 package org.example.technihongo.services.serviceimplements;
 
 import lombok.RequiredArgsConstructor;
+import org.apache.tomcat.util.digester.Rule;
 import org.example.technihongo.dto.*;
 import org.example.technihongo.entities.*;
 import org.example.technihongo.enums.CompletionStatus;
@@ -21,6 +22,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor

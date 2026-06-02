@@ -1,18 +1,14 @@
 package org.example.technihongo.dto;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.Data;
 
-@Getter
-@Setter
-@AllArgsConstructor
-@NoArgsConstructor
+@Data
 public class StudentSpendingDTO {
     private Integer studentId;
-    private Double totalSpent = 0.0;
+    private Double totalSpent;
+
+    public StudentSpendingDTO(Integer studentId, Double totalSpent) {
+        this.studentId = studentId;
+        this.totalSpent = totalSpent != null ? totalSpent : 0.0;
+    }
 }
-
-
-

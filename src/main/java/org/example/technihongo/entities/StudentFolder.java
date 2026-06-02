@@ -31,7 +31,6 @@ public class StudentFolder {
     private String description;
 
     @Column(name = "is_deleted")
-    @Builder.Default
     private boolean isDeleted = false;
 
     @CreationTimestamp

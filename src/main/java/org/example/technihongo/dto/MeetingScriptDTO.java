@@ -1,10 +1,11 @@
 package org.example.technihongo.dto;
-import lombok.Getter;
-import lombok.Setter;
 
+import lombok.Data;
+import org.example.technihongo.entities.Meeting;
 
-@Getter
-@Setter
+import java.time.LocalDateTime;
+
+@Data
 public class MeetingScriptDTO {
     private Integer meetingId;
     private String question;

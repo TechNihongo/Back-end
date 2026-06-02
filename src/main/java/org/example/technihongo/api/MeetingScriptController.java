@@ -3,6 +3,7 @@ package org.example.technihongo.api;
 import lombok.RequiredArgsConstructor;
 import org.example.technihongo.core.security.JwtUtil;
 import org.example.technihongo.dto.*;
+import org.example.technihongo.entities.Meeting;
 import org.example.technihongo.entities.MeetingScript;
 import org.example.technihongo.response.ApiResponse;
 import org.example.technihongo.services.interfaces.MeetingScriptService;

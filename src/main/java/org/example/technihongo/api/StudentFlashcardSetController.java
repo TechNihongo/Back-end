@@ -2,19 +2,20 @@ package org.example.technihongo.api;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
-
 import org.example.technihongo.core.security.JwtUtil;
 import org.example.technihongo.dto.*;
 import org.example.technihongo.enums.ActivityType;
 import org.example.technihongo.enums.ContentType;
 import org.example.technihongo.exception.ResourceNotFoundException;
 import org.example.technihongo.exception.UnauthorizedAccessException;
+import org.example.technihongo.repositories.StudentFlashcardSetRepository;
+import org.example.technihongo.repositories.UserRepository;
 import org.example.technihongo.response.ApiResponse;
 import org.example.technihongo.services.interfaces.StudentFlashcardSetProgressService;
 import org.example.technihongo.services.interfaces.StudentFlashcardSetService;
 import org.example.technihongo.services.interfaces.StudentService;
 import org.example.technihongo.services.interfaces.UserActivityLogService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -24,14 +25,22 @@ import java.util.Collections;
 import java.util.List;
 
 @RestController
-@RequiredArgsConstructor
 @RequestMapping("/api/student-flashcard-set")
 public class StudentFlashcardSetController {
-    private final StudentFlashcardSetService studentFlashcardSetService;
-    private final JwtUtil jwtUtil;
-    private final StudentService studentService;
-    private final StudentFlashcardSetProgressService studentFlashcardSetProgressService;
-    private final UserActivityLogService userActivityLogService;
+    @Autowired
+    private StudentFlashcardSetService studentFlashcardSetService;
+    @Autowired
+    private JwtUtil jwtUtil;
+    @Autowired
+    private StudentService studentService;
+    @Autowired
+    private StudentFlashcardSetProgressService studentFlashcardSetProgressService;
+    @Autowired
+    private UserActivityLogService userActivityLogService;
+    @Autowired
+    private UserRepository userRepository;
+    @Autowired
+    private StudentFlashcardSetRepository studentFlashcardSetRepository;
 
     @PostMapping("/create")
     @PreAuthorize("hasRole('ROLE_Student')")

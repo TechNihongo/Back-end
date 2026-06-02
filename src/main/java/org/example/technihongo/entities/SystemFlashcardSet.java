@@ -15,6 +15,7 @@ import java.util.Set;
 @Table(name = "SystemFlashcardSet")
 @Getter
 @Setter
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class SystemFlashcardSet {

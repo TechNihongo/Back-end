@@ -1,6 +1,7 @@
 package org.example.technihongo.services.interfaces;
 
 import org.example.technihongo.dto.PageResponseDTO;
+import org.example.technihongo.entities.LearningResource;
 import org.example.technihongo.entities.LessonResource;
 import org.example.technihongo.entities.StudentFavorite;
 

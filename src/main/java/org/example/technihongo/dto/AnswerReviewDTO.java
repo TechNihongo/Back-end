@@ -1,6 +1,7 @@
 package org.example.technihongo.dto;
 
 import lombok.*;
+import org.example.technihongo.entities.QuestionAnswerOption;
 
 import java.util.List;
 

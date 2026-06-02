@@ -6,12 +6,14 @@ import org.example.technihongo.dto.LearningResourceStatusDTO;
 import org.example.technihongo.entities.*;
 import org.example.technihongo.repositories.*;
 import org.example.technihongo.services.interfaces.LearningResourceService;
+import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 
 @Service
 @RequiredArgsConstructor
+@Component
 public class LearningResourceServiceImpl implements LearningResourceService {
     private final LearningResourceRepository learningResourceRepository;
     private final UserRepository userRepository;

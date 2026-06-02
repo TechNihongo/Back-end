@@ -2,25 +2,27 @@ package org.example.technihongo.api;
 
 import org.example.technihongo.core.security.JwtUtil;
 import org.example.technihongo.entities.StudentLessonProgress;
+import org.example.technihongo.entities.StudentResourceProgress;
 import org.example.technihongo.response.ApiResponse;
 import org.example.technihongo.services.interfaces.StudentLessonProgressService;
 import org.example.technihongo.services.interfaces.StudentService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import lombok.RequiredArgsConstructor;
-
 import java.util.List;
 
 @RestController
-@RequiredArgsConstructor
 @RequestMapping("/api/lesson-progress")
 public class StudentLessonProgressController {
-    private final StudentLessonProgressService studentLessonProgressService;
-    private final StudentService studentService;
-    private final JwtUtil jwtUtil;
+    @Autowired
+    private StudentLessonProgressService studentLessonProgressService;
+    @Autowired
+    private StudentService studentService;
+    @Autowired
+    private JwtUtil jwtUtil;
 
     @GetMapping("/view")
     @PreAuthorize("hasRole('ROLE_Student')")
