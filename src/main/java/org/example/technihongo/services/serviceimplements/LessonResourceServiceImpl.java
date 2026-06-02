@@ -6,8 +6,6 @@ import org.example.technihongo.entities.*;
 import org.example.technihongo.enums.CompletionStatus;
 import org.example.technihongo.repositories.*;
 import org.example.technihongo.services.interfaces.LessonResourceService;
-import org.example.technihongo.services.interfaces.StudentFlashcardSetProgressService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -21,26 +19,26 @@ import java.util.List;
 @RequiredArgsConstructor
 @Component
 public class LessonResourceServiceImpl implements LessonResourceService {
-    @Autowired
-    private LessonResourceRepository lessonResourceRepository;
-    @Autowired
-    private LessonRepository lessonRepository;
-    @Autowired
-    private LearningResourceRepository learningResourceRepository;
-    @Autowired
-    private SystemFlashcardSetRepository systemFlashcardSetRepository;
-    @Autowired
-    private QuizRepository quizRepository;
-    @Autowired
-    private StudyPlanRepository studyPlanRepository;
-    @Autowired
-    private StudentRepository studentRepository;
-    @Autowired
-    private StudentQuizAttemptRepository studentQuizAttemptRepository;
-    @Autowired
-    private StudentResourceProgressRepository studentResourceProgressRepository;
-    @Autowired
-    private StudentFlashcardSetProgressRepository studentFlashcardSetProgressRepository;
+
+    private final LessonResourceRepository lessonResourceRepository;
+
+    private final LessonRepository lessonRepository;
+
+    private final LearningResourceRepository learningResourceRepository;
+
+    private final SystemFlashcardSetRepository systemFlashcardSetRepository;
+
+    private final QuizRepository quizRepository;
+
+    private final StudyPlanRepository studyPlanRepository;
+
+    private final StudentRepository studentRepository;
+
+    private final StudentQuizAttemptRepository studentQuizAttemptRepository;
+
+    private final StudentResourceProgressRepository studentResourceProgressRepository;
+
+    private final StudentFlashcardSetProgressRepository studentFlashcardSetProgressRepository;
 
     @Override
     public List<LessonResource> getLessonResourceListByLessonId(Integer lessonId) {
